@@ -1,0 +1,117 @@
+ARGUS — Demo Video Script
+Microsoft Agents League Hackathon 2026
+ElevenLabs Voice: Rachel | Speed: 1.0x | ~5 minutes
+
+PASTE THIS ENTIRE TEXT INTO ELEVENLABS.
+Do not change punctuation — it controls pacing.
+
+─────────────────────────────────────────────
+[SECTION 1 — 0:00 to 0:30 — PROBLEM]
+Screen: Show architecture diagram from README
+─────────────────────────────────────────────
+
+Know Your Customer — or KYC — is one of the most expensive and time-consuming tasks in financial compliance.
+
+Before a bank can onboard any new customer, it must verify their identity, check global sanctions lists, screen for adverse media, resolve corporate ownership structures, and assess regulatory risk.
+
+Doing this manually takes days. And the cost of getting it wrong — through fines, fraud, or missed risks — can be enormous.
+
+This is ARGUS.
+
+─────────────────────────────────────────────
+[SECTION 2 — 0:30 to 1:30 — WHAT IS ARGUS]
+Screen: Keep architecture diagram visible
+─────────────────────────────────────────────
+
+ARGUS stands for Agentic Risk and Governance Unified Screening.
+
+It is a multi-agent KYC risk assessment system built on Azure AI Foundry, created for the Microsoft Agents League Hackathon 2026, Reasoning Agents track.
+
+A single KYC request is broken down into five specialised agents — all running in parallel.
+
+The Identity Agent verifies who the entity is. The Screening Agent checks global sanctions lists and adverse media. The Corporate Intelligence Agent resolves the ultimate beneficial ownership structure. The Transaction Intelligence Agent detects suspicious financial patterns. And the Compliance and Risk Agent synthesises everything into a final risk decision.
+
+These agents communicate using the Agent-to-Agent protocol — called A2A — coordinated by a central Orchestrator on Azure AI Foundry.
+
+The knowledge retrieval layer is powered by Foundry IQ — Microsoft's managed intelligence layer — with three knowledge bases. One for regulatory text, one for sanctions data, and one for adverse media. This ensures every answer is cited, grounded, and traceable. No hallucination is possible.
+
+All data in this demonstration is fully synthetic. No real personal or financial information is used.
+
+─────────────────────────────────────────────
+[SECTION 3 — 1:30 to 2:30 — LIVE DEMO]
+Screen: Switch to Gradio UI at localhost:7860
+─────────────────────────────────────────────
+
+Let me show you ARGUS in action.
+
+This is the ARGUS demo interface, built with Gradio and served by a FastAPI backend running locally.
+
+I will submit a KYC request for a synthetic corporate entity called Cayman Synth Capital — registered in the Cayman Islands, which is a high-risk jurisdiction under FATF guidelines.
+
+I enter the entity name — Cayman Synth Capital.
+
+I select Corporate as the entity type.
+
+I enter KY as the jurisdiction — the country code for the Cayman Islands.
+
+I click Submit.
+
+ARGUS immediately fires four agents in parallel — Identity, Screening, Corporate Intelligence, and Transaction. The Orchestrator coordinates all four simultaneously.
+
+Within seconds, all four agents return their results. The Orchestrator then passes everything to the Compliance and Risk Agent — the fan-in step — which synthesises the final risk score and generates the report.
+
+─────────────────────────────────────────────
+[SECTION 4 — 2:30 to 3:30 — FOUNDRY IQ]
+Screen: Scroll to Regulatory Triggers in the report
+─────────────────────────────────────────────
+
+The risk report is ready. Let me scroll to the Regulatory Triggers section.
+
+Notice that every regulatory reference includes a Foundry IQ citation — the exact knowledge base name, the source document, and the article number.
+
+For example: FATF Recommendation 12, cited directly from the FATF 40 Recommendations document. And FATF Recommendation 19, for high-risk third countries.
+
+This is exactly what Foundry IQ provides. Grounded, cited, auditable answers — not generated text.
+
+This matters deeply in compliance. A risk decision that cannot be traced to a specific regulatory source has no legal standing. ARGUS solves this by design, using Foundry IQ as the intelligence layer.
+
+The Screening Agent also identified adverse media — a synthetic news article flagging regulatory concerns — with a citation back to the knowledge base entry, including the document identifier.
+
+─────────────────────────────────────────────
+[SECTION 5 — 3:30 to 4:30 — RISK REPORT]
+Screen: Scroll through full risk report — scores, actions
+─────────────────────────────────────────────
+
+The overall risk tier for Cayman Synth Capital is HIGH, with a score of 74 out of 100.
+
+Looking at the five dimensions.
+
+Identity: Low risk. The entity verified cleanly against the synthetic registry.
+
+Screening: High risk. Adverse media was detected with a confidence score of 72 percent.
+
+Corporate and UBO: Medium risk. A three-level ownership chain was identified, with one node registered in a high-risk jurisdiction.
+
+Transaction Intelligence: Medium risk. A structuring pattern was detected — seven transactions placed just below the ten-thousand Euro reporting threshold within a thirty-day window. This matches the FATF typology for smurfing.
+
+Regulatory Compliance: Medium risk. FATF Recommendation 12 and Recommendation 19 were both triggered, requiring Enhanced Due Diligence.
+
+The recommended actions are clear. Enhanced Due Diligence is required before onboarding. A source of funds declaration must be obtained from the beneficial owners. The case must be escalated to a Senior Compliance Officer. And a Suspicious Activity Report should be considered, given the transaction pattern.
+
+The audit trace at the bottom shows all five agents were invoked, fifteen tool calls were made, and three Foundry IQ knowledge base queries were executed — with full traceability.
+
+─────────────────────────────────────────────
+[SECTION 6 — 4:30 to 5:00 — CLOSING]
+Screen: Switch to github.com/iarjunganesh/argus
+─────────────────────────────────────────────
+
+ARGUS demonstrates how multi-agent reasoning, the Agent-to-Agent protocol, and Foundry IQ can transform a complex, multi-day compliance workflow into a fast, cited, and fully auditable process — in seconds.
+
+The complete source code, architecture documentation, synthetic data generators, and a batch KYC runner are all open source and available at github dot com slash iarjunganesh slash argus.
+
+Thank you.
+
+─────────────────────────────────────────────
+END OF SCRIPT
+Word count: ~620 words | Estimated duration: 4:55 to 5:10 at Rachel 1.0x
+─────────────────────────────────────────────
