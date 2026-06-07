@@ -1,5 +1,4 @@
 """tests/test_agents.py — Integration tests for agent endpoints using mock data."""
-import pytest
 from fastapi.testclient import TestClient
 
 SAMPLE_A2A = {
@@ -54,3 +53,33 @@ def test_api_root():
     resp = client.get("/")
     assert resp.status_code == 200
     assert resp.json()["service"] == "ARGUS"
+
+
+def test_compliance_agent_handles_none_upstream_results():
+    from agents.compliance.agent import app
+
+    client = TestClient(app)
+    payload = {
+        "a2a_version": "1.0",
+        "source_agent": "argus-orchestrator-v1",
+        "target_agent": "argus-compliance-agent-v1",
+        "task_id": "test-task-none-upstream",
+        "payload": {
+            "entity_name": "Synthetic Entity Ltd.",
+            "entity_type": "corporate",
+            "jurisdiction": "KY",
+            "upstream_results": {
+                "identity": {"status": "error", "result": None},
+                "screening": {"status": "error", "result": None},
+                "corporate": {"status": "completed", "result": {}},
+                "transaction": {"status": "completed", "result": {}},
+            },
+        },
+    }
+
+    resp = client.post("/a2a/invoke", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "completed"
+    assert "risk_summary" in data["result"]
+    assert "explanation" in data["result"]

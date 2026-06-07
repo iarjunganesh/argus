@@ -10,6 +10,13 @@ load_dotenv()
 
 USE_GITHUB_MODELS = os.getenv("USE_GITHUB_MODELS", "false").lower() == "true"
 
+
+def _require_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"{name} not set — mock fallback will handle")
+    return value
+
 # ── OpenAI / GitHub Models client ────────────────────────────────────────────
 
 def get_llm_client() -> AsyncOpenAI:
@@ -21,11 +28,13 @@ def get_llm_client() -> AsyncOpenAI:
     if USE_GITHUB_MODELS:
         return AsyncOpenAI(
             base_url="https://models.inference.ai.azure.com",
-            api_key=os.environ["GITHUB_TOKEN"],
+            api_key=_require_env("GITHUB_TOKEN"),
         )
+    endpoint = _require_env("AZURE_OPENAI_ENDPOINT")
+    deployment = _require_env("AZURE_OPENAI_DEPLOYMENT")
     return AsyncOpenAI(
-        base_url=f"{os.environ['AZURE_OPENAI_ENDPOINT']}/openai/deployments/{os.environ['AZURE_OPENAI_DEPLOYMENT']}",
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        base_url=f"{endpoint}/openai/deployments/{deployment}",
+        api_key=_require_env("AZURE_OPENAI_API_KEY"),
         default_headers={"api-version": os.environ.get("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")},
     )
 
@@ -34,10 +43,15 @@ MODEL_NAME = "gpt-4o"
 # ── Azure Cosmos DB ───────────────────────────────────────────────────────────
 
 def get_cosmos_client():
+    endpoint = _require_env("COSMOS_ENDPOINT")
     from azure.cosmos import CosmosClient
+    key = os.getenv("COSMOS_KEY")
+    if key:
+        return CosmosClient(url=endpoint, credential=key)
+
     from azure.identity import DefaultAzureCredential
     return CosmosClient(
-        url=os.environ["COSMOS_ENDPOINT"],
+        url=endpoint,
         credential=DefaultAzureCredential(),
     )
 
@@ -49,27 +63,30 @@ def get_cosmos_database():
 # ── Azure AI Search ───────────────────────────────────────────────────────────
 
 def get_search_client(index_name: str):
+    endpoint = _require_env("AZURE_SEARCH_ENDPOINT")
+    key = _require_env("AZURE_SEARCH_API_KEY")
     from azure.search.documents import SearchClient
     from azure.core.credentials import AzureKeyCredential
     return SearchClient(
-        endpoint=os.environ["AZURE_SEARCH_ENDPOINT"],
+        endpoint=endpoint,
         index_name=index_name,
-        credential=AzureKeyCredential(os.environ["AZURE_SEARCH_API_KEY"]),
+        credential=AzureKeyCredential(key),
     )
 
 # ── Foundry IQ ────────────────────────────────────────────────────────────────
 
 def get_foundry_client():
     """Azure AI Projects client for Foundry IQ knowledge base queries."""
+    endpoint = _require_env("FOUNDRY_ENDPOINT")
     try:
         from azure.ai.projects import AIProjectClient
         from azure.identity import DefaultAzureCredential
         return AIProjectClient(
-            endpoint=os.environ["FOUNDRY_ENDPOINT"],
+            endpoint=endpoint,
             credential=DefaultAzureCredential(),
         )
-    except ImportError:
-        raise ImportError("Install azure-ai-projects: pip install azure-ai-projects")
+    except ImportError as exc:
+        raise RuntimeError("azure-ai-projects not installed — mock fallback will handle") from exc
 
 FOUNDRY_IQ_KB_REGULATIONS  = os.getenv("FOUNDRY_IQ_KB_REGULATIONS",  "argus-kb-regulations")
 FOUNDRY_IQ_KB_SANCTIONS     = os.getenv("FOUNDRY_IQ_KB_SANCTIONS",     "argus-kb-sanctions")

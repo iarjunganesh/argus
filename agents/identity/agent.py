@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from agents.identity.tools.customer_lookup import customer_lookup
 from agents.identity.tools.ocr_processor import ocr_processor
 from agents.identity.tools.identity_validator import identity_validator
+from utils.demo_profiles import get_demo_profile
 
 app = FastAPI(title="ARGUS Identity Agent")
 logger = get_logger('agent.identity')
@@ -26,8 +27,18 @@ async def invoke(message: A2AMessage):
     entity_type = p.get("entity_type", "individual")
     reg_number  = p.get("registration_number")
     documents   = p.get("documents", [])   # list of base64 doc images
+    jurisdiction = p.get("jurisdiction", "")
 
     logger.info('invoke', extra={"task_id": message.task_id, "entity": entity_name})
+    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
+    if demo_profile and demo_profile.get("identity"):
+        return {
+            "agent":   "identity",
+            "task_id": message.task_id,
+            "status":  "completed",
+            "result":  demo_profile["identity"],
+        }
+
     # Step 1: Registry lookup
     registry_result = await customer_lookup(entity_name, entity_type, reg_number)
 

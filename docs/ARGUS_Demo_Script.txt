@@ -27,9 +27,9 @@ ARGUS stands for Agentic Risk and Governance Unified Screening.
 
 It is a multi-agent KYC risk assessment system built on Azure AI Foundry, created for the Microsoft Agents League Hackathon 2026, Reasoning Agents track.
 
-A single KYC request is broken down into five specialised agents — all running in parallel.
+A single KYC request is broken down into four specialist agents running in parallel, followed by a compliance fan-in step.
 
-The Identity Agent verifies who the entity is. The Screening Agent checks global sanctions lists and adverse media. The Corporate Intelligence Agent resolves the ultimate beneficial ownership structure. The Transaction Intelligence Agent detects suspicious financial patterns. And the Compliance and Risk Agent synthesises everything into a final risk decision.
+The Identity Agent verifies who the entity is. The Screening Agent checks global sanctions lists and adverse media. The Corporate Intelligence Agent resolves the ultimate beneficial ownership structure. The Transaction Intelligence Agent detects suspicious financial patterns. And the Compliance and Risk Agent synthesises everything into a final risk decision after those four upstream agents complete.
 
 These agents communicate using the Agent-to-Agent protocol — called A2A — coordinated by a central Orchestrator on Azure AI Foundry.
 
@@ -60,6 +60,8 @@ ARGUS immediately fires four agents in parallel — Identity, Screening, Corpora
 
 Within seconds, all four agents return their results. The Orchestrator then passes everything to the Compliance and Risk Agent — the fan-in step — which synthesises the final risk score and generates the report.
 
+At the top of the report, ARGUS shows the overall risk tier, the numeric score, and the confidence for this run.
+
 ─────────────────────────────────────────────
 [SECTION 4 — 2:30 to 3:30 — FOUNDRY IQ]
 Screen: Scroll to Regulatory Triggers in the report
@@ -82,13 +84,15 @@ The Screening Agent also identified adverse media — a synthetic news article f
 Screen: Scroll through full risk report — scores, actions
 ─────────────────────────────────────────────
 
-The overall risk tier for Cayman Synth Capital is HIGH, with a score of 74 out of 100.
+The Investigation Timeline shows when each agent completed and the total latency for the full assessment.
+
+The overall risk tier for Cayman Synth Capital is shown at the top, together with the numeric score for this run.
 
 Looking at the five dimensions.
 
 Identity: Low risk. The entity verified cleanly against the synthetic registry.
 
-Screening: High risk. Adverse media was detected with a confidence score of 72 percent.
+Screening: Elevated risk. Adverse media was detected and flagged for analyst review.
 
 Corporate and UBO: Medium risk. A three-level ownership chain was identified, with one node registered in a high-risk jurisdiction.
 
@@ -98,7 +102,7 @@ Regulatory Compliance: Medium risk. FATF Recommendation 12 and Recommendation 19
 
 The recommended actions are clear. Enhanced Due Diligence is required before onboarding. A source of funds declaration must be obtained from the beneficial owners. The case must be escalated to a Senior Compliance Officer. And a Suspicious Activity Report should be considered, given the transaction pattern.
 
-The audit trace at the bottom shows all five agents were invoked, fifteen tool calls were made, and three Foundry IQ knowledge base queries were executed — with full traceability.
+The audit trace at the bottom shows all five agents were invoked, along with tool calls and Foundry IQ query counts — with full traceability.
 
 ─────────────────────────────────────────────
 [SECTION 6 — 4:30 to 5:00 — CLOSING]

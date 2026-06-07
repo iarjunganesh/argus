@@ -43,19 +43,30 @@ python -m uvicorn api.main:app --port 8000
 ```
 Wait until you see: `Application startup complete`
 
-### 2.2 Start the Gradio UI (Terminal 2)
+### 2.2 Start all specialist agents (Terminals 2-6)
+```bash
+cd argus
+python -m uvicorn agents.identity.agent:app --port 8001
+python -m uvicorn agents.screening.agent:app --port 8002
+python -m uvicorn agents.corporate.agent:app --port 8003
+python -m uvicorn agents.compliance.agent:app --port 8004
+python -m uvicorn agents.transaction.agent:app --port 8005
+```
+Wait until each terminal reports startup complete.
+
+### 2.3 Start the Gradio UI (Terminal 7)
 ```bash
 cd argus
 python ui/gradio_app.py
 ```
 Wait until you see: `Running on local URL: http://0.0.0.0:7860`
 
-### 2.3 Open browser tabs in this order
+### 2.4 Open browser tabs in this order
 - Tab 1: http://localhost:7860 (Gradio UI — this is your main demo tab)
 - Tab 2: github.com/iarjunganesh/argus (for closing shot)
 - Tab 3: github.com/iarjunganesh/argus/blob/main/architecture/ARGUS_Architecture.md (for opening shot)
 
-### 2.4 Do a test submission (do NOT record yet)
+### 2.5 Do a test submission (do NOT record yet)
 - In Tab 1 (Gradio), enter:
   - Entity Name: `Cayman Synth Capital`
   - Entity Type: `corporate`
@@ -104,7 +115,7 @@ Wait until you see: `Running on local URL: http://0.0.0.0:7860`
 
 **[0:00 – 0:30] Show architecture diagram**
 - Switch to Tab 3 (architecture/ARGUS_Architecture.md on GitHub)
-- Scroll slowly so the ASCII architecture diagram is fully visible
+- Scroll slowly so the Mermaid architecture diagram is fully visible
 - Stay on this screen for ~30 seconds
 
 ---
@@ -144,23 +155,24 @@ Wait until you see: `Running on local URL: http://0.0.0.0:7860`
 
 **[2:30] Report appears — scroll slowly**
 - Scroll down slowly to show the full risk report
-- Pause on the coloured risk tier banner (HIGH / MEDIUM / etc.)
+- Pause on the coloured risk tier banner so the tier, score, and confidence are visible
 - Continue scrolling to the dimension scores table
 
 ---
 
 **[2:45 – 3:30] Show Foundry IQ citations**
 - Scroll to the "Regulatory Triggers" section
-- Move mouse to hover over a citation line
+- Move mouse to hover over the citation metadata line (knowledge base | document | article)
 - Stay here for ~30 seconds so viewers can read it
 
 ---
 
 **[3:30 – 4:20] Walk through risk report**
 - Scroll to dimension scores — pause on each score briefly
+- Scroll to the Investigation Timeline and pause so the timestamps and total latency are visible
 - Scroll to Recommended Actions
 - Scroll to Audit Trace at the bottom
-- Hover mouse over "foundry_iq_queries: 3" line
+- Hover mouse over the `tool_calls` and `foundry_iq_queries` lines
 
 ---
 
@@ -210,7 +222,7 @@ Wait until you see: `Running on local URL: http://0.0.0.0:7860`
 ARGUS (Agentic Risk & Governance Unified Screening) — a multi-agent KYC system
 built on Azure AI Foundry with Foundry IQ knowledge retrieval.
 
-5 parallel A2A agents | 15 tools | 3 Foundry IQ knowledge bases | GPT-4o reasoning
+4 parallel specialist agents + 1 compliance fan-in step | 15 tools | 3 Foundry IQ knowledge bases | GPT-4o reasoning
 
 Microsoft Agents League Hackathon 2026 — Reasoning Agents Track
 
@@ -247,7 +259,7 @@ git push
 
 | Problem | Fix |
 |---|---|
-| Gradio UI not loading | Check API is running first (Terminal 1) |
+| Gradio UI not loading | Check API and all five agent services are running before starting the UI |
 | Report takes too long | Normal — mock fallbacks can be slow. Pre-run before recording. |
 | OBS recording is laggy | Lower OBS bitrate to 4000 kbps in Settings |
 | Audio and video out of sync | In editor, nudge the MP3 track left or right by 1-2 seconds |

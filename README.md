@@ -13,11 +13,27 @@
 
 ARGUS is an open, multi-agent KYC (Know Your Customer) risk assessment system that demonstrates enterprise-grade agentic reasoning applied to financial compliance.
 
-A single KYC request is decomposed into **5 parallel specialised agents** coordinated via the **Agent-to-Agent (A2A)** protocol on **Azure AI Foundry**. Knowledge retrieval is powered by **Foundry IQ** — providing cited, grounded, hallucination-resistant answers from regulatory knowledge bases.
+A single KYC request is decomposed into **4 parallel specialist agents plus a compliance fan-in step** coordinated via the **Agent-to-Agent (A2A)** protocol on **Azure AI Foundry**. Knowledge retrieval is powered by **Foundry IQ** — providing cited, grounded, hallucination-resistant answers from regulatory knowledge bases.
 
 **All data is 100% synthetic. No real PII or financial data is used.**
 
 ---
+
+## The Problem
+
+KYC compliance requires a human analyst to simultaneously verify identity,
+screen sanctions lists, resolve corporate ownership structures, and assess
+regulatory risk. Done manually, this takes 2-5 days per customer and costs
+financial institutions billions in compliance overhead annually. A missed
+risk can result in multi-million dollar regulatory fines.
+
+## How ARGUS Works
+
+1. Submit an entity name, type, and jurisdiction
+2. ARGUS fans out to Identity, Screening, Corporate, and Transaction agents in parallel via the A2A protocol
+3. Foundry IQ retrieves cited, grounded answers from regulatory knowledge bases
+4. Compliance agent runs as the fan-in step and synthesises a weighted risk score, confidence, plain-English explanation, and action plan
+5. Every decision is fully traceable - agent by agent, tool by tool, citation by citation
 
 ## Architecture
 
@@ -117,7 +133,14 @@ make index-knowledge-bases
 # 6. Run the API
 make run-api
 
-# 7. Launch demo UI
+# 7. Start all specialist agents (separate terminals)
+make run-identity-agent
+make run-screening-agent
+make run-corporate-agent
+make run-compliance-agent
+make run-transaction-agent
+
+# 8. Launch demo UI
 make run-ui
 ```
 
@@ -125,6 +148,7 @@ make run-ui
 
 We've included a demo runbook and a batch-run script to produce sample KYC reports:
 
+- Docs index: docs/README.md
 - Demo runbook: docs/DEMO_RUNBOOK.md
 - Batch KYC runner: scripts/batch_run_kyc.py
 
@@ -148,7 +172,21 @@ Logs are emitted in JSON format by all services (see utils/structured_logger.py)
 
 ## Demo
 
-📹 [Demo Video](https://youtube.com/TODO) *(link added on submission day)*
+📹 [Demo Video](https://youtube.com/TODO) *(updated on submission day)*
+
+### Demo Scenarios
+
+| Scenario | Entity | Type | Jurisdiction | Expected Outcome |
+|---|---|---|---|---|
+| 🔴 High Risk | `Cayman Synth Capital` | corporate | KY | HIGH - Enhanced Due Diligence |
+| 🟠 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM - Elevated monitoring |
+| 🟢 Low Risk | `Jane Synthetic` | individual | DE | LOW - Standard onboarding |
+
+For recording and narration assets, use:
+
+- docs/ARGUS_Recording_Guide.md
+- docs/ARGUS_Demo_Script.txt
+- docs/ARGUS_Demo_VoiceOver.txt
 
 ---
 

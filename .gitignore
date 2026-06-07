@@ -59,3 +59,5 @@ data/public/*.pdf
 # Demo outputs
 outputs/
 reports/
+data/*.jsonl
+

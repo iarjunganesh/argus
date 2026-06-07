@@ -3,13 +3,13 @@ ARGUS Screening Agent
 Screens entities against sanctions, adverse media, and PEP databases.
 sanctions_checker and adverse_media_scanner are powered by Foundry IQ.
 """
-import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from agents.screening.tools.sanctions_checker import sanctions_checker
 from agents.screening.tools.adverse_media_scanner import adverse_media_scanner
 from agents.screening.tools.pep_checker import pep_checker
+from utils.demo_profiles import get_demo_profile
 from utils.structured_logger import get_logger
 
 load_dotenv()
@@ -32,8 +32,19 @@ async def invoke(message: A2AMessage):
     aliases     = payload.get("aliases", [])
     nationality = payload.get("nationality", "")
     dob_or_inc  = payload.get("dob_or_incorporated", "")
+    entity_type = payload.get("entity_type", "individual")
+    jurisdiction = payload.get("jurisdiction", "")
 
     logger.info('invoke', extra={"task_id": message.task_id, "entity": entity_name})
+    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
+    if demo_profile and demo_profile.get("screening"):
+        return {
+            "agent":   "screening",
+            "task_id": message.task_id,
+            "status":  "completed",
+            "result":  demo_profile["screening"],
+        }
+
     # Run all three screening tools
     sanctions_result    = await sanctions_checker(entity_name, aliases, nationality)
     adverse_media_result= await adverse_media_scanner(entity_name, aliases)

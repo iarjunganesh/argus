@@ -6,13 +6,13 @@ JSON objects on each log line for easier ingestion by logging systems.
 import logging
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
-            "ts": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
+            "ts": datetime.fromtimestamp(record.created, UTC).isoformat().replace("+00:00", "Z"),
             "level": record.levelname,
             "name": record.name,
             "msg": record.getMessage(),

@@ -1,11 +1,29 @@
 """
 regulations_rag — Foundry IQ powered tool
-Queries KB-Regulations (Azure AI Search index) for applicable FATF/4AMLD/6AMLD/GDPR text.
+Queries KB-Regulations through the Foundry IQ knowledge base API for applicable FATF/4AMLD/6AMLD/GDPR text.
 Returns cited, grounded regulatory references — no hallucination.
 """
-import json
-import os
-from config import FOUNDRY_IQ_KB_REGULATIONS
+from config import FOUNDRY_IQ_KB_REGULATIONS, get_foundry_client
+
+
+def _item_field(item, name: str, default=None):
+    if isinstance(item, dict):
+        return item.get(name, default)
+    return getattr(item, name, default)
+
+
+def _citation_field(citation, name: str, default=None):
+    if citation is None:
+        return default
+    if isinstance(citation, dict):
+        return citation.get(name, default)
+    return getattr(citation, name, default)
+
+
+def _normalize_relevance(score: float) -> float:
+    if score <= 1:
+        return round(max(score, 0.0), 3)
+    return round(min(score / 4.0, 1.0), 3)
 
 
 async def regulations_rag(
@@ -26,35 +44,27 @@ async def regulations_rag(
     )
 
     try:
-        from azure.search.documents import SearchClient
-        from azure.search.documents.models import QueryType
-        from azure.core.credentials import AzureKeyCredential
-
-        endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
-        key      = os.environ["AZURE_SEARCH_API_KEY"]
-        client   = SearchClient(endpoint, FOUNDRY_IQ_KB_REGULATIONS, AzureKeyCredential(key))
-
-        results = client.search(
-            search_text=enriched_query,
-            query_type=QueryType.SEMANTIC,
-            semantic_configuration_name="default",
+        client = get_foundry_client()
+        results = client.knowledge_bases.query(
+            knowledge_base_name=FOUNDRY_IQ_KB_REGULATIONS,
+            query=enriched_query,
             top=8,
-            select=["id", "content", "title", "source_doc", "metadata_json"],
+            include_citations=True,
         )
 
         regulations = []
-        for r in results:
-            score     = r.get("@search.reranker_score") or r.get("@search.score", 0)
-            threshold = 1.5 if r.get("@search.reranker_score") else 0.3
-            if score >= threshold:
+        for item in _item_field(results, "items", []):
+            score = float(_item_field(item, "relevance_score", 0) or 0)
+            citation = _item_field(item, "citation")
+            if score >= 0.15:
                 regulations.append({
-                    "text":      r.get("content", ""),
-                    "relevance": round(min(score / 4.0, 1.0), 3),
+                    "text":      _item_field(item, "content", ""),
+                    "relevance": _normalize_relevance(score),
                     "foundry_iq_citation": {
                         "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
-                        "document":       r.get("source_doc", "unknown"),
-                        "article":        r.get("title", "unknown"),
-                        "snippet_id":     r.get("id"),
+                        "document":       _citation_field(citation, "document_title", "unknown"),
+                        "article":        _citation_field(citation, "section", _citation_field(citation, "article", "unknown")),
+                        "snippet_id":     _citation_field(citation, "snippet_id", _item_field(item, "id")),
                     },
                 })
 
@@ -69,7 +79,7 @@ async def regulations_rag(
             "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
         }
 
-    except Exception as e:
+    except (ImportError, KeyError, RuntimeError, AttributeError, TypeError, ValueError) as e:
         print(f"[regulations_rag] Foundry IQ unavailable: {e}. Using mock.")
         return _mock_regulations_response()
 

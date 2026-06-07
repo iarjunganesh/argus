@@ -6,6 +6,7 @@ regulatory text with citations, produces final weighted risk score.
 from fastapi import FastAPI
 from utils.structured_logger import get_logger
 from pydantic import BaseModel
+from agents.compliance.tools.explain_decision import explain_decision
 from agents.compliance.tools.regulations_rag import regulations_rag
 from agents.compliance.tools.risk_scorer import risk_scorer
 from agents.compliance.tools.gap_analyzer import gap_analyzer
@@ -27,10 +28,10 @@ async def invoke(message: A2AMessage):
     entity_type = p.get("entity_type", "corporate")
     upstream    = p.get("upstream_results", {})
 
-    identity    = upstream.get("identity",    {}).get("result", {})
-    screening   = upstream.get("screening",   {}).get("result", {})
-    corporate   = upstream.get("corporate",   {}).get("result", {})
-    transaction = upstream.get("transaction", {}).get("result", {})
+    identity    = upstream.get("identity",    {}).get("result") or {}
+    screening   = upstream.get("screening",   {}).get("result") or {}
+    corporate   = upstream.get("corporate",   {}).get("result") or {}
+    transaction = upstream.get("transaction", {}).get("result") or {}
 
     logger.info('invoke', extra={"task_id": message.task_id, "jurisdiction": jurisdiction})
     # Build risk indicator list from upstream findings
@@ -71,12 +72,27 @@ async def invoke(message: A2AMessage):
     ]
 
     recommended_actions = _build_actions(tier, risk_indicators, gaps)
+    explanation = await explain_decision(
+        entity={
+            "name": p.get("entity_name", "Unknown"),
+            "type": entity_type,
+            "jurisdiction": jurisdiction,
+        },
+        risk_summary={
+            "overall_risk_tier": tier,
+            "overall_risk_score": overall_score,
+        },
+        dimension_scores=scores["dimensions"],
+        key_findings=key_findings,
+        regulatory_triggers=regulatory_triggers,
+    )
 
     return {
         "agent":   "compliance",
         "task_id": message.task_id,
         "status":  "completed",
         "result": {
+            "explanation": explanation,
             "risk_summary": {
                 "overall_risk_tier":     tier,
                 "overall_risk_score":    overall_score,
@@ -99,6 +115,7 @@ def health():
 
 
 def _extract_findings(identity, screening, corporate, transaction) -> list:
+    _ = identity
     findings = []
     if screening.get("pep_hit"):
         for f in screening.get("findings", []):

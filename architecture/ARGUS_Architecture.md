@@ -94,44 +94,49 @@ ARGUS demonstrates across all judging criteria:
 
 ## 4. High-Level Architecture
 
+```mermaid
+graph TD
+  UI["Client UI<br/>Gradio or FastAPI"]
+  ORC["ARGUS Orchestrator<br/>Azure AI Foundry Agent Service"]
+  AGENTS["Specialist Agent Runtime<br/>Identity, Screening, Corporate, Transaction, Compliance"]
+
+  UI -->|"KYC request"| ORC
+  ORC -->|"Risk report"| UI
+  ORC -->|"A2A orchestration"| AGENTS
+
+  subgraph IQ["Foundry IQ Intelligence Layer"]
+    direction LR
+    KBREG["KB Regulations"]
+    KBSAN["KB Sanctions"]
+    KBMEDIA["KB AdverseMedia"]
+    KBTYP["KB Typologies"]
+  end
+
+  subgraph DATA["Azure Data Plane"]
+    direction LR
+    COSMOS["Cosmos DB"]
+    SEARCH["AI Search"]
+    DOCINT["Document Intelligence"]
+    BLOB["Blob Storage"]
+  end
+
+  AGENTS -->|"grounded queries"| IQ
+  AGENTS -->|"state and records"| DATA
+
+  KBREG --> SEARCH
+  KBSAN --> SEARCH
+  KBMEDIA --> SEARCH
+  KBTYP --> SEARCH
+
+  ORC -->|"tool and data access"| DATA
+  ORC -->|"knowledge access"| IQ
+
+  AGENTS --> DOCINT
+  AGENTS --> COSMOS
+  DOCINT --> BLOB
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          ARGUS System Boundary                           │
-│                                                                          │
-│  ┌──────────────┐     REST/A2A      ┌───────────────────────────────┐   │
-│  │   Client UI  │ ─────────────── ▶ │     ARGUS Orchestrator        │   │
-│  │  (Gradio /   │ ◀ ─────────────   │     (Azure AI Foundry)        │   │
-│  │   FastAPI)   │    Risk Report    │     GPT-4o  |  Sem.Kernel     │   │
-│  └──────────────┘                   └─────────────┬─────────────────┘   │
-│                                                   │ A2A Protocol        │
-│          ┌──────────────────────────────────────┬─┴────────────────┐    │
-│          │                                      │                  │    │
-│ ┌────────▼──────┐  ┌─────────────────┐  ┌──────▼──────┐  ┌───────▼──┐ │
-│ │   Identity    │  │   Screening     │  │  Corporate  │  │ Transact │ │
-│ │    Agent      │  │     Agent       │  │  Intel Agent│  │ Intel Agt│ │
-│ │ • cust_lookup │  │ • sanctions ─── ┼─▶│ • ubo_rslvr │  │ • tx_mon │ │
-│ │ • ocr_proc    │  │   [Foundry IQ] │  │ • reg_lookup│  │ • pattern│ │
-│ │ • id_validate │  │ • adv_media ───┼─▶│ • jrsd_map  │  │ • typol  │ │
-│ └───────────────┘  │   [Foundry IQ] │  └─────────────┘  └──────────┘ │
-│                    │ • pep_checker   │                                  │
-│                    └─────────────────┘                                  │
-│                                                                          │
-│          ┌───────────────────────────────────────────────────────────┐  │
-│          │           Compliance & Risk Agent  (fan-in)               │  │
-│          │   • regulations_rag [Foundry IQ] • risk_scorer            │  │
-│          │   • gap_analyzer                                           │  │
-│          └───────────────────────────────────────────────────────────┘  │
-│                                                                          │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                    Foundry IQ Intelligence Layer                  │   │
-│  │  KB-Regulations │ KB-Sanctions │ KB-AdverseMedia │ KB-Typologies │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │                       Azure Data Plane                            │   │
-│  │   Cosmos DB │ AI Search │ Doc Intelligence │ Blob Storage         │   │
-│  └──────────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────┘
-```
+
+Section 4 intentionally stays high-level. Detailed fan-out/fan-in agent interactions are shown in Section 5.
 
 ---
 
@@ -498,40 +503,40 @@ Total: ~2.5 hours. Do this on Day 1.
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                    Azure AI Foundry                          │
-│  • Agent Service (GA) — hosts all 6 agents                  │
-│  • Azure OpenAI — gpt-4o for all agents                     │
-│  • Foundry IQ — managed knowledge layer (3 KBs)             │
-│  • Foundry Managed Memory (Preview) — cross-session context │
-│  • AgentOps / Azure Monitor — tracing + evaluation          │
+│  • Agent Service (GA) — hosts all 6 agents                   │
+│  • Azure OpenAI — gpt-4o for all agents                      │
+│  • Foundry IQ — managed knowledge layer (3 KBs)              │
+│  • Foundry Managed Memory (Preview) — cross-session context  │
+│  • AgentOps / Azure Monitor — tracing + evaluation           │
 └──────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────┐
 │                    Foundry IQ Layer                          │
-│  • KB-Regulations — FATF/4AMLD/6AMLD/GDPR text              │
+│  • KB-Regulations — FATF/4AMLD/6AMLD/GDPR text               │
 │  • KB-Sanctions   — synthetic sanctions dataset              │
 │  • KB-AdverseMedia — synthetic news corpus                   │
 │  (backed by Azure AI Search indexes underneath)              │
 └──────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────┐
 │                    Data & Storage                            │
-│  • Azure Cosmos DB (NoSQL) — entity profiles, corporate     │
-│    graph, PEP data, transaction ledger (all synthetic)      │
-│  • Azure AI Search — raw indexes backing Foundry IQ KBs     │
-│    + typology index for transaction agent                   │
-│  • Azure Blob Storage — synthetic document images (OCR)     │
+│  • Azure Cosmos DB (NoSQL) — entity profiles, corporate      │
+│    graph, PEP data, transaction ledger (all synthetic)       │
+│  • Azure AI Search — raw indexes backing Foundry IQ KBs      │
+│    + typology index for transaction agent                    │
+│  • Azure Blob Storage — synthetic document images (OCR)      │
 └──────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────┐
 │                    Processing & Integration                  │
-│  • Azure Document Intelligence — OCR for document types     │
-│  • Azure Functions — tool execution wrappers                │
-│  • Semantic Kernel — A2A protocol + tool orchestration      │
-│  • FastAPI — API gateway (Azure Container Apps)             │
-│  • Gradio — demo UI                                         │
+│  • Azure Document Intelligence — OCR for document types      │
+│  • Azure Functions — tool execution wrappers                 │
+│  • Semantic Kernel — A2A protocol + tool orchestration       │
+│  • FastAPI — API gateway (Azure Container Apps)              │
+│  • Gradio — demo UI                                          │
 └──────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────┐
 │                    Observability                             │
-│  • Azure Monitor + Application Insights                     │
-│  • Foundry AgentOps — per-agent accuracy / latency metrics  │
-│  • Structured audit log — every tool call + agent decision  │
+│  • Azure Monitor + Application Insights                      │
+│  • Foundry AgentOps — per-agent accuracy / latency metrics   │
+│  • Structured audit log — every tool call + agent decision   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -574,24 +579,40 @@ All data generation scripts committed to repo. Fully reproducible with `make gen
 
 ### Sequence Diagram
 
-```
-Client       Orchestrator   Identity   Screening  Corporate  Transaction   Compliance
-  │               │            Agent      Agent      Agent       Agent        Agent
-  │──KYC Req────▶│            │          │          │           │            │
-  │               │──A2A────▶│           │          │           │            │
-  │               │──A2A──────────────────▶          │           │            │
-  │               │──A2A───────────────────────────── ▶          │            │
-  │               │──A2A──────────────────────────────────────── ▶            │
-  │    [parallel: all four agents run simultaneously]             │            │
-  │               │◀─identity_result──────│          │           │            │
-  │               │◀─screening_result─────────────── │           │            │
-  │               │◀─corporate_result─────────────────────────── │            │
-  │               │◀─transaction_result───────────────────────────────────── │ │
-  │    [fan-in complete — orchestrator passes all results to Compliance]      │
-  │               │──A2A (with all upstream results)──────────────────────────▶
-  │               │◀─compliance_result + risk_score + citations───────────────│
-  │    [orchestrator synthesises final report]                                 │
-  │◀──Risk Report─│                                                            │
+```mermaid
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant O as Orchestrator
+  participant I as Identity Agent
+  participant S as Screening Agent
+  participant CO as Corporate Agent
+  participant T as Transaction Agent
+  participant R as Compliance Agent
+
+  C->>O: KYC request
+
+  Note over O,T: Fan-out phase (parallel)
+  par Identity lane
+    O->>I: A2A invoke
+    I-->>O: identity_result
+  and Screening lane
+    O->>S: A2A invoke
+    S-->>O: screening_result
+  and Corporate lane
+    O->>CO: A2A invoke
+    CO-->>O: corporate_result
+  and Transaction lane
+    O->>T: A2A invoke
+    T-->>O: transaction_result
+  end
+
+  Note over O,R: Fan-in phase
+  O->>R: A2A invoke (all upstream results)
+  R-->>O: compliance_result + risk score + citations
+
+  Note over O: Synthesis phase
+  O-->>C: Final risk report
 ```
 
 ### A2A Message Format
@@ -664,8 +685,8 @@ Client       Orchestrator   Identity   Screening  Corporate  Transaction   Compl
     "identity":            { "score": 85, "tier": "LOW",    "summary": "Identity verified, minor address discrepancy." },
     "screening":           { "score": 68, "tier": "HIGH",   "summary": "PEP hit + adverse media. Director is former Minister of Finance." },
     "corporate_ubo":       { "score": 55, "tier": "MEDIUM", "summary": "3-level chain; one node in high-risk jurisdiction (Panama)." },
-    "regulatory_compliance":{ "score": 60, "tier": "MEDIUM", "summary": "FATF Rec.12 triggered. Enhanced monitoring required." },
-    "transaction_behaviour":{ "score": 72, "tier": "MEDIUM", "summary": "Structuring pattern detected: 7 tx below €10K threshold/30 days." }
+    "regulatory":          { "score": 60, "tier": "MEDIUM", "summary": "FATF Rec.12 triggered. Enhanced monitoring required." },
+    "transaction":         { "score": 72, "tier": "MEDIUM", "summary": "Structuring pattern detected: 7 tx below EUR10K threshold/30 days." }
   },
   "regulatory_triggers": [
     {
@@ -683,12 +704,27 @@ Client       Orchestrator   Identity   Screening  Corporate  Transaction   Compl
     "File Suspicious Activity Report if transaction pattern continues"
   ],
   "audit_trace": {
+    "task_id": "kyc-87b92c1c43a8",
     "agents_invoked": ["identity", "screening", "corporate", "transaction", "compliance"],
     "tool_calls": 15,
     "foundry_iq_queries": 3,
-    "total_latency_ms": 4820,
-    "model_tokens_used": 12400
-  }
+    "identity_status": "completed",
+    "screening_status": "completed",
+    "corporate_status": "completed",
+    "transaction_status": "completed",
+    "compliance_status": "completed"
+  },
+  "timeline": [
+    {"step": "Request received", "time": "14:31:58"},
+    {"step": "Identity Agent", "time": "14:31:58"},
+    {"step": "Screening Agent", "time": "14:31:58"},
+    {"step": "Corporate Agent", "time": "14:31:58"},
+    {"step": "Transaction Agent", "time": "14:31:58"},
+    {"step": "Parallel agents complete", "time": "14:32:01"},
+    {"step": "Compliance & Risk Agent", "time": "14:32:01"},
+    {"step": "Final report generated", "time": "14:32:03"}
+  ],
+  "total_latency_seconds": 5.04
 }
 ```
 

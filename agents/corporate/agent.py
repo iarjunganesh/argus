@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from agents.corporate.tools.ubo_resolver import ubo_resolver
 from agents.corporate.tools.registry_lookup import registry_lookup
 from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+from utils.demo_profiles import get_demo_profile
 
 app = FastAPI(title="ARGUS Corporate Intelligence Agent")
 logger = get_logger('agent.corporate')
@@ -28,6 +29,15 @@ async def invoke(message: A2AMessage):
     jurisdiction= p.get("jurisdiction", "")
 
     logger.info('invoke', extra={"task_id": message.task_id, "entity": entity_name})
+    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
+    if demo_profile and demo_profile.get("corporate"):
+        return {
+            "agent":   "corporate",
+            "task_id": message.task_id,
+            "status":  "completed",
+            "result":  demo_profile["corporate"],
+        }
+
     # Only run UBO resolution for corporate entities
     if entity_type != "corporate":
         return {

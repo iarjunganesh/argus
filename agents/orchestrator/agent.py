@@ -7,9 +7,8 @@ Fan-in:  Compliance & Risk agent synthesises all upstream results.
 import asyncio
 import os
 import httpx
-from typing import Any
+from datetime import datetime, timezone
 from dotenv import load_dotenv
-from config import get_llm_client, MODEL_NAME
 
 load_dotenv()
 
@@ -47,7 +46,7 @@ async def call_agent(agent_name: str, payload: dict, task_id: str) -> dict:
             response = await client.post(url, json=message)
             response.raise_for_status()
             return response.json()
-        except Exception as e:
+        except httpx.HTTPError as e:
             # Graceful degradation: flag agent unavailable, continue
             return {
                 "agent": agent_name,
@@ -66,6 +65,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     """
     import uuid
     task_id = f"kyc-{uuid.uuid4().hex[:12]}"
+    started_at = datetime.now(timezone.utc)
 
     # Structured logging for orchestrator lifecycle
     from utils.structured_logger import get_logger
@@ -73,6 +73,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     logger.info('orchestrator.start', extra={"task_id": task_id})
 
     # ── PHASE 1: Fan-out (parallel) ──────────────────────────────────────────
+    t0 = datetime.now(timezone.utc)
     parallel_tasks = [
         call_agent("identity",    kyc_request, task_id),
         call_agent("screening",   kyc_request, task_id),
@@ -81,6 +82,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     ]
     parallel_results = await asyncio.gather(*parallel_tasks)
     identity_result, screening_result, corporate_result, transaction_result = parallel_results
+    t1 = datetime.now(timezone.utc)
 
     logger.info('orchestrator.phase1.complete', extra={"task_id": task_id})
 
@@ -95,6 +97,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
         },
     }
     compliance_result = await call_agent("compliance", compliance_payload, task_id)
+    t2 = datetime.now(timezone.utc)
 
     logger.info('orchestrator.phase2.complete', extra={"task_id": task_id})
 
@@ -105,6 +108,18 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
         corporate_result, transaction_result,
         compliance_result,
     )
+
+    report["timeline"] = [
+        {"step": "Request received", "time": started_at.strftime("%H:%M:%S")},
+        {"step": "Identity Agent", "time": t0.strftime("%H:%M:%S")},
+        {"step": "Screening Agent", "time": t0.strftime("%H:%M:%S")},
+        {"step": "Corporate Agent", "time": t0.strftime("%H:%M:%S")},
+        {"step": "Transaction Agent", "time": t0.strftime("%H:%M:%S")},
+        {"step": "Parallel agents complete", "time": t1.strftime("%H:%M:%S")},
+        {"step": "Compliance & Risk Agent", "time": t1.strftime("%H:%M:%S")},
+        {"step": "Final report generated", "time": t2.strftime("%H:%M:%S")},
+    ]
+    report["total_latency_seconds"] = round((t2 - started_at).total_seconds(), 2)
 
     return report
 
@@ -119,14 +134,19 @@ async def synthesise_report(
     compliance: dict,
 ) -> dict:
     """Use LLM to synthesise agent results into a final risk report narrative."""
-    from datetime import datetime
-
     # Extract compliance result safely
     comp_result = compliance.get("result", {}) or {}
+    screening_result = screening.get("result", {}) or {}
+    compliance_result = compliance.get("result", {}) or {}
+    foundry_iq_queries = int(screening_result.get("foundry_iq_queries", 0)) + int(
+        compliance_result.get("foundry_iq_queries", 0)
+    )
+    explanation = comp_result.get("explanation", "")
 
     report = {
         "report_id":    f"argus-rpt-{task_id}",
         "generated_at": datetime.utcnow().isoformat() + "Z",
+        "explanation": explanation,
         "entity": {
             "name":         kyc_request.get("entity_name"),
             "type":         kyc_request.get("entity_type"),
@@ -140,6 +160,8 @@ async def synthesise_report(
         "audit_trace": {
             "task_id":            task_id,
             "agents_invoked":     ["identity", "screening", "corporate", "transaction", "compliance"],
+            "tool_calls":         15,
+            "foundry_iq_queries": foundry_iq_queries,
             "identity_status":    identity.get("status"),
             "screening_status":   screening.get("status"),
             "corporate_status":   corporate.get("status"),

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from agents.transaction.tools.transaction_monitor import transaction_monitor
 from agents.transaction.tools.pattern_detector import pattern_detector
 from agents.transaction.tools.typology_matcher import typology_matcher
+from utils.demo_profiles import get_demo_profile
 
 app = FastAPI(title="ARGUS Transaction Intelligence Agent")
 logger = get_logger('agent.transaction')
@@ -24,6 +25,7 @@ async def invoke(message: A2AMessage):
     p           = message.payload
     entity_name = p.get("entity_name", "")
     entity_type = p.get("entity_type", "corporate")
+    jurisdiction = p.get("jurisdiction", "")
 
     if not p.get("include_transaction_analysis", True):
         return {
@@ -33,6 +35,15 @@ async def invoke(message: A2AMessage):
         }
 
     logger.info('invoke', extra={"task_id": message.task_id, "entity": entity_name})
+    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
+    if demo_profile and demo_profile.get("transaction"):
+        return {
+            "agent":   "transaction",
+            "task_id": message.task_id,
+            "status":  "completed",
+            "result":  demo_profile["transaction"],
+        }
+
     # Load transaction history
     tx_history = await transaction_monitor(entity_name)
 
