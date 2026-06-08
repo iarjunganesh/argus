@@ -6,6 +6,7 @@
 
 [![Azure AI Foundry](https://img.shields.io/badge/Azure%20AI%20Foundry-Agent%20Service-0078D4)](https://ai.azure.com)
 [![Foundry IQ](https://img.shields.io/badge/Microsoft%20IQ-Foundry%20IQ-7B2FBE)](https://github.com/microsoft/iq-series)
+[![Foundry IQ Badge](https://img.shields.io/badge/Foundry%20IQ%20Badge-Issued-success)](https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/)
 [![A2A](https://img.shields.io/badge/Pattern-Agent--to--Agent-00B4D8)](https://aka.ms/a2a)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://python.org)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
@@ -19,6 +20,8 @@ ARGUS is an open, multi-agent KYC (Know Your Customer) risk assessment system th
 A single KYC request is decomposed into **4 parallel specialist agents plus a compliance fan-in step** coordinated via the **Agent-to-Agent (A2A)** protocol on **Azure AI Foundry**. Knowledge retrieval is powered by **Foundry IQ** — providing cited, grounded, hallucination-resistant answers from regulatory knowledge bases.
 
 **Core entity, transaction, and sanctions datasets are synthetic. The adverse-media demo corpus now also includes public-source summaries for additional demo coverage.**
+
+**Foundry IQ badge status:** Issued (evidence: [Global AI badge](https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/)).
 
 ---
 
@@ -258,7 +261,6 @@ Each ARGUS report surfaces:
 For submission runbook and narration assets, use:
 
 - docs/ARGUS_PreSubmission_Steps.md
-- docs/ARGUS_Demo_Script.txt
 - docs/ARGUS_Demo_VoiceOver.txt
 
 ---

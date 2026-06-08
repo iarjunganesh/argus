@@ -17,7 +17,6 @@ Use this index as the single source of truth for what to read first.
 
 ## Script Assets
 
-- `ARGUS_Demo_Script.txt` - Spoken/demo script.
-- `ARGUS_Demo_VoiceOver.txt` - Voice-over narration text.
+- `ARGUS_Demo_VoiceOver.txt` - Voice-over narration text and demo timing cues.
 
 `ARGUS_PreSubmission_Steps.md` is the only active checklist for submission and recording.

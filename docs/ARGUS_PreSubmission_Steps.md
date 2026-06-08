@@ -406,6 +406,17 @@ curl -s -X POST http://localhost:8000/api/v1/kyc/document/ocr \
 
 ### Recording sequence
 
+### Voiceover sync map
+
+| Voiceover beat | Screen action |
+|---|---|
+| 0:00–0:30 Problem | Show architecture diagram |
+| 0:30–1:30 What is ARGUS | Stay on architecture and scroll to the agent table |
+| 1:30–2:35 Live demo case 1 | Switch to Gradio and submit Cayman Synth Capital |
+| 2:35–3:20 Foundry IQ on case 1 | Scroll to Regulatory Triggers and citations |
+| 3:20–4:20 Live demo case 2 | Submit Wirecard AG and show contrast |
+| 4:20–4:55 Closing | Switch to GitHub repo and end on the README |
+
 ```
 [0:00]  OBS: Start Recording — wait 3 seconds
 [0:00]  Screen: Tab 3 — architecture/ARGUS_Architecture.md on GitHub
@@ -413,7 +424,7 @@ curl -s -X POST http://localhost:8000/api/v1/kyc/document/ocr \
 [1:30]  Screen: Switch to Tab 1 — localhost:7860 (Gradio UI)
 [1:40]  Type: Cayman Synth Capital / corporate / KY — type slowly
 [2:00]  Click: Submit — move mouse away
-[2:10]  Wait: Report loads
+[2:10]  Wait: Report loads — if needed, briefly hold on the sequence diagram fan-out/fan-in view while the audio covers the gap
 [2:30]  Scroll: Risk tier banner — pause (show HIGH + confidence %)
 [2:40]  Scroll: Explanation panel — pause 10 seconds (money shot)
 [3:00]  Scroll: Regulatory Triggers — pause on citation
@@ -491,6 +502,7 @@ git push
 | Project Name | ARGUS — Agentic Risk & Governance Unified Screening |
 | Track | Reasoning Agents |
 | IQ Layer | Foundry IQ |
+| Foundry IQ Badge Evidence | https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/ |
 | GitHub | https://github.com/iarjunganesh/argus |
 | Demo Video | https://youtu.be/YOUR_VIDEO_ID |
 

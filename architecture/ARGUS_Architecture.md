@@ -111,7 +111,6 @@ graph TD
     KBREG["KB Regulations"]
     KBSAN["KB Sanctions"]
     KBMEDIA["KB AdverseMedia"]
-    KBTYP["KB Typologies"]
   end
 
   subgraph DATA["Azure Data Plane"]
@@ -128,7 +127,6 @@ graph TD
   KBREG --> SEARCH
   KBSAN --> SEARCH
   KBMEDIA --> SEARCH
-  KBTYP --> SEARCH
 
   ORC -->|"tool and data access"| DATA
   ORC -->|"knowledge access"| IQ
@@ -494,7 +492,7 @@ Before writing any ARGUS code, complete these — they give you the exact integr
 | Run Cookbook 2 | `2-Foundry-IQ-Building-the-Data-Pipeline-with-Knowledge-Sources/cookbook/` | 30 min |
 | Watch Episode 3 | [Querying Multi-Source Knowledge Bases](https://aka.ms/iq-series/episode3) | 17 min |
 | Run Cookbook 3 | `3-Foundry-IQ-Querying-the-Multi-Source-AI-Knowledge-Bases/cookbook/` | 30 min |
-| **Earn Badge** | Submit [badge request](https://github.com/microsoft/iq-series/issues/new?template=foundry-iq-badge-request.yml) | 5 min |
+| **Foundry IQ Badge** | Issued (evidence: [Global AI badge](https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/)) | Completed |
 
 Total: ~2.5 hours. Do this on Day 1.
 
@@ -805,7 +803,8 @@ Official requirements with ARGUS status:
 | ✅ No confidential information | Synthetic data only | ✅ Enforced |
 | ✅ Code of Conduct compliance | Community standards | ✅ |
 | ✅ Original work | Not previously a prize winner | ✅ New project |
-| ✅ Microsoft Learn username | For badge/prize eligibility | ⬜ Confirm username |
+| ✅ Microsoft Learn username | For badge/prize eligibility | ✅ Confirmed |
+| ✅ Foundry IQ badge issued | IQ-Series completion proof | ✅ https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/ |
 | ✅ Register on Innovation Studio | Profile created | ✅ Done |
 
 **Submission deadline: June 14, 2026, 11:59 PM PT**
@@ -848,7 +847,7 @@ git clone https://github.com/microsoft/iq-series.git
 cd iq-series
 # Open in VS Code, launch Codespace, or run notebooks locally
 # Complete Episode 1, 2, 3 cookbooks in order
-# Submit badge request after Episode 3
+# Badge already issued: https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/
 ```
 
 ### Step 2: Deploy Foundry IQ Infrastructure (Day 1)

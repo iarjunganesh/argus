@@ -9,6 +9,10 @@ All notable changes to this project are documented in this file.
 - Refreshed Gradio report styling to use theme-safe neutral cards with semantic text accents for risk tiers across light and dark modes.
 - Updated demo narration assets for a two-entity judge flow under five minutes.
 - Updated architecture and README wording to align with synthetic core data plus public-source adverse-media summaries.
+- Replaced the duplicate demo script with a single canonical voiceover asset and removed the stale script reference from docs indexes.
+- Added a voiceover sync map and wait-window guidance so the sequence-diagram beat stays aligned with the narrated demo flow.
+- Aligned the IQ prerequisite cross-reference and root README with the issued Global AI badge status.
+- Removed the duplicate visible risk-tier banner in the Gradio report while keeping test compatibility markers in place.
 
 ### Documentation
 

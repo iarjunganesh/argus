@@ -1,6 +1,6 @@
 # ARGUS x IQ-Series Prerequisite Cross-Reference
 
-Date: 2026-06-07
+Date: 2026-06-08
 
 ## Objective
 
@@ -60,21 +60,25 @@ Required items include:
 - Episode takeaways
 - Badge form confirmation: https://aka.ms/iq-series/badge-form
 
-## Gap / Risk
+## Badge Status (final)
 
-- Resolved: public badge request issue is now visible.
+- Issued: Foundry IQ badge process is complete and publicly evidenced.
 
-Badge issue evidence:
+Primary badge evidence:
+
+- https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/
+
+Supporting issue evidence:
 
 - https://github.com/microsoft/iq-series/issues/59
 - Title: `Arjun Ganesh Foundry IQ Badge Request`
-- Includes all 3 episode fork URLs, screenshots, insights, and badge form confirmation.
+- Includes all 3 episode fork URLs, screenshots, insights, badge form confirmation, and issued status.
 
-## Recommended Closure (5-10 min)
+## Recommended Closure (completed)
 
-1. Keep issue link in submission evidence: https://github.com/microsoft/iq-series/issues/59
-2. Keep a screenshot/PDF export of the issue in your local submission packet.
-3. Track issue state until badge issuance confirmation.
+1. Keep badge link in submission evidence: https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/
+2. Keep issue link as supporting technical proof: https://github.com/microsoft/iq-series/issues/59
+3. No further badge-tracking action required.
 
 ## ARGUS Documentation Alignment
 

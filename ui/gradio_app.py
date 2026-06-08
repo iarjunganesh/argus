@@ -301,13 +301,7 @@ def format_report(report: dict) -> str:
             <strong>Entity:</strong> {report.get('entity', {}).get('name', '')} ({report.get('entity', {}).get('type', '')}) - {report.get('entity', {}).get('jurisdiction', '')}
         </p>
 
-        <div style="background:var(--block-background-fill,#ffffff);color:var(--body-text-color,#111827);padding:16px;border-radius:10px;margin:16px 0;border:1px solid var(--border-color-primary,#e5e7eb);box-shadow:0 6px 18px rgba(15,23,42,0.06);">
-            <h3 data-risk-line="Risk Tier: {tier}" style="margin:0">Risk Tier: <span style="color:{color};">{tier}</span> &nbsp;|&nbsp; Score: {score}/100</h3>
-            <p style="margin:4px 0;color:var(--body-text-color-subdued,#475569);">{risk_summary.get('decision_recommendation', '')}</p>
-            <p style="margin:4px 0;font-size:0.85em;color:var(--body-text-color-subdued,#64748b);">
-                Confidence: <strong>{confidence_pct}</strong>
-            </p>
-        </div>
+        <span data-risk-line="Risk Tier: {tier}" style="display:none">Risk Tier: {tier}</span>
 
         {executive_summary}
 

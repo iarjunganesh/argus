@@ -31,6 +31,8 @@ I enter the entity name, select corporate, and set the jurisdiction to KY.
 
 I click Submit.
 
+While that runs, the sequence diagram on screen shows the fan-out and fan-in pattern.
+
 Four agents fire in parallel immediately — Identity, Screening, Corporate Intelligence, and Transaction. The Orchestrator coordinates all four simultaneously.
 
 Within seconds, all results return. The Orchestrator passes everything to the Compliance and Risk Agent — the fan-in step — which synthesises the final risk score.
