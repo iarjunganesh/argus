@@ -3,16 +3,21 @@ ARGUS Screening Agent
 Screens entities against sanctions, adverse media, and PEP databases.
 sanctions_checker and adverse_media_scanner are powered by Foundry IQ.
 """
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from fastapi import FastAPI
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from agents.screening.tools.sanctions_checker import sanctions_checker
 from agents.screening.tools.adverse_media_scanner import adverse_media_scanner
 from agents.screening.tools.pep_checker import pep_checker
 from utils.demo_profiles import get_demo_profile
 from utils.structured_logger import get_logger
+from utils.env_loader import load_repo_env
 
-load_dotenv()
+load_repo_env(__file__)
 app = FastAPI(title="ARGUS Screening Agent")
 logger = get_logger('agent.screening')
 

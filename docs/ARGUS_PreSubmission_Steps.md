@@ -215,8 +215,8 @@ Also update the `## Demo` section at the bottom to add the three scenarios:
 | Scenario | Entity | Type | Jurisdiction | Expected Outcome |
 |---|---|---|---|---|
 | 🔴 High Risk | `Cayman Synth Capital` | corporate | KY | HIGH — Enhanced Due Diligence |
-| 🟠 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM — Elevated monitoring |
-| 🟢 Low Risk | `Jane Synthetic` | individual | DE | LOW — Standard onboarding |
+| 🟠 Public Signal | `Wirecard AG` | corporate | DE | Screening-elevated with cited adverse media |
+| 🟡 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM — Elevated monitoring |
 ```
 
 ### Commit
@@ -282,7 +282,7 @@ If citations appear → the risk report will show real FATF article references. 
 ### 4.2 — KB-Sanctions and KB-AdverseMedia: index synthetic data
 
 Do NOT wire real OFAC/UN lists — too large, slow, and risky for demo.
-Synthetic data with realistic schema is sufficient for the hackathon.
+Synthetic core data with realistic schema is sufficient for the hackathon.
 
 ```bash
 # Generate if not already done
@@ -320,8 +320,9 @@ git push
 ```
 
 > **Note:** KB-Regulations uses the real FATF public document — citations will
-> reference specific article numbers and page numbers. KB-Sanctions and
-> KB-AdverseMedia use synthetic data — realistic in structure, sufficient for demo.
+> reference specific article numbers and page numbers. KB-Sanctions uses synthetic
+> data, while KB-AdverseMedia may combine synthetic and public-source summaries for
+> realistic screening demonstrations.
 
 ---
 
@@ -383,7 +384,7 @@ curl -s -X POST http://localhost:8000/api/v1/kyc/document/ocr \
 
 ## STEP 6 — Demo recording
 
-### Three scenarios to record (in this order)
+### Two primary scenarios to record (in this order)
 
 **Scenario 1 — HIGH risk** *(main demo, most time spent here)*
 - Entity: `Cayman Synth Capital`
@@ -392,13 +393,13 @@ curl -s -X POST http://localhost:8000/api/v1/kyc/document/ocr \
 - What to show: Explanation panel (blue), HIGH tier (red), Foundry IQ citations,
   Investigation Timeline with timestamps, structuring pattern in transaction findings
 
-**Scenario 2 — LOW risk** *(show contrast — 60 seconds)*
-- Entity: `Jane Synthetic`
-- Type: `individual`
+**Scenario 2 — Public-source adverse-media contrast** *(show contrast — 60 seconds)*
+- Entity: `Wirecard AG`
+- Type: `corporate`
 - Jurisdiction: `DE`
-- What to show: GREEN tier banner, clean findings, LOW risk actions
+- What to show: screening-driven risk, public-source citation metadata, contrast to Cayman typology case
 
-**Scenario 3 — MEDIUM risk** *(optional, if time permits in 5 min)*
+**Scenario 3 — MEDIUM risk** *(optional, if time permits)*
 - Entity: `Synthetic Holdings B.V.`
 - Type: `corporate`
 - Jurisdiction: `NL`
@@ -418,9 +419,9 @@ curl -s -X POST http://localhost:8000/api/v1/kyc/document/ocr \
 [3:00]  Scroll: Regulatory Triggers — pause on citation
 [3:20]  Scroll: Investigation Timeline — pause to show timestamps
 [3:40]  Scroll: Recommended Actions
-[3:55]  Clear form — type: Jane Synthetic / individual / DE
+[3:55]  Clear form — type: Wirecard AG / corporate / DE
 [4:05]  Click: Submit
-[4:25]  Report loads — pause on GREEN LOW risk banner (contrast)
+[4:25]  Report loads — pause on screening-driven decision and citations (contrast)
 [4:35]  Switch: Tab 2 — github.com/iarjunganesh/argus
 [4:45]  Scroll: README slowly
 [5:00]  OBS: Stop Recording
@@ -434,8 +435,8 @@ python -m uvicorn api.main:app --port 8000
 python -m uvicorn agents.identity.agent:app --port 8001
 python -m uvicorn agents.screening.agent:app --port 8002
 python -m uvicorn agents.corporate.agent:app --port 8003
-python -m uvicorn agents.compliance.agent:app --port 8004
-python -m uvicorn agents.transaction.agent:app --port 8005
+python -m uvicorn agents.transaction.agent:app --port 8004
+python -m uvicorn agents.compliance.agent:app --port 8005
 python ui/gradio_app.py
 ```
 
@@ -445,7 +446,7 @@ python ui/gradio_app.py
 python -c "
 import httpx
 for port, name in [(8001,'identity'),(8002,'screening'),(8003,'corporate'),
-                   (8004,'compliance'),(8005,'transaction')]:
+                   (8004,'transaction'),(8005,'compliance')]:
     try:
         r = httpx.get(f'http://127.0.0.1:{port}/health', timeout=2)
         print(f'{name}: {r.json()[\"status\"]}')
@@ -505,7 +506,7 @@ media), ensuring every risk decision includes cited, auditable references to
 FATF recommendations and AML directives. An Explainability Agent generates a
 plain-English narrative explaining WHY each entity received its risk rating.
 
-All data is 100% synthetic.
+Customer and transaction data are synthetic. Public-source adverse-media summaries are included for realistic screening citations.
 ```
 
 **Deadline: June 14, 2026 — 11:59 PM Pacific Time**

@@ -1,6 +1,6 @@
 ARGUS — Demo Video Script
 Microsoft Agents League Hackathon 2026
-ElevenLabs Voice: Rachel | Speed: 1.0x | ~5 minutes
+ElevenLabs Voice: Rachel | Speed: 1.0x | Target: 4:45 to 4:55
 
 PASTE THIS ENTIRE TEXT INTO ELEVENLABS.
 Do not change punctuation — it controls pacing.
@@ -33,12 +33,12 @@ The Identity Agent verifies who the entity is. The Screening Agent checks global
 
 These agents communicate using the Agent-to-Agent protocol — called A2A — coordinated by a central Orchestrator on Azure AI Foundry.
 
-The knowledge retrieval layer is powered by Foundry IQ — Microsoft's managed intelligence layer — with three knowledge bases. One for regulatory text, one for sanctions data, and one for adverse media. This ensures every answer is cited, grounded, and traceable. No hallucination is possible.
+The knowledge retrieval layer is powered by Foundry IQ — Microsoft's managed intelligence layer — with three knowledge bases. One for regulatory text, one for sanctions data, and one for adverse media. The adverse-media corpus now mixes synthetic cases with public-source summaries so the demo can show both controlled and real-world-style examples. Every answer is cited, grounded, and traceable.
 
-All data in this demonstration is fully synthetic. No real personal or financial information is used.
+Customer and transaction records in this demonstration are synthetic. Public-source adverse-media summaries are included to demonstrate realistic screening and citation behavior.
 
 ─────────────────────────────────────────────
-[SECTION 3 — 1:30 to 2:30 — LIVE DEMO]
+[SECTION 3 — 1:30 to 2:35 — LIVE DEMO CASE 1]
 Screen: Switch to Gradio UI at localhost:7860
 ─────────────────────────────────────────────
 
@@ -46,7 +46,9 @@ Let me show you ARGUS in action.
 
 This is the ARGUS demo interface, built with Gradio and served by a FastAPI backend running locally.
 
-I will submit a KYC request for a synthetic corporate entity called Cayman Synth Capital — registered in the Cayman Islands, which is a high-risk jurisdiction under FATF guidelines.
+Before we start, I want to highlight three things you will see in the report: first, the ARGUS DECISION executive summary card which shows the risk tier, score, confidence percentage, recommendation, and primary drivers at a glance; second, the confidence score which reflects how certain the model is about the risk decision; and third, the OCR Visibility strip which shows how document uploads flow through Upload, Extract, and Investigate.
+
+I will now submit a KYC request for Cayman Synth Capital — a synthetic corporate entity registered in the Cayman Islands, which is a high-risk jurisdiction under FATF guidelines.
 
 I enter the entity name — Cayman Synth Capital.
 
@@ -60,10 +62,10 @@ ARGUS immediately fires four agents in parallel — Identity, Screening, Corpora
 
 Within seconds, all four agents return their results. The Orchestrator then passes everything to the Compliance and Risk Agent — the fan-in step — which synthesises the final risk score and generates the report.
 
-At the top of the report, ARGUS shows the overall risk tier, the numeric score, and the confidence for this run.
+The report is ready. At the very top you can see the ARGUS DECISION card — an executive summary panel showing the risk tier, numeric score, confidence percentage, recommendation, and the key drivers that contributed to this decision. Below it the report shows the full dimension breakdown, the OCR visibility strip, and the investigation timeline.
 
 ─────────────────────────────────────────────
-[SECTION 4 — 2:30 to 3:30 — FOUNDRY IQ]
+[SECTION 4 — 2:35 to 3:20 — FOUNDRY IQ ON CASE 1]
 Screen: Scroll to Regulatory Triggers in the report
 ─────────────────────────────────────────────
 
@@ -80,32 +82,36 @@ This matters deeply in compliance. A risk decision that cannot be traced to a sp
 The Screening Agent also identified adverse media — a synthetic news article flagging regulatory concerns — with a citation back to the knowledge base entry, including the document identifier.
 
 ─────────────────────────────────────────────
-[SECTION 5 — 3:30 to 4:30 — RISK REPORT]
-Screen: Scroll through full risk report — scores, actions
+[SECTION 5 — 3:20 to 4:20 — LIVE DEMO CASE 2 + CONTRAST]
+Screen: Run second entity and compare outcomes
 ─────────────────────────────────────────────
 
-The Investigation Timeline shows when each agent completed and the total latency for the full assessment.
+Now I run a second case: Wirecard AG, jurisdiction DE.
 
-The overall risk tier for Cayman Synth Capital is shown at the top, together with the numeric score for this run.
+Again, ARGUS fires four specialist agents in parallel and performs the same compliance fan-in process.
 
-Looking at the five dimensions.
+The Investigation Timeline confirms the parallel execution pattern and total latency for the second run.
 
-Identity: Low risk. The entity verified cleanly against the synthetic registry.
+The overall risk profile now differs from Cayman Synth Capital.
 
-Screening: Elevated risk. Adverse media was detected and flagged for analyst review.
+Looking at the dimensions, screening risk is the main driver because public-source adverse-media coverage is detected and cited.
 
-Corporate and UBO: Medium risk. A three-level ownership chain was identified, with one node registered in a high-risk jurisdiction.
+Identity remains comparatively low risk.
 
-Transaction Intelligence: Medium risk. A structuring pattern was detected — seven transactions placed just below the ten-thousand Euro reporting threshold within a thirty-day window. This matches the FATF typology for smurfing.
+Screening is elevated due to adverse-media evidence.
 
-Regulatory Compliance: Medium risk. FATF Recommendation 12 and Recommendation 19 were both triggered, requiring Enhanced Due Diligence.
+Corporate and UBO risk is moderate, with governance review recommended.
 
-The recommended actions are clear. Enhanced Due Diligence is required before onboarding. A source of funds declaration must be obtained from the beneficial owners. The case must be escalated to a Senior Compliance Officer. And a Suspicious Activity Report should be considered, given the transaction pattern.
+Transaction risk is lower than in the Cayman case because no strong structuring pattern dominates this profile.
 
-The audit trace at the bottom shows all five agents were invoked, along with tool calls and Foundry IQ query counts — with full traceability.
+Most importantly, the citations remain explicit: knowledge base, source document, and snippet metadata are visible in the report.
+
+This demonstrates a robust compliance pattern: consistent orchestration with evidence-specific outcomes.
+
+The audit trace again shows all five agents invoked, along with tool calls and Foundry IQ query counts, with full traceability.
 
 ─────────────────────────────────────────────
-[SECTION 6 — 4:30 to 5:00 — CLOSING]
+[SECTION 6 — 4:20 to 4:55 — CLOSING]
 Screen: Switch to github.com/iarjunganesh/argus
 ─────────────────────────────────────────────
 
@@ -117,5 +123,5 @@ Thank you.
 
 ─────────────────────────────────────────────
 END OF SCRIPT
-Word count: ~620 words | Estimated duration: 4:55 to 5:10 at Rachel 1.0x
+Word count: ~590 words | Estimated duration: 4:45 to 4:55 at Rachel 1.0x
 ─────────────────────────────────────────────

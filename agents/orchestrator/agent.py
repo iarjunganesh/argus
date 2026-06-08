@@ -8,16 +8,21 @@ import asyncio
 import os
 import httpx
 from datetime import datetime, timezone
-from dotenv import load_dotenv
+from pathlib import Path
+import sys
 
-load_dotenv()
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from utils.env_loader import load_repo_env
+
+load_repo_env(__file__)
 
 AGENT_URLS = {
     "identity":    os.getenv("IDENTITY_AGENT_URL",    "http://localhost:8001"),
     "screening":   os.getenv("SCREENING_AGENT_URL",   "http://localhost:8002"),
     "corporate":   os.getenv("CORPORATE_AGENT_URL",   "http://localhost:8003"),
-    "transaction": os.getenv("TRANSACTION_AGENT_URL", "http://localhost:8005"),
-    "compliance":  os.getenv("COMPLIANCE_AGENT_URL",  "http://localhost:8004"),
+    "transaction": os.getenv("TRANSACTION_AGENT_URL", "http://localhost:8004"),
+    "compliance":  os.getenv("COMPLIANCE_AGENT_URL",  "http://localhost:8005"),
 }
 
 SYSTEM_PROMPT = """
@@ -41,11 +46,13 @@ async def call_agent(agent_name: str, payload: dict, task_id: str) -> dict:
         "task_id": task_id,
         "payload": payload,
     }
+    
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
             response = await client.post(url, json=message)
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            return result
         except httpx.HTTPError as e:
             # Graceful degradation: flag agent unavailable, continue
             return {
@@ -70,6 +77,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     # Structured logging for orchestrator lifecycle
     from utils.structured_logger import get_logger
     logger = get_logger('orchestrator')
+    
     logger.info('orchestrator.start', extra={"task_id": task_id})
 
     # ── PHASE 1: Fan-out (parallel) ──────────────────────────────────────────
@@ -82,6 +90,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     ]
     parallel_results = await asyncio.gather(*parallel_tasks)
     identity_result, screening_result, corporate_result, transaction_result = parallel_results
+
     t1 = datetime.now(timezone.utc)
 
     logger.info('orchestrator.phase1.complete', extra={"task_id": task_id})
@@ -97,6 +106,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
         },
     }
     compliance_result = await call_agent("compliance", compliance_payload, task_id)
+    
     t2 = datetime.now(timezone.utc)
 
     logger.info('orchestrator.phase2.complete', extra={"task_id": task_id})
@@ -134,10 +144,21 @@ async def synthesise_report(
     compliance: dict,
 ) -> dict:
     """Use LLM to synthesise agent results into a final risk report narrative."""
+    from utils.structured_logger import get_logger
+    import json
+    logger = get_logger('orchestrator.synthesise')
+    
     # Extract compliance result safely
     comp_result = compliance.get("result", {}) or {}
     screening_result = screening.get("result", {}) or {}
     compliance_result = compliance.get("result", {}) or {}
+    
+    
+    logger.info('compliance_received', extra={
+        "compliance_keys": list(compliance.keys()),
+        "comp_result_keys": list(comp_result.keys()),
+        "has_risk_summary": "risk_summary" in comp_result,
+    })
     foundry_iq_queries = int(screening_result.get("foundry_iq_queries", 0)) + int(
         compliance_result.get("foundry_iq_queries", 0)
     )
@@ -145,7 +166,7 @@ async def synthesise_report(
 
     report = {
         "report_id":    f"argus-rpt-{task_id}",
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "explanation": explanation,
         "entity": {
             "name":         kyc_request.get("entity_name"),

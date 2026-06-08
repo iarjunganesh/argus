@@ -36,7 +36,7 @@
 
 The knowledge intelligence layer is powered by **Foundry IQ** — Microsoft's managed knowledge retrieval system — providing cited, grounded, permission-aware answers across all regulatory and screening knowledge bases. This directly addresses the hackathon's mandatory IQ integration requirement.
 
-All data is **100% synthetic**. ARGUS has no affiliation with any financial institution.
+Core entity, transaction, and sanctions data are synthetic. The adverse-media knowledge base also includes a small public-source corpus for additional demo coverage. ARGUS has no affiliation with any financial institution.
 
 | Attribute | Value |
 |---|---|
@@ -47,7 +47,9 @@ All data is **100% synthetic**. ARGUS has no affiliation with any financial inst
 | Pattern | Orchestrator + A2A Sub-Agents |
 | Framework | Semantic Kernel (A2A) + Azure AI Foundry SDK |
 | Language | Python |
-| Data | Fully synthetic (no real PII or financial data) |
+| Data | Synthetic customer and transaction data, with public-source adverse-media summaries for screening citations (no real PII) |
+| Test Coverage | 90% (pytest + pytest-cov, CI on GitHub Actions) |
+| UI | Gradio 4.x — ARGUS DECISION card, confidence score, OCR visibility strip, dimension scores |
 
 ---
 
@@ -385,7 +387,7 @@ ARGUS provisions three Foundry IQ Knowledge Bases:
 |---|---|---|
 | **KB-Regulations** | FATF 40 Recommendations (public), 4AMLD/6AMLD text (public), GDPR Art.9, DORA excerpts | `regulations_rag` (Compliance Agent) |
 | **KB-Sanctions** | Synthetic sanctions dataset (OFAC/UN/EU/UK schema, Faker-generated) | `sanctions_checker` (Screening Agent) |
-| **KB-AdverseMedia** | Synthetic news corpus (GPT-4o generated articles, varied sentiment) | `adverse_media_scanner` (Screening Agent) |
+| **KB-AdverseMedia** | Synthetic news corpus plus public-source adverse-media summaries | `adverse_media_scanner` (Screening Agent) |
 
 ### Quickstart: Deploy Foundry IQ Infrastructure
 
@@ -565,9 +567,9 @@ Total: ~2.5 hours. Do this on Day 1.
 | Synthetic corporate ownership graph | NetworkX-generated DAG (configurable depth) | 2,000 companies |
 | Synthetic sanctions list | OFAC/UN schema + Faker-generated names | 500 entries |
 | Synthetic PEP database | Custom generator (role, country, exposure period) | 200 entries |
-| Synthetic adverse media corpus | GPT-4o generated news articles (varied sentiment) | 1,000 articles |
+| Synthetic adverse media corpus | GPT-4o generated news articles (varied sentiment) plus public-source summaries | 1,000+ articles |
 | Synthetic transaction ledger | Custom generator (normal + anomalous patterns) | 500K transactions |
-| Document images for OCR | Public template + Faker data overlay | 200 synthetic docs |
+| Document images for OCR | Faker + Pillow (PNG, 6 quality variants) + ReportLab (PDF) | 48 synthetic docs (4 types × 6 quality levels × PNG+PDF) |
 | Regulatory text corpus | **Public domain** — FATF 40 Recs, 4AMLD/6AMLD, OpenSanctions schema | Public |
 | FATF typologies | **Public domain** — FATF typology reports | Public |
 
@@ -896,9 +898,8 @@ python generate_adverse_media.py   # 1,000 synthetic news articles
 
 ```bash
 cd argus
-python scripts/index_regulations.py    # Indexes FATF/4AMLD PDFs → KB-Regulations
-python scripts/index_sanctions.py      # Indexes synthetic sanctions → KB-Sanctions
-python scripts/index_adverse_media.py  # Indexes synthetic news → KB-AdverseMedia
+python foundry_iq/index_regulations.py    # Indexes FATF/4AMLD PDFs → KB-Regulations
+python foundry_iq/index_sanctions_and_media.py  # Indexes synthetic sanctions + adverse media → KB-Sanctions & KB-AdverseMedia
 ```
 
 ### Step 6: Build Agents (Days 3–7)
@@ -1026,8 +1027,7 @@ argus/
 ├── foundry_iq/
 │   ├── create_knowledge_bases.py      ← NEW: Foundry IQ KB setup
 │   ├── index_regulations.py           ← NEW: Index FATF/4AMLD text
-│   ├── index_sanctions.py             ← NEW: Index synthetic sanctions
-│   └── index_adverse_media.py         ← NEW: Index synthetic news
+│   └── index_sanctions_and_media.py   ← NEW: Index synthetic sanctions + adverse media
 ├── data/
 │   ├── synthetic/
 │   │   ├── generate_entities.py

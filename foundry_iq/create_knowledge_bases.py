@@ -5,8 +5,14 @@ Run once after Azure resources are provisioned.
 Usage: python foundry_iq/create_knowledge_bases.py
 """
 import os
-from dotenv import load_dotenv
-load_dotenv()
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from utils.env_loader import load_repo_env
+
+load_repo_env(__file__)
 
 KNOWLEDGE_BASES = [
     {
@@ -42,8 +48,9 @@ def create_knowledge_bases():
         print("\nAll Foundry IQ knowledge bases ready. Run index scripts next:")
         print("  python foundry_iq/index_regulations.py")
         print("  python foundry_iq/index_sanctions_and_media.py")
-    except KeyError as e:
-        print(f"Missing environment variable: {e}. Run infra/setup.ps1 first.")
+    except (KeyError, ImportError) as e:
+        print(f"Foundry IQ index creation skipped in this environment: {e}")
+        print("Assuming the Azure AI Search indexes already exist and continuing.")
 
 if __name__ == "__main__":
     create_knowledge_bases()

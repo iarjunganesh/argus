@@ -20,8 +20,8 @@ Write-Output "3) Start agents (each in separate terminals during the live demo)"
 Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.identity.agent:app --port 8001 --reload'
 Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.screening.agent:app --port 8002 --reload'
 Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.corporate.agent:app --port 8003 --reload'
-Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.compliance.agent:app --port 8004 --reload'
-Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.transaction.agent:app --port 8005 --reload'
+Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.transaction.agent:app --port 8004 --reload'
+Start-Process -NoNewWindow -FilePath "C:\Users\arjunganesh\AppData\Local\Python\pythoncore-3.14-64\python.exe" -ArgumentList '-m uvicorn agents.compliance.agent:app --port 8005 --reload'
 Start-Sleep -Seconds 6
 
 Write-Output "4) Launch UI"

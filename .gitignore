@@ -54,10 +54,17 @@ htmlcov/
 data/synthetic/*.jsonl
 data/synthetic/*.csv
 data/synthetic/*.parquet
+data/synthetic/ocr_documents/
+
+# Generated adverse-media payload export (written when Azure SDK is unavailable)
+data/public/adverse_media_index_payload.jsonl
 data/public/*.pdf
 
 # Demo outputs
 outputs/
 reports/
 data/*.jsonl
+
+# Gradio local artifacts
+.gradio/
 

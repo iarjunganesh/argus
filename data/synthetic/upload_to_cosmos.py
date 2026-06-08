@@ -16,9 +16,13 @@ import os
 import time
 import uuid
 from pathlib import Path
-from dotenv import load_dotenv
+import sys
 
-load_dotenv()
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from utils.env_loader import load_repo_env
+
+load_repo_env(__file__)
 
 DATA_DIR = Path(__file__).parent
 

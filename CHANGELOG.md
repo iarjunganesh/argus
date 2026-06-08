@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.2.0] - 2026-06-08
+
+### Changed
+
+- Refreshed Gradio report styling to use theme-safe neutral cards with semantic text accents for risk tiers across light and dark modes.
+- Updated demo narration assets for a two-entity judge flow under five minutes.
+- Updated architecture and README wording to align with synthetic core data plus public-source adverse-media summaries.
+
+### Documentation
+
+- Consolidated submission workflow to a single canonical runbook: `docs/ARGUS_PreSubmission_Steps.md`.
+- Removed archived duplicate runbooks:
+  - `docs/ARGUS_FinalSteps.md`
+  - `docs/ARGUS_NextSteps_June8-14.md`
+  - `docs/ARGUS_Recording_Guide.md`
+- Updated documentation index and root README references to point to the canonical runbook.
+
+### Repository Hygiene
+
+- Added `.gradio/` to `.gitignore` to prevent local UI artifacts from appearing in commits.
+
 ## [v0.1.0-hackathon] - 2026-06-06
 
 ### Added

@@ -3,10 +3,10 @@ ARGUS — Shared configuration and Azure client factories.
 Supports both GitHub Models (dev) and Azure OpenAI (prod).
 """
 import os
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
+from utils.env_loader import load_repo_env
 
-load_dotenv()
+load_repo_env(__file__)
 
 USE_GITHUB_MODELS = os.getenv("USE_GITHUB_MODELS", "false").lower() == "true"
 

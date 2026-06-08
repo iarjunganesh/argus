@@ -91,8 +91,8 @@ def aggregated_health():
         ('identity', 'http://127.0.0.1:8001/health'),
         ('screening', 'http://127.0.0.1:8002/health'),
         ('corporate', 'http://127.0.0.1:8003/health'),
-        ('compliance', 'http://127.0.0.1:8004/health'),
-        ('transaction', 'http://127.0.0.1:8005/health'),
+        ('compliance', 'http://127.0.0.1:8005/health'),
+        ('transaction', 'http://127.0.0.1:8004/health'),
     ]
     results = {}
     for name, url in agents:

@@ -15,7 +15,13 @@ Quick steps to reproduce the demo used for the Microsoft Agents League submissio
    python data/synthetic/upload_to_cosmos.py
    ```
 
-3. Create Search indexes (Foundry IQ KBs):
+3. Generate synthetic OCR documents and upload them to blob storage:
+
+   ```powershell
+   make generate-ocr-docs
+   ```
+
+4. Create Search indexes (Foundry IQ KBs):
 
    ```powershell
    python infra/create_search_indexes.py
@@ -23,7 +29,15 @@ Quick steps to reproduce the demo used for the Microsoft Agents League submissio
    python foundry_iq/index_regulations.py
    ```
 
-4. Start services (each in its own terminal):
+4. Start services (recommended one-command startup):
+
+   ```powershell
+   .\scripts\start_demo.ps1
+   ```
+
+   This starts all agents, API, and Gradio.
+
+   Manual startup (advanced):
 
    ```powershell
    # API gateway (recommended without --reload during batch runs)
@@ -33,11 +47,17 @@ Quick steps to reproduce the demo used for the Microsoft Agents League submissio
    python -m uvicorn agents.identity.agent:app --port 8001 --reload
    python -m uvicorn agents.screening.agent:app --port 8002 --reload
    python -m uvicorn agents.corporate.agent:app --port 8003 --reload
-   python -m uvicorn agents.compliance.agent:app --port 8004 --reload
-   python -m uvicorn agents.transaction.agent:app --port 8005 --reload
+   python -m uvicorn agents.transaction.agent:app --port 8004 --reload
+   python -m uvicorn agents.compliance.agent:app --port 8005 --reload
 
    # UI
    python ui/gradio_app.py
+   ```
+
+   Stop all demo services:
+
+   ```powershell
+   .\scripts\end_demo.ps1
    ```
 
 5. Health checks (each agent exposes `/health`):

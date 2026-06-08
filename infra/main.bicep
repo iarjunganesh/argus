@@ -5,7 +5,7 @@
 // Provisions:
 //   • Azure AI Foundry (Hub + Project)
 //   • Azure OpenAI (GPT-4o)
-//   • Azure AI Search (Free tier — backs Foundry IQ)
+//   • Azure AI Search (Basic tier — backs Foundry IQ)
 //   • Azure Cosmos DB (Free tier)
 //   • Azure Document Intelligence (F0 — free)
 //   • Azure Storage + Key Vault (required by AI Hub)
@@ -147,14 +147,13 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
 
 // ────────────────────────────────────────────────────────────
 // Azure AI Search — backs Foundry IQ knowledge bases
-// NOTE: Free tier = 1 per subscription, 3 indexes, 50MB.
-// Sufficient for the hackathon demo with synthetic data.
-// Semantic Search: 1,000 free queries/month included.
+// NOTE: Basic tier provides vector capacity and enough storage for the demo.
+// Semantic Search can remain enabled for grounded retrieval.
 // ────────────────────────────────────────────────────────────
 resource search 'Microsoft.Search/searchServices@2023-11-01' = {
   name: '${prefix}-search-${suffix}'
   location: location
-  sku: { name: 'free' }
+  sku: { name: 'basic' }
   properties: {
     replicaCount: 1
     partitionCount: 1

@@ -58,7 +58,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "  ❌ Deployment failed. Common issues:" -ForegroundColor Red
     Write-Host "     - Azure OpenAI access not approved: https://aka.ms/oai/access" -ForegroundColor Red
     Write-Host "     - Cosmos DB free tier already used in this subscription" -ForegroundColor Red
-    Write-Host "     - AI Search free tier already used in this subscription" -ForegroundColor Red
+    Write-Host "     - AI Search service already exists in this subscription" -ForegroundColor Red
     Write-Host "  Raw error:" -ForegroundColor Red
     Write-Host $deployOutput -ForegroundColor Red
     exit 1
@@ -83,7 +83,7 @@ $cosmosName   = ($cosmosEndpoint -replace 'https://', '' -replace '\.documents\.
 $docAiName    = ($docAiEndpoint -replace 'https://', '' -replace '\.cognitiveservices\.azure\.com.*', '')
 
 $openaiKey    = (az cognitiveservices account keys list --name $openaiName --resource-group $ResourceGroup --query key1 -o tsv)
-$searchKey    = (az search admin-key show --service-name $searchName --resource-group $ResourceGroup --query primaryKey -o tsv)
+$searchKey    = (az search service admin-key list --search-service-name $searchName --resource-group $ResourceGroup --query primaryKey -o tsv)
 $cosmosKey    = (az cosmosdb keys list --name $cosmosName --resource-group $ResourceGroup --query primaryMasterKey -o tsv)
 $docAiKey     = (az cognitiveservices account keys list --name $docAiName --resource-group $ResourceGroup --query key1 -o tsv)
 
@@ -146,8 +146,8 @@ DOC_INTELLIGENCE_KEY=$docAiKey
 IDENTITY_AGENT_URL=http://localhost:8001
 SCREENING_AGENT_URL=http://localhost:8002
 CORPORATE_AGENT_URL=http://localhost:8003
-COMPLIANCE_AGENT_URL=http://localhost:8004
-TRANSACTION_AGENT_URL=http://localhost:8005
+TRANSACTION_AGENT_URL=http://localhost:8004
+COMPLIANCE_AGENT_URL=http://localhost:8005
 
 # ── API ───────────────────────────────────────
 API_HOST=0.0.0.0

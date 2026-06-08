@@ -1,9 +1,40 @@
 """Deterministic demo scenarios so the documented UI examples map to stable risk outcomes."""
 
 
+def _norm(value: str) -> str:
+    return " ".join(
+        value.strip().lower().replace(".", " ").replace(",", " ").replace("/", " ").split()
+    )
+
+
+# Common shorthand names used during demos map to canonical profiles.
+NAME_ALIASES = {
+    "wirecard": ("wirecard ag", "corporate", "DE"),
+    "wirecard ag": ("wirecard ag", "corporate", "DE"),
+    "cayman": ("cayman synth capital", "corporate", "KY"),
+    "cayman synth": ("cayman synth capital", "corporate", "KY"),
+    "cayman holdings": ("cayman synth capital", "corporate", "KY"),
+    "cayman synth capital": ("cayman synth capital", "corporate", "KY"),
+    "synthetic holdings": ("synthetic holdings b.v.", "corporate", "NL"),
+    "synthetic holdings b v": ("synthetic holdings b.v.", "corporate", "NL"),
+    "synthetic holdings b.v.": ("synthetic holdings b.v.", "corporate", "NL"),
+    "jane": ("jane synthetic", "individual", "DE"),
+    "jane doe": ("jane synthetic", "individual", "DE"),
+    "jane synthetic": ("jane synthetic", "individual", "DE"),
+}
+
+
 def get_demo_profile(entity_name: str, entity_type: str, jurisdiction: str) -> dict | None:
     key = (entity_name.strip().lower(), entity_type.strip().lower(), jurisdiction.strip().upper())
-    return DEMO_PROFILES.get(key)
+    profile = DEMO_PROFILES.get(key)
+    if profile is not None:
+        return profile
+
+    alias = NAME_ALIASES.get(_norm(entity_name))
+    if alias is not None:
+        return DEMO_PROFILES.get(alias)
+
+    return None
 
 
 DEMO_PROFILES = {
@@ -172,6 +203,153 @@ DEMO_PROFILES = {
             ],
             "typology_hits": ["Structuring below reporting threshold", "Rapid offshore layering activity"],
             "transaction_risk_score": 50,
+        },
+    },
+    ("wirecard ag", "corporate", "DE"): {
+        "identity": {
+            "registry_match": True,
+            "ocr_documents": 0,
+            "discrepancies": [],
+            "identity_score": 92,
+            "verified_fields": ["name"],
+        },
+        "screening": {
+            "sanctions_hit": False,
+            "adverse_media_hit": True,
+            "pep_hit": False,
+            "findings": [
+                {
+                    "type": "adverse_media",
+                    "match": "Public coverage highlights accounting irregularities and insolvency proceedings.",
+                    "confidence": 0.91,
+                    "foundry_iq_citation": {
+                        "knowledge_base": "argus-kb-adversemedia",
+                        "document": "wirecard_public_enforcement_summary.json",
+                        "snippet_id": "demo-public-001",
+                        "published_at": "2020-06-25",
+                        "tags": ["fraud", "accounting", "governance"],
+                    },
+                }
+            ],
+            "screening_risk_score": 72,
+            "foundry_iq_queries": 1,
+        },
+        "corporate": {
+            "registry": {"found": True, "record": {"name": "Wirecard AG", "jurisdiction": "DE"}},
+            "ubo_chain": {
+                "ownership_chain": [{"name": "Wirecard AG", "jurisdiction": "DE"}],
+                "depth": 1,
+            },
+            "jurisdiction_info": {"fatf_risk_tier": "standard"},
+            "risk_flags": ["Public adverse-media profile warrants enhanced governance review"],
+            "corporate_score": 60,
+        },
+        "transaction": {
+            "transaction_count": 14,
+            "date_range": {"from": "2026-01-08", "to": "2026-05-30"},
+            "structuring_flag": False,
+            "layering_flag": False,
+            "anomalous_transactions": [],
+            "typology_hits": [],
+            "transaction_risk_score": 15,
+        },
+    },
+    ("danske bank a/s", "corporate", "DK"): {
+        "identity": {
+            "registry_match": True,
+            "ocr_documents": 0,
+            "discrepancies": [],
+            "identity_score": 94,
+            "verified_fields": ["name"],
+        },
+        "screening": {
+            "sanctions_hit": False,
+            "adverse_media_hit": True,
+            "pep_hit": False,
+            "findings": [
+                {
+                    "type": "adverse_media",
+                    "match": "Public coverage references historical AML control weaknesses and supervisory scrutiny.",
+                    "confidence": 0.88,
+                    "foundry_iq_citation": {
+                        "knowledge_base": "argus-kb-adversemedia",
+                        "document": "danske_bank_public_enforcement_summary.json",
+                        "snippet_id": "demo-public-002",
+                        "published_at": "2018-09-19",
+                        "tags": ["aml", "controls", "governance"],
+                    },
+                }
+            ],
+            "screening_risk_score": 68,
+            "foundry_iq_queries": 1,
+        },
+        "corporate": {
+            "registry": {"found": True, "record": {"name": "Danske Bank A/S", "jurisdiction": "DK"}},
+            "ubo_chain": {
+                "ownership_chain": [{"name": "Danske Bank A/S", "jurisdiction": "DK"}],
+                "depth": 1,
+            },
+            "jurisdiction_info": {"fatf_risk_tier": "low"},
+            "risk_flags": ["Legacy controls issue requires remediation evidence review"],
+            "corporate_score": 58,
+        },
+        "transaction": {
+            "transaction_count": 18,
+            "date_range": {"from": "2026-01-22", "to": "2026-05-26"},
+            "structuring_flag": False,
+            "layering_flag": False,
+            "anomalous_transactions": [],
+            "typology_hits": [],
+            "transaction_risk_score": 18,
+        },
+    },
+    ("westpac banking corporation", "corporate", "AU"): {
+        "identity": {
+            "registry_match": True,
+            "ocr_documents": 0,
+            "discrepancies": [],
+            "identity_score": 93,
+            "verified_fields": ["name"],
+        },
+        "screening": {
+            "sanctions_hit": False,
+            "adverse_media_hit": True,
+            "pep_hit": False,
+            "findings": [
+                {
+                    "type": "adverse_media",
+                    "match": "Public coverage references AML and sanctions-screening control failings.",
+                    "confidence": 0.87,
+                    "foundry_iq_citation": {
+                        "knowledge_base": "argus-kb-adversemedia",
+                        "document": "westpac_public_enforcement_summary.json",
+                        "snippet_id": "demo-public-003",
+                        "published_at": "2020-11-24",
+                        "tags": ["aml", "sanctions", "monitoring"],
+                    },
+                }
+            ],
+            "screening_risk_score": 66,
+            "foundry_iq_queries": 1,
+        },
+        "corporate": {
+            "registry": {"found": True, "record": {"name": "Westpac Banking Corporation", "jurisdiction": "AU"}},
+            "ubo_chain": {
+                "ownership_chain": [{"name": "Westpac Banking Corporation", "jurisdiction": "AU"}],
+                "depth": 1,
+            },
+            "jurisdiction_info": {"fatf_risk_tier": "standard"},
+            "risk_flags": ["Public compliance remediation case requires control evidence"],
+            "corporate_score": 57,
+        },
+        "transaction": {
+            "transaction_count": 20,
+            "date_range": {"from": "2026-02-01", "to": "2026-05-29"},
+            "structuring_flag": False,
+            "layering_flag": False,
+            "anomalous_transactions": [],
+            "typology_hits": [],
+            "transaction_risk_score": 20,
         },
     },
 }
