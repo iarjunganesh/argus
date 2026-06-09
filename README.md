@@ -1,5 +1,9 @@
 # ARGUS — Agentic Risk & Governance Unified Screening
 
+<p align="center">
+     <img src="assets/argus.svg" width="300" alt="ARGUS logo"/>
+</p>
+
 [![Tests](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml)
 
 > **Microsoft Agents League Hackathon 2026 — Reasoning Agents Track**
@@ -9,7 +13,7 @@
 [![Foundry IQ Badge](https://img.shields.io/badge/Foundry%20IQ%20Badge-Issued-success)](https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/)
 [![A2A](https://img.shields.io/badge/Pattern-Agent--to--Agent-00B4D8)](https://aka.ms/a2a)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://python.org)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
+[![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
 
 ---
 

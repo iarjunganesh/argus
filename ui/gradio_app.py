@@ -8,8 +8,30 @@ import time
 import json
 import os
 import html
+import base64
+from pathlib import Path
 
 API_BASE = os.getenv("API_BASE", "http://localhost:8000")
+
+
+def _logo_data_uri() -> str:
+    logo_path = Path(__file__).resolve().parents[1] / "assets" / "argus.svg"
+    try:
+        svg = logo_path.read_bytes()
+        encoded = base64.b64encode(svg).decode("ascii")
+        return f"data:image/svg+xml;base64,{encoded}"
+    except OSError:
+        return ""
+
+
+logo_uri = _logo_data_uri()
+branding_header = ""
+if logo_uri:
+    branding_header = (
+        f"<div style='text-align:center;margin-bottom:8px;'>"
+        f"<img src='{logo_uri}' alt='ARGUS logo' style='max-width:280px;width:100%;height:auto;'/>"
+        f"</div>"
+    )
 
 
 def format_agent_activity(report: dict) -> str:
@@ -156,7 +178,7 @@ def format_executive_summary(report: dict) -> str:
             </div>
         </div>
         <div style="margin-top:16px;display:grid;grid-template-columns:1fr;gap:10px;">
-            <div style="font-weight:600;color:var(--body-text-color,#111827);">Primary Drivers</div>
+            <div style="font-weight:600;color:var(--body-text-color,#111827);">Why This Risk Rating?</div>
             <ul style="margin:0;padding-left:20px;line-height:1.7;color:var(--body-text-color,#111827);">
                 {drivers_html}
             </ul>
@@ -241,7 +263,6 @@ def format_report(report: dict) -> str:
     color = tier_colors.get(tier, "#888")
     confidence = risk_summary.get("confidence", 0)
     confidence_pct = f"{int(confidence * 100)}%" if confidence <= 1 else f"{int(confidence)}%"
-
     findings_html = "".join(f"<li>{finding}</li>" for finding in report.get("key_findings", []))
     actions_html = "".join(f"<li>{action}</li>" for action in report.get("recommended_actions", []))
 
@@ -260,6 +281,15 @@ def format_report(report: dict) -> str:
         </li>"""
 
     trace = report.get("audit_trace", {})
+    agents_invoked_count = len(trace.get("agents_invoked", []))
+    tool_calls = trace.get("tool_calls", "-")
+    foundry_iq_queries = trace.get("foundry_iq_queries", "-")
+    latency = report.get("total_latency_seconds", "-")
+    foundry_grounded = isinstance(foundry_iq_queries, int) and foundry_iq_queries > 0
+    foundry_badge_text = "Foundry IQ Grounded" if foundry_grounded else "Foundry IQ: No live queries"
+    foundry_badge_bg = "#dcfce7" if foundry_grounded else "#f1f5f9"
+    foundry_badge_fg = "#166534" if foundry_grounded else "#475569"
+    foundry_badge_border = "#86efac" if foundry_grounded else "#cbd5e1"
     audit_trace_text = html.escape(
         "\n".join([
             f"task_id: {trace.get('task_id', '-')}",
@@ -274,15 +304,6 @@ def format_report(report: dict) -> str:
         <pre style="background:var(--background-fill-secondary,#f8fafc);color:var(--body-text-color,#111827);padding:12px;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow:auto;border-radius:6px;border:1px solid var(--border-color-primary,#e5e7eb);">{audit_trace_text}</pre>
     </div>"""
 
-    explanation = report.get("explanation", "")
-    explanation_html = ""
-    if explanation:
-        explanation_html = f"""
-    <div style="background:var(--background-fill-secondary,#f8fafc);border:1px solid var(--border-color-primary,#dbeafe);border-left:4px solid #3b5bdb;padding:14px 16px;border-radius:6px;margin:12px 0;">
-        <strong style="color:#3b5bdb;">Why this risk rating?</strong>
-        <p style="margin:8px 0 0;line-height:1.6;color:var(--body-text-color,#1f2937);">{html.escape(explanation)}</p>
-    </div>"""
-
     raw_json = json.dumps(report or {}, indent=2, ensure_ascii=False, default=str)
     if not raw_json.strip():
         raw_json = "{}"
@@ -292,6 +313,28 @@ def format_report(report: dict) -> str:
     dimension_table = format_dimension_scores(report)
     executive_summary = format_executive_summary(report)
     ocr_visibility = format_ocr_visibility()
+    critical_banners = f"""
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin:10px 0 14px 0;">
+        <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Agents Invoked</div>
+            <div style="font-weight:800;font-size:1.05em;">{agents_invoked_count}</div>
+        </div>
+        <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Tool Calls</div>
+            <div style="font-weight:800;">{tool_calls}</div>
+        </div>
+        <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Foundry IQ Queries</div>
+            <div style="font-weight:800;">{foundry_iq_queries}</div>
+        </div>
+        <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Runtime</div>
+            <div style="font-weight:800;">{latency}s</div>
+        </div>
+        <div style="padding:10px 12px;border:1px solid {foundry_badge_border};border-radius:10px;background:{foundry_badge_bg};grid-column:span 4;">
+            <div style="font-size:0.78em;color:{foundry_badge_fg};font-weight:700;letter-spacing:0.03em;">✓ {foundry_badge_text}</div>
+        </div>
+    </div>"""
 
     return f"""
     <div style="font-family: sans-serif; max-width: 860px; color:var(--body-text-color,#111827);">
@@ -305,9 +348,7 @@ def format_report(report: dict) -> str:
 
         {executive_summary}
 
-        {ocr_visibility}
-
-        {explanation_html}
+        {critical_banners}
 
         {dimension_table}
 
@@ -321,6 +362,11 @@ def format_report(report: dict) -> str:
 
         <h3>Recommended Actions</h3>
         <ul>{actions_html}</ul>
+
+        <details style="margin-top:14px;">
+            <summary style="cursor:pointer;color:var(--body-text-color-subdued,#64748b);font-size:0.95em;font-weight:600;">OCR visibility (expand)</summary>
+            {ocr_visibility}
+        </details>
 
         {audit_trace_html}
 
@@ -341,7 +387,11 @@ demo = gr.Interface(
     ],
     outputs=gr.HTML(label="ARGUS Risk Report"),
     title="ARGUS - Agentic KYC Risk Assessment",
-    description="Powered by Azure AI Foundry · Foundry IQ · A2A · GPT-4o | Synthetic core data with public-source adverse-media demos.",
+    description=(
+        branding_header
+        + "Powered by Azure AI Foundry · Foundry IQ · A2A · GPT-4o | "
+        + "Synthetic core data with public-source adverse-media demos."
+    ),
     theme=gr.themes.Soft(),
     flagging_mode="never",
     examples=[

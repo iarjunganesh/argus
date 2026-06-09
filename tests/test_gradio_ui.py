@@ -27,7 +27,7 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
     assert "Risk Score" in html
     assert "Confidence" in html and "91%" in html
     assert "Enhanced Due Diligence" in html
-    assert "Primary Drivers" in html
+    assert "Why This Risk Rating?" in html
     assert "Adverse Media" in html
     assert "OCR Visibility" in html
     assert "Upload" in html and "Extract" in html and "Investigate" in html

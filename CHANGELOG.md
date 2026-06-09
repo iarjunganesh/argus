@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.3.0] - 2026-06-09
+
+### Changed
+
+- Added deterministic demo-profile shortcut in orchestrator fan-out path so known demo entities skip live parallel calls while keeping compliance fan-in live.
+- Reworked Gradio results flow for recording clarity: decision-first layout, explicit "Why This Risk Rating?", agent metrics banner, Foundry IQ grounded badge, visible dimensions/timeline/findings/triggers/actions, and collapsible OCR/JSON detail.
+- Updated final submission runbook and narration script to use runtime-safe wording for variable risk tiers and conditional Foundry IQ availability.
+- Integrated canonical logo asset (`assets/argus.svg`) across README, docs index, and demo guidance references.
+
+### Documentation
+
+- Promoted `submission/ARGUS_FINAL_DEMO_RUNBOOK.md` and `submission/ARGUS_FINAL_AUDIO_SCRIPT.md` as canonical freeze artifacts.
+- Updated docs index to remove stale references to removed pre-submission and voiceover files.
+
+### Tests
+
+- Added orchestrator regression coverage for demo-profile shortcut behavior.
+- Added branch tests for jurisdiction mapping and Azure OCR success-path mocking.
+- Updated Gradio UI assertion from "Primary Drivers" to "Why This Risk Rating?".
+
 ## [v1.2.0] - 2026-06-08
 
 ### Changed

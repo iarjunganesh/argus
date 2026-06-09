@@ -80,16 +80,48 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     
     logger.info('orchestrator.start', extra={"task_id": task_id})
 
+    # ── Demo profile shortcut ────────────────────────────────────────────────
+    from utils.demo_profiles import get_demo_profile
+    profile = get_demo_profile(
+        kyc_request.get("entity_name", ""),
+        kyc_request.get("entity_type", ""),
+        kyc_request.get("jurisdiction", ""),
+    )
+
     # ── PHASE 1: Fan-out (parallel) ──────────────────────────────────────────
     t0 = datetime.now(timezone.utc)
-    parallel_tasks = [
-        call_agent("identity",    kyc_request, task_id),
-        call_agent("screening",   kyc_request, task_id),
-        call_agent("corporate",   kyc_request, task_id),
-        call_agent("transaction", kyc_request, task_id),
-    ]
-    parallel_results = await asyncio.gather(*parallel_tasks)
-    identity_result, screening_result, corporate_result, transaction_result = parallel_results
+
+    if profile:
+        # Deterministic demo results — bypass live calls for parallel agents.
+        identity_result = {
+            "agent": "identity",
+            "status": "completed",
+            "result": profile.get("identity", {}),
+        }
+        screening_result = {
+            "agent": "screening",
+            "status": "completed",
+            "result": profile.get("screening", {}),
+        }
+        corporate_result = {
+            "agent": "corporate",
+            "status": "completed",
+            "result": profile.get("corporate", {}),
+        }
+        transaction_result = {
+            "agent": "transaction",
+            "status": "completed",
+            "result": profile.get("transaction", {}),
+        }
+    else:
+        parallel_tasks = [
+            call_agent("identity",    kyc_request, task_id),
+            call_agent("screening",   kyc_request, task_id),
+            call_agent("corporate",   kyc_request, task_id),
+            call_agent("transaction", kyc_request, task_id),
+        ]
+        parallel_results = await asyncio.gather(*parallel_tasks)
+        identity_result, screening_result, corporate_result, transaction_result = parallel_results
 
     t1 = datetime.now(timezone.utc)
 

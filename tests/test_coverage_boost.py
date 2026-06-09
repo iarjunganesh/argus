@@ -38,6 +38,37 @@ async def test_run_kyc_assessment_with_mocked_call_agent(monkeypatch):
     assert report["audit_trace"]["agents_invoked"] == ["identity", "screening", "corporate", "transaction", "compliance"]
 
 
+@pytest.mark.asyncio
+async def test_run_kyc_assessment_uses_demo_profile_shortcut(monkeypatch):
+    import utils.demo_profiles as demo_profiles
+
+    calls = []
+
+    async def fake_call(agent_name, payload, task_id):
+        calls.append(agent_name)
+        return {"agent": agent_name, "status": "ok", "result": {"foo": agent_name}}
+
+    monkeypatch.setattr(orchestrator, "call_agent", fake_call)
+
+    # Force deterministic shortcut branch.
+    monkeypatch.setattr(
+        demo_profiles,
+        "get_demo_profile",
+        lambda name, etype, j: {
+            "identity": {"identity_score": 95},
+            "screening": {"screening_risk_score": 5},
+            "corporate": {"corporate_score": 5},
+            "transaction": {"transaction_risk_score": 5},
+        },
+    )
+
+    kyc = {"entity_name": "DemoCo", "entity_type": "corporate", "jurisdiction": "US"}
+    report = await orchestrator.run_kyc_assessment(kyc)
+
+    assert report["entity"]["name"] == "DemoCo"
+    assert calls == ["compliance"]
+
+
 def test_regulations_helpers_and_normalize():
     import agents.compliance.tools.regulations_rag as rr
 

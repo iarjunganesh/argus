@@ -2,6 +2,8 @@
 
 Quick steps to reproduce the demo used for the Microsoft Agents League submission.
 
+Brand asset for slides and README: `assets/argus.svg`.
+
 1. Provision Azure resources (already done in this workspace using infra/main.bicep)
 
 2. Populate synthetic data and upload to Cosmos DB (already executed):
@@ -84,3 +86,4 @@ Quick steps to reproduce the demo used for the Microsoft Agents League submissio
 Notes:
 - Structured JSON logs are emitted to stdout by all agents and the API gateway (see `utils/structured_logger.py`).
 - If agents cannot reach Azure (RBAC issues), the code falls back to local mocks and will still run the orchestrator for demo purposes.
+- Use `assets/argus.svg` for both opening and closing slide branding.
