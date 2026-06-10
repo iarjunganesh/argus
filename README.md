@@ -13,7 +13,9 @@
 [![Foundry IQ Badge](https://img.shields.io/badge/Foundry%20IQ%20Badge-Issued-success)](https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/)
 [![A2A](https://img.shields.io/badge/Pattern-Agent--to--Agent-00B4D8)](https://aka.ms/a2a)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://python.org)
-[![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
+[![Agents Coverage](https://img.shields.io/badge/agents%20coverage-92%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
+[![Full Repo Coverage](https://img.shields.io/badge/full%20repo%20coverage-89%25-brightgreen)](https://github.com/iarjunganesh/argus/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
@@ -220,6 +222,10 @@ Failed batch items are written to `data/reports_batch_errors.jsonl` while succes
 
 Logs are emitted in JSON format by all services (see utils/structured_logger.py).
 
+Coverage note: CI enforces coverage on the `agents/` package (`pytest --cov=agents`), which is currently 92%. Full-repository coverage (`pytest --cov=.`) is currently 89% with `.coveragerc` omitting non-runtime indexing/synthetic generation scripts.
+
+Observability hooks ready: Azure Monitor integration planned post hackathon.
+
 ---
 
 ## Demo
@@ -262,10 +268,14 @@ Each ARGUS report surfaces:
 .\scripts\end_demo.ps1
 ```
 
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
 For submission runbook and narration assets, use:
 
-- docs/ARGUS_PreSubmission_Steps.md
-- docs/ARGUS_Demo_VoiceOver.txt
+- submission/ARGUS_FINAL_DEMO_RUNBOOK.md
+- submission/ARGUS_FINAL_AUDIO_SCRIPT.md
 
 ---
 

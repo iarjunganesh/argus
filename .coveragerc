@@ -1,0 +1,4 @@
+[run]
+omit =
+    foundry_iq/*.py
+    data/synthetic/generate_ocr_documents.py

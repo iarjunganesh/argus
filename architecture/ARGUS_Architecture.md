@@ -48,7 +48,7 @@ Core entity, transaction, and sanctions data are synthetic. The adverse-media kn
 | Framework | Semantic Kernel (A2A) + Azure AI Foundry SDK |
 | Language | Python |
 | Data | Synthetic customer and transaction data, with public-source adverse-media summaries for screening citations (no real PII) |
-| Test Coverage | 90% (pytest + pytest-cov, CI on GitHub Actions) |
+| Test Coverage | 92% agents CI / 89% full repo (pytest + pytest-cov, CI on GitHub Actions; `.coveragerc` omits non-runtime scripts) |
 | UI | Gradio 4.x — ARGUS DECISION card, confidence score, OCR visibility strip, dimension scores |
 
 ---

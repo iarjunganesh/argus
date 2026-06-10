@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.4.0] - 2026-06-10
+
+### Changed
+
+- Added MIT license and surfaced it in the root README.
+- Clarified coverage reporting by separating agents-only CI coverage from full-repository coverage.
+- Added a lightweight observability placeholder note and README stub for planned Azure Monitor integration.
+- Refreshed submission references in the root README to point at the final submission markdown files.
+
+### Documentation
+
+- Added a full-repo coverage badge alongside the agents-only badge for judge transparency.
+- Updated the root README submission pointers to the canonical files in `submission/`.
+
 ## [v1.3.0] - 2026-06-09
 
 ### Changed

@@ -36,9 +36,7 @@ As the investigation progresses, ARGUS performs identity verification, screening
 
 Findings from specialist agents are continuously aggregated into a unified compliance assessment.
 
-ARGUS has completed the investigation and assigned the risk rating shown on screen.
-
-Let's examine why.
+ARGUS has completed the investigation and produced a risk assessment. Let's examine the results and understand the factors behind this rating.
 
 The Executive Decision summarizes the overall assessment, confidence score, and recommended action.
 
@@ -56,9 +54,7 @@ This provides a structured view of where risk originates and helps analysts focu
 
 The investigation timeline provides a complete audit trail showing how specialist agents collaborated throughout the assessment.
 
-Every recommendation is supported by evidence, key findings, regulatory triggers, and available regulatory grounding sources.
-
-When Foundry IQ citations are available, they are surfaced directly within the investigation report.
+Every recommendation is supported by evidence, key findings, regulatory triggers, and available regulatory grounding sources. When Foundry IQ citations are available, they are surfaced directly within the investigation report.
 
 This enables compliance analysts to understand, validate, and defend every recommendation produced by the system.
 
@@ -66,6 +62,6 @@ Rather than acting as a black-box AI, ARGUS provides transparent and traceable r
 
 ARGUS demonstrates how Microsoft Foundry-powered reasoning agents can automate compliance investigations through orchestration, multi-step reasoning, explainability, regulatory grounding, evidence-based decision making, and auditability.
 
-By combining specialized agents, regulatory intelligence, and transparent risk assessment, ARGUS transforms a traditionally manual compliance process into a workflow completed in seconds.
+By combining specialized agents, regulatory intelligence, transparent reasoning, and explainable risk assessment, ARGUS transforms a traditionally manual compliance process into a workflow completed in seconds.
 
 Thank you for watching.
