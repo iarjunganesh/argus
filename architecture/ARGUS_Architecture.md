@@ -797,7 +797,7 @@ Official requirements with ARGUS status:
 |---|---|---|
 | ✅ Public GitHub repository | Source code, public README | ⬜ Create repo |
 | ✅ Project description | Features, problem, tech stack | ⬜ Write README |
-| ✅ Demo video ≤5 min | YouTube or Vimeo, unlisted OK | ⬜ Record on Day 9 |
+| ✅ Demo video ≤5 min | YouTube or Vimeo, unlisted OK | ✅ [https://youtu.be/yaTNCgCwX4s](https://youtu.be/yaTNCgCwX4s) |
 | ✅ Architecture diagram | Visual system diagram | ✅ This doc |
 | ✅ Foundry IQ integration | At least one IQ layer used | ✅ 3 KBs |
 | ✅ No confidential information | Synthetic data only | ✅ Enforced |

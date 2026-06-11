@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.5.0] - 2026-06-11
+
+### Changed
+
+- Published demo video to YouTube: https://youtu.be/yaTNCgCwX4s
+- Updated root README `Demo Video` link from TODO placeholder to live YouTube URL.
+- Updated architecture submission checklist to mark demo video as completed with link.
+
 ## [v1.4.0] - 2026-06-10
 
 ### Changed

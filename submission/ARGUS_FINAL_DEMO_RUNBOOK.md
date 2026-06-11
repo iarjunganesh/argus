@@ -6,6 +6,8 @@
 
 ### Final Submission Demo Runbook (Freeze Version)
 
+**Published Demo Video:** https://youtu.be/yaTNCgCwX4s
+
 Target Runtime: 4:20–4:50
 
 Maximum Runtime: 5:00

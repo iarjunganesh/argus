@@ -230,7 +230,7 @@ Observability hooks ready: Azure Monitor integration planned post hackathon.
 
 ## Demo
 
-📹 [Demo Video](https://youtube.com/TODO) *(updated on submission day)*
+📹 [Demo Video](https://youtu.be/yaTNCgCwX4s)
 
 ### Demo Scenarios
 
