@@ -1,0 +1,72 @@
+version: "3.9"
+
+# ARGUS Community Edition — one command, no Azure subscription required.
+#
+# Services:
+#   argus-api         FastAPI backend (all 5 agents run in-process for simplicity)
+#   argus-ui          Gradio demo UI
+#   qdrant            Local vector DB replacing Azure AI Search
+#
+# Usage:
+#   docker compose -f community/docker-compose.yml up
+#   Then open: http://localhost:7860
+
+services:
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  argus-api:
+    build:
+      context: ..
+      dockerfile: community/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ARGUS_EDITION=community
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=gpt-4o-mini
+      - VECTOR_BACKEND=qdrant
+      - QDRANT_URL=http://qdrant:6333
+      - ENTITY_STORE=sqlite
+      - SQLITE_PATH=/data/community.db
+      - OCR_BACKEND=tesseract
+      - USE_OPEN_CORPUS=true
+    volumes:
+      - sqlite_data:/data
+      - ../community/knowledge_base:/app/community/knowledge_base:ro
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  argus-ui:
+    build:
+      context: ..
+      dockerfile: community/Dockerfile
+    command: python ui/gradio_app.py
+    ports:
+      - "7860:7860"
+    environment:
+      - API_BASE=http://argus-api:8000
+      - ARGUS_EDITION=community
+    depends_on:
+      argus-api:
+        condition: service_healthy
+
+volumes:
+  qdrant_data:
+  sqlite_data:
