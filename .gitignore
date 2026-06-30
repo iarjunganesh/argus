@@ -68,3 +68,6 @@ data/*.jsonl
 # Gradio local artifacts
 .gradio/
 
+
+# Local scratch (winner email, draft posts) — never commit
+.tmp/
