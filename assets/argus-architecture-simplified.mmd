@@ -1,0 +1,15 @@
+graph TD
+    Human([Person or Institution]) -->|KYC Request| ORC[🎯 Orchestrator Agent]
+    ORC -->|Explainable Risk Report| Human
+
+    ORC -->|A2A| IDA[🪪 Identity Agent]
+    ORC -->|A2A| SCA[🔍 Screening Agent]
+    ORC -->|A2A| CIA[🏢 Corporate Intelligence]
+    ORC -->|A2A| CRA[⚖️ Compliance and Risk]
+    ORC -->|A2A| TIA[💳 Transaction Intelligence]
+
+    IDA -.-> ORC
+    SCA -.-> ORC
+    CIA -.-> ORC
+    CRA -.-> ORC
+    TIA -.-> ORC

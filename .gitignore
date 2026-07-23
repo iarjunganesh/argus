@@ -44,6 +44,10 @@ azd-env/
 .DS_Store
 Thumbs.db
 
+# Node (build tooling for diagram/GIF scripts)
+node_modules/
+package-lock.json
+
 # Test / coverage
 .pytest_cache/
 .coverage

@@ -1,0 +1,28 @@
+graph TD
+    Human([Person or Institution]) -->|KYC Request| ORC
+
+    ORC[🎯 Orchestrator Agent<br/>Task Decomposition &<br/>Result Synthesis]
+
+    ORC -->|A2A call| IDA[🪪 Identity Agent]
+    ORC -->|A2A call| SCA[🔍 Screening Agent]
+    ORC -->|A2A call| CIA[🏢 Corporate Intelligence Agent]
+    ORC -->|A2A call| TIA[💳 Transaction Intelligence Agent]
+
+    IDA -->|identity_result| ORC
+    SCA -->|screening_result| ORC
+    CIA -->|corporate_result| ORC
+    TIA -->|transaction_result| ORC
+
+    ORC -->|fan-in: all results| CRA[⚖️ Compliance & Risk Agent]
+    CRA -->|compliance_result| ORC
+    ORC -->|Explainable Risk Report| Human
+
+    IDA --- T1[customer_lookup<br/>ocr_processor<br/>identity_validator]
+    SCA --- T2[sanctions_checker 🧠<br/>adverse_media_scanner 🧠<br/>pep_checker]
+    CIA --- T3[ubo_resolver<br/>registry_lookup<br/>jurisdiction_mapper]
+    CRA --- T4[regulations_rag 🧠<br/>risk_scorer<br/>gap_analyzer]
+    TIA --- T5[transaction_monitor<br/>pattern_detector<br/>typology_matcher]
+
+    FIQ[🧠 Foundry IQ<br/>KB-Regulations<br/>KB-Sanctions<br/>KB-AdverseMedia]
+    T2 -->|cited query| FIQ
+    T4 -->|cited query| FIQ

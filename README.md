@@ -9,41 +9,33 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iarjunganesh/argus"><img alt="Hack for Good Winner" src="https://img.shields.io/badge/🏆_Hack_for_Good-Winner_2026-gold?style=for-the-badge"/></a>
+  <a href="https://techcommunity.microsoft.com/blog/educatordeveloperblog/%F0%9F%8F%86-agents-league-celebrating-the-builders-who-made-agents-battle-for-glory/4538007"><img alt="Microsoft Agents League — AI Skills Fest 2026 | Hack for Good winner (1 of 3)" src="https://img.shields.io/badge/🏆_Microsoft_Agents_League_—_AI_Skills_Fest_2026-Hack_for_Good_winner_(1_of_3)-gold?style=for-the-badge"/></a>
 </p>
 
 <p align="center">
-  <em>Microsoft Agents League — AI Skills Fest 2026 · Hack for Good winner (1 of 3).</em>
+  <a href="https://globalai.community/badges/8261feac-a6a6-4ee9-bc77-4ebecbbf2ce8"><img alt="Agents League — Reasoning Agents badge" src="https://globalai.community/img/badge/shared/e7860f511b05fc9a1a85b9335618871286c3279b000350d76b049f6049f2aa51.png?h=500" height="120"/></a>
+  &nbsp;&nbsp;
+  <a href="https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76"><img alt="The Microsoft IQ Series: Foundry IQ badge" src="https://globalai.community/img/badge/shared/f1de85c1359e1380dcabb9901d210a3d00645ec975a640338021f91792d26ffd.png?h=500" height="120"/></a>
 </p>
 
-<!-- Status -->
-<p align="center">
-  <a href="https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml"><img src="https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml/badge.svg?branch=main" alt="Tests"/></a>
-  <a href="https://codecov.io/gh/iarjunganesh/argus"><img src="https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg" alt="Coverage"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
-  <a href="https://youtu.be/yaTNCgCwX4s"><img src="https://img.shields.io/badge/▶_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white" alt="Watch the demo"/></a>
-</p>
+<!-- Row 1 — status -->
+[![Tests](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml)
+[![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)
+[![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/argus/tags)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Watch demo](https://img.shields.io/badge/▶_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
 
-<!-- Tech stack · runtime & orchestration -->
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11"/>
-  <a href="https://ai.azure.com"><img src="https://img.shields.io/badge/Azure_AI_Foundry-Agent_Service-0078D4?logo=microsoftazure&logoColor=white" alt="Azure AI Foundry"/></a>
-  <a href="https://learn.microsoft.com/semantic-kernel/"><img src="https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white" alt="Semantic Kernel"/></a>
-  <a href="https://aka.ms/a2a"><img src="https://img.shields.io/badge/Protocol-A2A-00B4D8?logo=protocolsdotio&logoColor=white" alt="A2A protocol"/></a>
-</p>
+<!-- Row 2 — Azure platform -->
+[![Azure AI Foundry](https://img.shields.io/badge/Azure_AI_Foundry-Agent_Service-0078D4?logo=microsoftazure&logoColor=white)](https://ai.azure.com)
+[![Azure OpenAI GPT-4o](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
+[![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-Vector-0078D4?logo=microsoftazure&logoColor=white)](https://learn.microsoft.com/azure/search/)
+[![Cosmos DB](https://img.shields.io/badge/Cosmos_DB-NoSQL-0078D4?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cosmos-db)
 
-<!-- Tech stack · intelligence -->
-<p align="center">
-  <img src="https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white" alt="Azure OpenAI GPT-4o"/>
-  <a href="https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76/"><img src="https://img.shields.io/badge/Foundry_IQ-Issued-success?logo=microsoft&logoColor=white" alt="Foundry IQ Badge"/></a>
-</p>
-
-<!-- Tech stack · data & UI -->
-<p align="center">
-  <img src="https://img.shields.io/badge/Azure_AI_Search-Vector-0078D4?logo=microsoftazure&logoColor=white" alt="Azure AI Search"/>
-  <img src="https://img.shields.io/badge/Cosmos_DB-NoSQL-0078D4?logo=microsoftazure&logoColor=white" alt="Azure Cosmos DB"/>
-  <img src="https://img.shields.io/badge/UI-Gradio-F97316?logo=gradio&logoColor=white" alt="Gradio"/>
-</p>
+<!-- Row 3 — framework & runtime -->
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/semantic-kernel/)
+[![A2A protocol](https://img.shields.io/badge/Protocol-A2A-00B4D8?logo=protocolsdotio&logoColor=white)](https://aka.ms/a2a)
+[![Gradio](https://img.shields.io/badge/UI-Gradio-F97316?logo=gradio&logoColor=white)](https://gradio.app/)
 
 ---
 
