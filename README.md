@@ -22,7 +22,7 @@
 [![Tests](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml)
 [![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)
 [![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/argus/tags)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Watch demo](https://img.shields.io/badge/▶_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
 
 <!-- Row 2 — Azure platform -->
@@ -326,7 +326,9 @@ The most needed contributions right now:
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Copyright (c) 2026 iarjunganesh.
+
+Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 For the submission artifacts, see:
 - [`submission/ARGUS_FINAL_DEMO_RUNBOOK.md`](submission/ARGUS_FINAL_DEMO_RUNBOOK.md)

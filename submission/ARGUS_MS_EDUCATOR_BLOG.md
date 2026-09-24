@@ -59,7 +59,7 @@ Same underlying data. Entirely different outcome for the person on the receiving
 
 ## Try it yourself
 
-ARGUS is open source under MIT. If you're teaching agentic AI, Azure AI Foundry, or Semantic Kernel, the repo is built to be a working example of multi-agent orchestration with A2A and grounded retrieval via Foundry IQ:
+ARGUS is open source under the GNU General Public License v3.0. If you're teaching agentic AI, Azure AI Foundry, or Semantic Kernel, the repo is built to be a working example of multi-agent orchestration with A2A and grounded retrieval via Foundry IQ:
 
 ```bash
 git clone https://github.com/iarjunganesh/argus.git
