@@ -20,12 +20,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
   code review rather than from the old README.
 - **A CI quality gate** (`.github/workflows/ci.yml`) that fails a pull request on: ruff lint or
-  format drift, mypy errors, a failing test or coverage below the measured floor (74%), a known
+  format drift, mypy errors, a failing test or line/branch coverage below 100%, a known
   vulnerability in the locked dependency graph (pip-audit), a committed secret (gitleaks), or
   documentation drift (markdownlint plus `scripts/check_docs.py`: broken links, unfinished
   markers, Python version disagreement, unlisted docs, tracked local files).
-- **Codecov configuration** (`codecov.yml`): the project status fails on a coverage drop of more
-  than 0.5 points; the patch status is informational until coverage reaches 100%.
+- **100% line and branch coverage**, enforced (`fail_under = 100`) and mirrored by Codecov
+  (`codecov.yml`: project and patch targets 100%). 75 new tests cover every agent's decision
+  branches, the API gateway, the client factories, the UI's submit/poll/fetch paths and the
+  Community Edition presets. The only exclusion is the UI's `__main__` launch guard. Tests run
+  hermetically: `tests/conftest.py` ignores `.env` and removes Azure credentials from the
+  environment, so local and CI runs take the same code paths.
 - **Reproducible environments:** `pyproject.toml` with dependency groups, `uv.lock` and
   `.python-version` (3.14). CI, local runs and the Windows demo script use the same lock.
 
@@ -48,11 +52,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **Structured logs now include their context fields.** `JsonFormatter` looked for a single
+  `record.extra` attribute that `logging` never sets, so every `extra=` field (task IDs, report
+  IDs, entity names) was silently dropped. Checked: `tests/test_structured_logger.py`.
 - **The test suite runs from the repository root.** The empty root `__init__.py` made pytest
   treat the parent directory as the import root. Checked: 50 passed, 1 xfailed.
 
 ### Removed
 
+- **Unreachable code:** a `try/except` around plain dictionary reads in `risk_scorer`, and an
+  empty-JSON guard in the UI that `json.dumps` can never trigger.
 - **Unused dependencies:** semantic-kernel, pandas, numpy, networkx, tenacity, rich,
   asyncio-throttle, opentelemetry-sdk, azure-monitor-opentelemetry, azure-ai-inference,
   azure-ai-documentintelligence, python-multipart, pytest-httpx, requests. Checked: nothing imports

@@ -31,16 +31,13 @@ def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: d
     # Heuristic boost for adverse-only public enforcement cases (e.g., Wirecard-style demos).
     # Keep this narrow so heavily signaled cases (sanctions/PEP) are not over-amplified into
     # CRITICAL solely because adverse media is also present.
-    try:
-        if (
-            screening.get("adverse_media_hit")
-            and screening.get("screening_risk_score", 0) >= 70
-            and not screening.get("sanctions_hit")
-            and not screening.get("pep_hit")
-        ):
-            overall += 12.0
-    except Exception:
-        pass
+    if (
+        screening.get("adverse_media_hit")
+        and screening.get("screening_risk_score", 0) >= 70
+        and not screening.get("sanctions_hit")
+        and not screening.get("pep_hit")
+    ):
+        overall += 12.0
 
     def tier(score):
         if score >= 75:

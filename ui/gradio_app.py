@@ -26,14 +26,17 @@ def _logo_data_uri() -> str:
         return ""
 
 
-logo_uri = _logo_data_uri()
-branding_header = ""
-if logo_uri:
-    branding_header = (
+def _branding_header(logo_uri: str) -> str:
+    if not logo_uri:
+        return ""
+    return (
         f"<div style='text-align:center;margin-bottom:8px;'>"
         f"<img src='{logo_uri}' alt='ARGUS logo' style='max-width:280px;width:100%;height:auto;'/>"
         f"</div>"
     )
+
+
+branding_header = _branding_header(_logo_data_uri())
 
 
 def format_agent_activity(report: dict) -> str:
@@ -310,8 +313,6 @@ def format_report(report: dict) -> str:
     </div>"""
 
     raw_json = json.dumps(report or {}, indent=2, ensure_ascii=False, default=str)
-    if not raw_json.strip():
-        raw_json = "{}"
     pretty_json = html.escape(raw_json)
 
     agent_activity = format_agent_activity(report)

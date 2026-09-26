@@ -1,21 +1,18 @@
 # Codecov reads the report uploaded by the "Tests and coverage" CI job.
 # The enforced gate is the pytest-cov floor in pyproject.toml ([tool.coverage.report] fail_under),
-# which fails CI on its own. These statuses report the same numbers on pull requests.
+# which fails CI on its own. These statuses report the same bar on pull requests.
 coverage:
   precision: 2
   round: down
   status:
     project:
       default:
-        # Fail if total coverage drops by more than 0.5 percentage points against the base.
-        target: auto
-        threshold: 0.5%
+        # Every measured line and branch is covered; any drop fails.
+        target: 100%
     patch:
       default:
-        # Informational until the test/coverage-100 branch raises the floor to 100%. Until then,
-        # most "changed" lines in cleanup PRs are reformatted legacy code whose missing tests
-        # predate the change; the project status above still blocks regressions.
-        informational: true
+        # Every changed line must be covered.
+        target: 100%
 
 comment:
   layout: "diff, files"

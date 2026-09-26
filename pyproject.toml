@@ -77,10 +77,13 @@ source = ["agents", "api", "utils", "accessibility", "community", "ui", "config"
 branch = true
 
 [tool.coverage.report]
-# Set to the measured value (74.23% on 2026-09-26, hermetic run). Raise it as coverage rises; never lower it silently.
-fail_under = 74
+# Every measured line and branch is covered. New code arrives with its tests; a line that truly
+# cannot be tested is excluded explicitly (exclude_also below), never by lowering this floor.
+fail_under = 100
 show_missing = true
 skip_covered = true
+# Script entry points start servers; they are exercised by running the app, not by tests.
+exclude_also = ['if __name__ == "__main__":']
 
 [tool.mypy]
 python_version = "3.14"
