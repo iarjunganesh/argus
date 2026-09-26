@@ -15,6 +15,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Release automation validates the tagged commit before publication.** The workflow reuses
+  the full CI gate and requires a matching package version and changelog section. Local
+  regression tests cover missing, duplicate and mismatched release metadata and prereleases.
+  The rerun of CI receives only the Codecov token, the release is published with the runner's
+  own `gh` CLI (no third-party action holds write access), and no CI checkout keeps git
+  credentials on disk. Checked with actionlint and zizmor.
+- **Post-release dependency reviews record failures as well as upgrades.** The refresh prepares
+  a PR with the version inventory and gate results, and keeps interpreter upgrades separate.
+  Offline fixture tests check version drift, wheel compatibility, action resolution and failed
+  refresh reporting. GitHub publication and automatic PR creation await the first approved tag.
 - **The standard GitHub community files:** `CONTRIBUTING.md`, `SECURITY.md` (private
   vulnerability reporting, which is enabled on the repository), `CODE_OF_CONDUCT.md`
   (Contributor Covenant 2.1), issue forms, a pull request template with the CI checklist,
@@ -94,6 +104,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **Risk and status badges now meet the normal-text AA contrast threshold.** Darker green,
+  amber and red tokens replace the failing palette; the UI uses the shared audited pairs
+  with explicit white text on colored backgrounds. The formerly expected failure now passes,
+  and rendered-HTML checks cover each risk tier and status, including unknown values. This
+  verifies badge contrast, not full UI accessibility.
 - **Structured logs now include their context fields.** `JsonFormatter` looked for a single
   `record.extra` attribute that `logging` never sets, so every `extra=` field (task IDs, report
   IDs, entity names) was silently dropped. Checked: `tests/test_structured_logger.py`.

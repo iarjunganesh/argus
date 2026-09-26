@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    # The post-release workflow owns version updates. Security PRs remain enabled.
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    # Add npm when web/package.json exists in Phase 5.

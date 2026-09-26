@@ -17,11 +17,12 @@ class WCAGLevel(Enum):
     AAA = 7.0  # Enhanced
 
 
-# Risk tier palette — these are what ARGUS renders for every report.
+# Audited color pairs. The UI reverses the risk pairs for white-on-color badges;
+# contrast is symmetric, so the same AA check covers both orientations.
 ARGUS_PALETTE = {
-    "risk_low": ("#2ecc71", "#ffffff"),
-    "risk_medium": ("#f39c12", "#ffffff"),
-    "risk_high": ("#e74c3c", "#ffffff"),
+    "risk_low": ("#1e8449", "#ffffff"),
+    "risk_medium": ("#a16207", "#ffffff"),
+    "risk_high": ("#c0392b", "#ffffff"),
     "risk_critical": ("#8e1a0e", "#ffffff"),
     "accent_blue": ("#1d4ed8", "#ffffff"),
     "accent_teal": ("#0f766e", "#ffffff"),

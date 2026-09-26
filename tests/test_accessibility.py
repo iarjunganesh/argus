@@ -2,8 +2,6 @@
 WCAG 2.1 AA compliance tests for the ARGUS palette.
 
 These run in CI to catch any color changes that break contrast requirements.
-Currently documents what passes and what needs to be fixed in v2 — failing
-assertions are marked xfail until the palette is updated.
 """
 
 import pytest
@@ -36,9 +34,8 @@ def test_audit_palette_returns_all_tokens():
         assert result["ratio"] > 0
 
 
-@pytest.mark.xfail(reason="v2 palette fix pending — current green/amber/red fail AA on white")
 def test_argus_risk_palette_aa_compliance():
-    """Full palette must pass WCAG AA. Marked xfail until v2 colors land."""
+    """Every audited palette pair must meet the normal-text AA threshold."""
     results = audit_palette(ARGUS_PALETTE, level=WCAGLevel.AA)
     failures = {k: v for k, v in results.items() if not v["passes"]}
     assert not failures, "WCAG AA failures: " + ", ".join(
@@ -47,8 +44,8 @@ def test_argus_risk_palette_aa_compliance():
 
 
 def test_critical_color_passes_aaa():
-    # CRITICAL (#8e1a0e) is dark enough to pass AAA on white — verify it stays that way
-    ratio = contrast_ratio("#8e1a0e", "#ffffff")
+    # Verify the actual CRITICAL token, not a duplicate that could drift from the UI.
+    ratio = contrast_ratio(*ARGUS_PALETTE["risk_critical"])
     assert ratio >= WCAGLevel.AAA.value, (
         f"CRITICAL color {ratio:.2f}:1 no longer meets AAA — don't lighten it"
     )

@@ -8,6 +8,7 @@
       "Bash(uv run mypy:*)",
       "Bash(uv run pytest:*)",
       "Bash(uv run python scripts/ci/check_docs.py)",
+      "Bash(uv run python scripts/ci/check_versions.py --check)",
       "Bash(uv run python scripts/ci/render_assets.py --check)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
