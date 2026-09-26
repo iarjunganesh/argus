@@ -38,11 +38,13 @@ async def test_synthesise_report_handles_missing_and_present_fields():
         "result": {
             "risk_summary": {"tier": "HIGH"},
             "explanation": "Found risks",
-            "foundry_iq_queries": 2,
+            "explanation_source": "model",
+            "retrieval_queries": 2,
         },
+        "source": "computed",
     }
-    identity = {"status": "ok"}
-    screening = {"status": "ok", "result": {"foundry_iq_queries": 1}}
+    identity = {"status": "ok", "source": "fallback", "fallbacks": ["ocr_processor[0]"]}
+    screening = {"status": "ok", "source": "demo_profile", "result": {"retrieval_queries": 1}}
     corporate = {"status": "ok"}
     transaction = {"status": "ok"}
 
@@ -52,8 +54,13 @@ async def test_synthesise_report_handles_missing_and_present_fields():
     assert rpt["report_id"].startswith("argus-rpt-")
     assert rpt["entity"]["name"] == "Acme"
     assert rpt["risk_summary"]["tier"] == "HIGH"
-    # foundry_iq_queries aggregated
-    assert rpt["audit_trace"]["foundry_iq_queries"] == 3
+    assert rpt["explanation_source"] == "model"
+    trace = rpt["audit_trace"]
+    assert trace["retrieval_queries"] == 3
+    assert trace["data_backend"] == "local"
+    assert trace["agent_sources"]["identity"] == "fallback"
+    assert trace["agent_sources"]["screening"] == "demo_profile"
+    assert trace["fallbacks"] == {"identity": ["ocr_processor[0]"]}
 
 
 async def test_run_kyc_assessment_with_mocked_call_agent(monkeypatch):

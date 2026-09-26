@@ -1,4 +1,4 @@
-"""Corporate agent scoring and the Cosmos-backed ownership tools."""
+"""Corporate agent scoring and its registry and ownership tools."""
 
 from fastapi.testclient import TestClient
 
@@ -15,24 +15,6 @@ def _msg(payload: dict) -> corp.A2AMessage:
         task_id="t-corp",
         payload=payload,
     )
-
-
-class FakeContainer:
-    """Answers ownership queries from a {parent_name: [child nodes]} map."""
-
-    def __init__(self, graph: dict):
-        self.graph = graph
-
-    def query_items(self, query, parameters, enable_cross_partition_query):
-        return self.graph.get(parameters[0]["value"], [])
-
-
-class FakeDB:
-    def __init__(self, graph: dict):
-        self.container = FakeContainer(graph)
-
-    def get_container_client(self, name):
-        return self.container
 
 
 # ── agent ─────────────────────────────────────────────────────────────────────
@@ -74,29 +56,42 @@ def test_health():
 # ── tools ─────────────────────────────────────────────────────────────────────
 
 
-async def test_registry_lookup_reports_missing_entity(monkeypatch):
-    monkeypatch.setattr(reg, "get_cosmos_database", lambda: FakeDB({}))
-
-    assert await reg.registry_lookup("Unknown Ltd", None) == {"found": False, "record": None}
-
-
-async def test_ubo_resolver_recurses_through_corporate_owners(monkeypatch):
-    graph = {
-        "Parent": [
-            {"name": "Sub", "entity_type": "corporate", "ownership_percentage": 100},
-        ],
-        "Sub": [
-            {"name": "Owner", "entity_type": "individual", "ownership_percentage": 60},
-            {"name": "Minor", "entity_type": "individual", "ownership_percentage": 10},
-        ],
+async def test_registry_lookup_reports_missing_entity():
+    assert await reg.registry_lookup("Unknown Ltd", None) == {
+        "found": False,
+        "record": None,
+        "source": "local",
     }
-    monkeypatch.setattr(ubo, "get_cosmos_database", lambda: FakeDB(graph))
 
+
+async def test_ubo_resolver_recurses_through_corporate_owners():
+    result = await ubo.ubo_resolver("Harbor Test Holdings", {})
+
+    assert [u["name"] for u in result["ubos"]] == ["Pat Politico", "Ada Synthetic"]
+    assert result["ubos"][0]["depth"] == 2
+    assert [n["name"] for n in result["ownership_chain"]] == [
+        "Offshore Test SPC",
+        "Pat Politico",
+        "Ada Synthetic",
+        "Minor Holder",  # in the chain, but 5% is below the ownership threshold
+    ]
+    assert result["source"] == "local"
+
+
+async def test_ubo_resolver_marks_a_fallback_deeper_in_the_chain(use_plane):
+    from argus.data_plane import DataPlaneUnavailable
+
+    class Graph:
+        async def ownership_children(self, name):
+            if name == "Parent":
+                return [{"name": "Sub", "entity_type": "corporate", "ownership_percentage": 100}]
+            raise DataPlaneUnavailable("down")
+
+    use_plane(entities=Graph())
     result = await ubo.ubo_resolver("Parent", {})
 
-    assert [u["name"] for u in result["ubos"]] == ["Owner"]
-    assert result["ubos"][0]["depth"] == 2
-    assert [n["name"] for n in result["ownership_chain"]] == ["Sub", "Owner", "Minor"]
+    assert result["source"] == "fallback"
+    assert [n["name"] for n in result["ownership_chain"]] == ["Sub"]
 
 
 async def test_ubo_resolver_stops_at_max_depth():
@@ -184,36 +179,27 @@ def test_corporate_agent_skips_individual(a2a_request):
     assert resp.json()["result"].get("skipped") is True
 
 
-async def test_registry_and_ubo_read_cosmos_records(monkeypatch):
-    class FakeContainer:
-        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
-            return [
-                {
-                    "name": "Acme",
-                    "incorporated_date": "2020-01-01",
-                    "ownership_percentage": 60,
-                    "entity_type": "individual",
-                    "jurisdiction": "GB",
-                }
-            ]
+async def test_registry_lookup_reads_the_local_registry():
+    result = await reg.registry_lookup("Harbor Test Holdings", None)
 
-    class FakeDB:
-        def get_container_client(self, name):
-            return FakeContainer()
-
-    monkeypatch.setattr(reg, "get_cosmos_database", lambda: FakeDB())
-    monkeypatch.setattr(ubo, "get_cosmos_database", lambda: FakeDB())
-
-    assert (await reg.registry_lookup("Acme", None))["found"] is True
-    assert (await ubo.ubo_resolver("Acme", {}))["ubos"]
+    assert result["found"] is True and result["record"]["entity_id"] == "CORP-T0001"
 
 
-async def test_registry_and_ubo_fall_back_to_mock_without_cosmos(monkeypatch):
-    def no_db():
-        raise RuntimeError("no db")
+async def test_registry_and_ubo_fall_back_when_the_store_is_down(use_plane, unavailable):
+    use_plane(entities=unavailable)
 
-    monkeypatch.setattr(reg, "get_cosmos_database", no_db)
-    monkeypatch.setattr(ubo, "get_cosmos_database", no_db)
+    assert (await reg.registry_lookup("Acme", None))["source"] == "fallback"
+    assert (await ubo.ubo_resolver("Acme", {}))["source"] == "fallback"
 
-    assert (await reg.registry_lookup("Acme", None))["source"] == "mock"
-    assert (await ubo.ubo_resolver("Acme", {}))["source"] == "mock"
+
+async def test_agent_reports_its_provenance(use_plane, unavailable):
+    payload = {"entity_name": "Harbor Test Holdings", "entity_type": "corporate"}
+    response = await corp.invoke(_msg({**payload, "jurisdiction": "KY"}))
+    assert response["source"] == "computed"
+    assert response["result"]["risk_flags"] == [
+        "High-risk jurisdiction node: Offshore Test SPC (PA)"
+    ]
+
+    use_plane(entities=unavailable)
+    response = await corp.invoke(_msg({**payload, "jurisdiction": "KY"}))
+    assert response["fallbacks"] == ["registry_lookup", "ubo_resolver"]

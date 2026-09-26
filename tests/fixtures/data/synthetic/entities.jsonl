@@ -1,0 +1,3 @@
+{"entity_id": "IND-T0001", "entity_type": "individual", "name": "Ada Synthetic", "nationality": "NL", "date_of_birth": "1980-01-02", "is_pep": false}
+{"entity_id": "IND-T0002", "entity_type": "individual", "name": "Pat Politico", "nationality": "FR", "date_of_birth": "1965-05-06", "is_pep": true, "role": "Deputy minister", "period": "2015-2020"}
+{"entity_id": "CORP-T0001", "entity_type": "corporate", "name": "Harbor Test Holdings", "jurisdiction": "KY", "registration_number": "KY-T-1", "is_pep": false}

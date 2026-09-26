@@ -1,6 +1,6 @@
 """
 risk_scorer — Weighted risk scoring across all dimensions.
-Weights: Identity 25% | Screening 30% | Corporate 20% | Regulatory 15% | Transaction 10%
+Weights: Screening 30% | Regulatory 25% | Identity 20% | Corporate 15% | Transaction 10%
 """
 
 WEIGHTS = {

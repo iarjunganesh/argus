@@ -84,8 +84,8 @@ def test_report_renders_dimensions_timeline_and_citations():
         ],
         "audit_trace": {"identity_status": "completed", "screening_status": "error"},
         "regulatory_triggers": [
-            {"rule": "FATF Rec.12", "foundry_iq_citation": {"document": "fatf<.pdf"}},
-            {"rule": "No citation", "foundry_iq_citation": None},
+            {"rule": "FATF Rec.12", "citation": {"document": "fatf<.pdf"}},
+            {"rule": "No citation", "citation": None},
         ],
         "recommended_actions": ["Escalate"],
     }
@@ -99,6 +99,29 @@ def test_report_renders_dimensions_timeline_and_citations():
     assert "fatf&lt;.pdf" in page  # citation text is escaped
     assert "83%" in page  # confidence above 1 is already a percentage
     assert "<li>Escalate</li>" in page  # actions stand in for missing findings
+
+
+@pytest.mark.parametrize(
+    ("trace", "badge"),
+    [
+        (
+            {"retrieval_queries": 3, "data_backend": "azure"},
+            "✓ Knowledge bases answered 3 searches (azure data)",
+        ),
+        (
+            {"retrieval_queries": 1, "fallbacks": {"identity": ["ocr_processor[0]"]}},
+            "Fallback used: identity (ocr_processor[0])",
+        ),
+        ({"retrieval_queries": 0}, "No knowledge-base search answered"),
+    ],
+)
+def test_report_says_where_its_evidence_came_from(trace, badge):
+    trace = {**trace, "agent_sources": {"identity": "computed"}}
+    page = format_report({"audit_trace": trace, "explanation_source": "fallback"})
+
+    assert badge in page
+    assert "agent_sources: identity=computed" in page
+    assert "explanation_source: fallback" in page
 
 
 def test_summary_without_findings_or_actions():

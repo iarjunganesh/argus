@@ -1,85 +1,39 @@
-"""
-adverse_media_scanner — Foundry IQ powered tool
-Queries KB-AdverseMedia through the Foundry IQ knowledge base API for negative coverage.
-Returns cited, grounded results — no hallucination risk.
-"""
+"""adverse_media_scanner — searches the adverse media knowledge base for negative coverage."""
 
-import json
+from argus.agents.screening.tools.name_match import mentions
+from argus.data_plane import DataPlaneUnavailable, get_data_plane
+from argus.utils.structured_logger import get_logger
 
-from argus.config import FOUNDRY_IQ_KB_ADVERSEMEDIA, get_foundry_client
+logger = get_logger("tool.adverse_media_scanner")
 
-
-def _item_field(item, name: str, default=None):
-    if isinstance(item, dict):
-        return item.get(name, default)
-    return getattr(item, name, default)
-
-
-def _citation_field(citation, name: str, default=None):
-    if citation is None:
-        return default
-    if isinstance(citation, dict):
-        return citation.get(name, default)
-    return getattr(citation, name, default)
-
-
-def _normalize_relevance(score: float) -> float:
-    if score <= 1:
-        return round(max(score, 0.0), 3)
-    return round(min(score / 4.0, 1.0), 3)
-
-
-def _load_metadata(item) -> dict:
-    raw = _item_field(item, "metadata_json") or _item_field(item, "metadata") or "{}"
-    if isinstance(raw, dict):
-        return raw
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError, TypeError:
-        return {}
+MATCH_THRESHOLD = 0.2  # minimum retrieval score, 0 to 1, that counts as a match
 
 
 async def adverse_media_scanner(entity_name: str, aliases: list[str]) -> dict:
-    base_query = " ".join([entity_name, *aliases])
-    query = base_query + " fraud corruption scandal investigation bribery money laundering"
-
+    # The knowledge base holds only negative coverage, so the query is the names alone.
+    names = [entity_name, *aliases]
+    query = " ".join(names)
+    plane = get_data_plane()
     try:
-        client = get_foundry_client()
-        results = client.knowledge_bases.query(
-            knowledge_base_name=FOUNDRY_IQ_KB_ADVERSEMEDIA,
-            query=query,
-            top=5,
-            include_citations=True,
-        )
+        passages = await plane.retriever.search("adverse_media", query, top=5)
+    except DataPlaneUnavailable as exc:
+        logger.warning("tool.fallback", extra={"tool": "adverse_media_scanner", "reason": str(exc)})
+        return {"hit": False, "findings": [], "source": "fallback"}
 
-        findings = []
-        hit = False
-        for item in _item_field(results, "items", []):
-            score = float(_item_field(item, "relevance_score", 0) or 0)
-            threshold = 0.2
-            if score >= threshold:
-                hit = True
-                citation = _item_field(item, "citation")
-                meta = _load_metadata(item)
-                findings.append(
-                    {
-                        "type": "adverse_media",
-                        "match": _item_field(item, "content", "")[:250],
-                        "confidence": _normalize_relevance(score),
-                        "foundry_iq_citation": {
-                            "knowledge_base": FOUNDRY_IQ_KB_ADVERSEMEDIA,
-                            "document": _citation_field(citation, "document_title", "unknown"),
-                            "snippet_id": _citation_field(
-                                citation, "snippet_id", _item_field(item, "id")
-                            ),
-                            "published_at": meta.get("published_at"),
-                            "tags": meta.get("tags", []),
-                        },
-                    }
-                )
-
-        return {"hit": hit, "findings": findings, "source": "foundry_iq"}
-
-    except (ImportError, KeyError, RuntimeError, AttributeError, TypeError, ValueError) as e:
-        print(f"[adverse_media_scanner] Foundry IQ unavailable: {e}. Using mock.")
-        return {"hit": False, "findings": [], "source": "mock"}
+    findings = [
+        {
+            "type": "adverse_media",
+            "match": p.content[:250],
+            "confidence": p.score,
+            "citation": {
+                "knowledge_base": "adverse_media",
+                "document": p.source_doc,
+                "snippet_id": p.id,
+                "published_at": p.metadata.get("published_at"),
+                "tags": p.metadata.get("tags", []),
+            },
+        }
+        for p in passages
+        if p.score >= MATCH_THRESHOLD and mentions(f"{p.title} {p.content}", names)
+    ]
+    return {"hit": bool(findings), "findings": findings, "source": plane.backend}

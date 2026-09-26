@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from argus.agents.identity.tools.customer_lookup import customer_lookup
 from argus.agents.identity.tools.identity_validator import identity_validator
 from argus.agents.identity.tools.ocr_processor import ocr_processor
+from argus.agents.provenance import demo_provenance, provenance
 from argus.utils.demo_profiles import get_demo_profile
 from argus.utils.structured_logger import get_logger
 
@@ -40,6 +41,7 @@ async def invoke(message: A2AMessage):
             "agent": "identity",
             "task_id": message.task_id,
             "status": "completed",
+            **demo_provenance(),
             "result": demo_profile["identity"],
         }
 
@@ -67,6 +69,10 @@ async def invoke(message: A2AMessage):
         "agent": "identity",
         "task_id": message.task_id,
         "status": "completed",
+        **provenance(
+            customer_lookup=registry_result,
+            **{f"ocr_processor[{i}]": r for i, r in enumerate(ocr_results)},
+        ),
         "result": {
             "registry_match": registry_result.get("found", False),
             "ocr_documents": len(ocr_results),

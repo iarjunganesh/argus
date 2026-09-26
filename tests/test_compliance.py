@@ -29,6 +29,12 @@ def _msg(upstream: dict) -> comp.A2AMessage:
 class FakeLLM:
     """Stands in for AsyncOpenAI: records the prompt and returns fixed content."""
 
+    def model(self):
+        """This client as the configured chat model, for patching `get_chat_model`."""
+        from argus.models import ChatModel
+
+        return lambda: ChatModel("test", "test-model", self)
+
     def __init__(self, content: str | None = None, error: Exception | None = None):
         self.content = content
         self.error = error
@@ -139,9 +145,9 @@ def test_critical_score_adds_legal_hold():
 
 async def test_explanation_comes_from_the_model(monkeypatch):
     llm = FakeLLM(content="  Rated HIGH because of PEP exposure.  ")
-    monkeypatch.setattr(ed, "get_llm_client", lambda: llm)
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
 
-    text = await ed.explain_decision(
+    explanation = await ed.explain_decision(
         {"name": "Acme", "type": "corporate", "jurisdiction": "NL"},
         {"overall_risk_tier": "HIGH", "overall_risk_score": 60},
         {"identity": {"score": 10}},
@@ -149,17 +155,33 @@ async def test_explanation_comes_from_the_model(monkeypatch):
         [{"rule": "FATF Rec.12"}],
     )
 
-    assert text == "Rated HIGH because of PEP exposure."
+    assert explanation == {"text": "Rated HIGH because of PEP exposure.", "source": "model"}
     assert "FATF Rec.12" in llm.prompts[0]
     assert "- Identity: 10/100" in llm.prompts[0]
 
 
 async def test_explanation_falls_back_without_findings(monkeypatch):
-    monkeypatch.setattr(ed, "get_llm_client", lambda: FakeLLM(error=RuntimeError("down")))
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(error=RuntimeError("down")).model())
 
-    text = await ed.explain_decision({}, {"overall_risk_tier": "LOW"}, {}, [], [])
+    explanation = await ed.explain_decision({}, {"overall_risk_tier": "LOW"}, {}, [], [])
 
-    assert text.startswith("This case was assessed as LOW risk based on")
+    assert explanation["source"] == "fallback"
+    assert explanation["text"].startswith("This case was assessed as LOW risk based on")
+
+
+async def test_explanation_without_a_configured_model_is_labelled_fallback():
+    explanation = await ed.explain_decision({}, {"overall_risk_tier": "LOW"}, {}, ["X found"], [])
+
+    assert explanation["source"] == "fallback"
+    assert "primarily because x found" in explanation["text"]
+
+
+async def test_an_empty_model_reply_is_not_passed_off_as_an_explanation(monkeypatch):
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(content="   ").model())
+
+    explanation = await ed.explain_decision({}, {"overall_risk_tier": "LOW"}, {}, [], [])
+
+    assert explanation["source"] == "fallback"
 
 
 async def test_plain_language_sections_are_parsed(monkeypatch):
@@ -172,7 +194,7 @@ async def test_plain_language_sections_are_parsed(monkeypatch):
         "CONTACT_INFO: Call us and quote REF-1."
     )
     llm = FakeLLM(content=raw)
-    monkeypatch.setattr(ed, "get_llm_client", lambda: llm)
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
 
     result = await ed.explain_decision_plain_language(
         {"name": "Jane"}, {"overall_risk_tier": "MEDIUM"}, ["PEP identified"], "REF-1"
@@ -188,7 +210,7 @@ async def test_plain_language_sections_are_parsed(monkeypatch):
 
 
 async def test_plain_language_unlabelled_reply_uses_fallback(monkeypatch):
-    monkeypatch.setattr(ed, "get_llm_client", lambda: FakeLLM(content="No labels here."))
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(content="No labels here.").model())
 
     result = await ed.explain_decision_plain_language({}, {"overall_risk_tier": "ODD"}, [])
 
@@ -196,7 +218,7 @@ async def test_plain_language_unlabelled_reply_uses_fallback(monkeypatch):
 
 
 async def test_plain_language_model_failure_uses_fallback(monkeypatch):
-    monkeypatch.setattr(ed, "get_llm_client", lambda: FakeLLM(error=RuntimeError("down")))
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(error=RuntimeError("down")).model())
 
     result = await ed.explain_decision_plain_language({}, {}, [], "REF-9")
 
@@ -207,97 +229,56 @@ async def test_plain_language_model_failure_uses_fallback(monkeypatch):
 # ── regulations_rag ───────────────────────────────────────────────────────────
 
 
-def _foundry(results):
-    kb = SimpleNamespace(query=lambda **kwargs: results)
-    return lambda: SimpleNamespace(knowledge_bases=kb)
+async def test_regulations_cite_the_retrieved_passages(use_plane):
+    from argus.data_plane import Passage
+
+    class Retriever:
+        async def search(self, knowledge_base, query, top=5):
+            assert knowledge_base == "regulations" and top == 8
+            assert query == "Q jurisdiction NL corporate pep"
+            return [
+                Passage("fatf-rec-12", "FATF Recommendation 12", "Rule A", "fatf.pdf", 0.75),
+                Passage("weak", "Weak", "too weak", "x.pdf", 0.1),
+            ]
+
+    use_plane(retriever=Retriever())
+    res = await rr.regulations_rag("Q", "NL", "corporate", ["pep"])
+
+    assert res["source"] == "local"
+    assert res["regulations"] == [
+        {
+            "text": "Rule A",
+            "relevance": 0.75,
+            "citation": {
+                "knowledge_base": "regulations",
+                "document": "fatf.pdf",
+                "article": "FATF Recommendation 12",
+                "snippet_id": "fatf-rec-12",
+            },
+        }
+    ]
 
 
-async def test_regulations_read_object_shaped_results(monkeypatch):
-    results = SimpleNamespace(
-        items=[
-            SimpleNamespace(
-                relevance_score=3.0,
-                content="Rule A",
-                citation=SimpleNamespace(document_title="fatf.pdf", article="Rec. 12"),
-                id="a",
-            ),
-            SimpleNamespace(relevance_score=0.5, content="Rule B", citation=None, id="b"),
-            SimpleNamespace(relevance_score=0.1, content="too weak", citation=None, id="c"),
-        ]
-    )
-    monkeypatch.setattr(rr, "get_foundry_client", _foundry(results))
+async def test_regulations_search_the_local_corpus():
+    res = await rr.regulations_rag("politically exposed persons PEP", "NL", "individual", [])
 
-    res = await rr.regulations_rag("Q", "NL", "corporate", [])
-
-    first, second = res["regulations"]
-    assert first["relevance"] == 0.75
-    assert first["foundry_iq_citation"]["document"] == "fatf.pdf"
-    assert first["foundry_iq_citation"]["article"] == "Rec. 12"
-    assert second["foundry_iq_citation"] == {
-        "knowledge_base": rr.FOUNDRY_IQ_KB_REGULATIONS,
-        "document": "unknown",
-        "article": "unknown",
-        "snippet_id": "b",
-    }
+    assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-12"
 
 
-async def test_regulations_without_strong_match_return_fatf_baseline(monkeypatch):
-    monkeypatch.setattr(rr, "get_foundry_client", _foundry({"items": []}))
+async def test_regulations_without_strong_match_return_fatf_baseline():
+    res = await rr.regulations_rag("zzz", "", "", [])
 
-    res = await rr.regulations_rag("Q", "NL", "corporate", [])
-
-    assert res["source"] == "foundry_iq"
-    assert res["regulations"][0]["foundry_iq_citation"]["snippet_id"] == "fatf-rec-10"
+    assert res["source"] == "local"
+    assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-10"
 
 
-def test_regulations_helpers_and_normalize():
-    import argus.agents.compliance.tools.regulations_rag as rr
-
-    assert rr._normalize_relevance(0.5) == 0.5
-    assert rr._normalize_relevance(2.0) == 0.5
-
-
-async def test_regulations_rag_returns_mock(monkeypatch):
-    # Force Foundry client errors by patching get_foundry_client in the module
-    import argus.agents.compliance.tools.regulations_rag as mod
-    from argus.agents.compliance.tools import regulations_rag as rr
-
-    monkeypatch.setattr(
-        mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
-    )
+async def test_regulations_fall_back_to_the_baseline_when_search_is_down(use_plane, unavailable):
+    use_plane(retriever=unavailable)
 
     res = await rr.regulations_rag("Q", "NL", "company", ["fraud"])
-    assert res["source"] == "mock"
 
-
-async def test_regulations_and_adverse_positive(monkeypatch):
-    # positive branch: fake foundry client returns items
-    import argus.agents.compliance.tools.regulations_rag as rrmod
-
-    class FakeKB:
-        def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
-            return {
-                "items": [
-                    {
-                        "relevance_score": 0.5,
-                        "content": "Some rule text",
-                        "citation": {
-                            "document_title": "doc.pdf",
-                            "section": "sec1",
-                            "snippet_id": "s1",
-                        },
-                        "id": "i1",
-                    }
-                ]
-            }
-
-    class FakeClient:
-        knowledge_bases = FakeKB()
-
-    monkeypatch.setattr(rrmod, "get_foundry_client", lambda: FakeClient())
-    res = await rrmod.regulations_rag("Q", "NL", "company", ["fraud"])
-    assert res["source"] == "foundry_iq"
-    assert res["regulations"]
+    assert res["source"] == "fallback"
+    assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-10"
 
 
 async def test_compliance_agent_invoke(monkeypatch):
@@ -316,7 +297,7 @@ async def test_compliance_agent_invoke(monkeypatch):
     monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"])
 
     async def fake_explain(*args, **kwargs):
-        return "explanation"
+        return {"text": "explanation", "source": "model"}
 
     monkeypatch.setattr(comp, "explain_decision", fake_explain)
 
@@ -338,6 +319,9 @@ async def test_compliance_agent_invoke(monkeypatch):
     )
     res = await comp.invoke(msg)
     assert res["result"]["risk_summary"]["overall_risk_tier"] == "HIGH"
+    assert res["result"]["explanation"] == "explanation"
+    assert res["result"]["explanation_source"] == "model"
+    assert res["source"] == "computed" and res["result"]["retrieval_queries"] == 1
 
 
 def test_risk_scorer_high_risk():
@@ -416,3 +400,4 @@ def test_compliance_agent_handles_none_upstream_results():
     assert data["status"] == "completed"
     assert "risk_summary" in data["result"]
     assert "explanation" in data["result"]
+    assert data["result"]["explanation_source"] == "fallback"

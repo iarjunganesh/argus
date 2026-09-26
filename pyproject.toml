@@ -8,7 +8,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.14"
 authors = [{ name = "Arjun Ganesh" }]
 dependencies = [
-    "azure-ai-projects>=2.7.0",
+    "azure-ai-documentintelligence>=1.0.2",
     "azure-core>=1.41.0",
     "azure-cosmos>=4.17.1",
     "azure-identity>=1.25.3",
