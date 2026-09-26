@@ -34,6 +34,7 @@ async def explain_decision(
         else "the score band"
     )
     sanctions = SANCTIONS_TEXT.get(risk_summary.get("sanctions_screening", ""), "not reported")
+    edd = risk_summary.get("edd_required", False)
 
     findings_text = (
         "\n".join(f"- {finding}" for finding in key_findings[:5]) or "- No material findings"
@@ -61,6 +62,7 @@ Risk Score: {score}/100
 Risk Tier: {tier}
 Tier set by: {tier_basis}
 Sanctions screening: {sanctions}
+Enhanced due diligence: {"required (PEP match), whatever the tier" if edd else "not required by a rule"}
 
 Key findings identified:
 {findings_text}
@@ -78,6 +80,8 @@ Rules:
 - If the tier was set by a sanctions match, say so, and say that a person must confirm or clear
   the match before anything else happens.
 - If sanctions screening did not run, say that the case cannot be cleared until it has.
+- If enhanced due diligence is required, say so; a PEP match alone does not make the case high
+  risk, but it does require those measures before onboarding.
 - Reference specific regulations by name when present.
 - Do NOT use bullet points or numbered lists.
 - Do NOT start with 'The entity'.
@@ -94,13 +98,15 @@ Rules:
         text = (response.choices[0].message.content or "").strip()
     except Exception as exc:  # no model configured, or the call failed: say so and fall back
         logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": str(exc)})
-        return {"text": _fallback_explanation(tier, key_findings, held), "source": "fallback"}
+        text = _fallback_explanation(tier, key_findings, held, edd)
+        return {"text": text, "source": "fallback"}
     if not text:
-        return {"text": _fallback_explanation(tier, key_findings, held), "source": "fallback"}
+        text = _fallback_explanation(tier, key_findings, held, edd)
+        return {"text": text, "source": "fallback"}
     return {"text": text, "source": "model"}
 
 
-def _fallback_explanation(tier: str, findings: list, held: bool = False) -> str:
+def _fallback_explanation(tier: str, findings: list, held: bool = False, edd: bool = False) -> str:
     if held:
         return (
             f"This case is held at {tier} because screening found a potential sanctions match; "
@@ -110,10 +116,16 @@ def _fallback_explanation(tier: str, findings: list, held: bool = False) -> str:
     if not findings:
         return f"This case was assessed as {tier} risk based on the combined screening and compliance analysis."
     primary_finding = findings[0]
+    edd_note = (
+        "Because of the PEP match, enhanced due diligence is required before onboarding "
+        "whatever the tier. "
+        if edd
+        else ""
+    )
     return (
         f"This case was assessed as {tier} risk primarily because {primary_finding.lower()}. "
         "The final recommendation combines screening, ownership, transaction, and regulatory signals. "
-        "A reviewer should confirm the findings before making an onboarding decision."
+        f"{edd_note}A reviewer should confirm the findings before making an onboarding decision."
     )
 
 

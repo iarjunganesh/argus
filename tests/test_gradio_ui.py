@@ -45,6 +45,7 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
             "overall_risk_score": 82,
             "tier_basis": "sanctions_match",
             "sanctions_screening": "potential_match",
+            "edd_required": True,
             "decision_recommendation": "Enhanced Due Diligence",
         },
         "key_findings": ["Adverse Media", "Regulatory Triggers", "Ownership Risk"],
@@ -64,6 +65,7 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
     assert "Confidence" not in html  # ARGUS reports no confidence it cannot compute
     assert "Tier Set By" in html and "Sanctions hold" in html
     assert "Sanctions Screening" in html and "Potential match" in html
+    assert "Enhanced Due Diligence" in html and "Required" in html
     assert "Enhanced Due Diligence" in html
     assert "Why This Risk Rating?" in html
     assert "Adverse Media" in html

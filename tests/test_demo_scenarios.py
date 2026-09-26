@@ -2,9 +2,12 @@
 
 `tests/fixtures/demo_scenarios.json` was recorded before the data-plane refactor, then re-recorded
 once when a potential sanctions match began to hold the case: only Cayman Synth Capital changed
-(HIGH to CRITICAL, with the hold's finding and actions; no score moved). A change that moves a
-tier, a score, a finding or a recommended action shows up here. Regulatory triggers are
-checked for citations only: they come from knowledge-base retrieval, which the refactor made real.
+(HIGH to CRITICAL, with the hold's finding and actions; no score moved). Re-recorded again when a
+PEP match began to require enhanced due diligence: the two PEP scenarios gain `edd_required` and a
+monitoring action, and Synthetic Holdings B.V. gets the EDD recommendation; no tier or score moved.
+A change that moves a tier, a score, a finding or a recommended action shows up here. Regulatory
+triggers are checked for citations only: they come from knowledge-base retrieval, which the
+refactor made real.
 """
 
 import json
