@@ -67,7 +67,7 @@ def main():
     ]
 
     total = 0
-    with open(OUTPUT, "w") as f:
+    with OUTPUT.open("w") as f:
         for entity in entities:
             n_normal = random.randint(10, 50)
             inject_aml = random.random() < 0.10  # 10% of entities have AML patterns

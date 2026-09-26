@@ -118,7 +118,8 @@ def variant(source: str, name: str, *, dark: bool) -> str:
     light_palette, dark_palette = palettes(source, name)
     light = LIGHT_BLOCK.search(source)
     dark_block = DARK_BLOCK.search(source)
-    assert light is not None and dark_block is not None
+    if light is None or dark_block is None:
+        raise ValueError(f"{name}: palette sentinels not found")
     palette = dark_palette if dark else light_palette
     out = source[: light.start()] + palette + source[dark_block.end() :]
     return out.replace("<svg ", GENERATED.format(master=name) + "\n<svg ", 1)
@@ -161,7 +162,8 @@ def tool(candidates: tuple[str, ...]) -> str | None:
 
 def run(argv: list[str], *, timeout: int) -> bool:
     try:
-        completed = subprocess.run(argv, capture_output=True, timeout=timeout, check=False)
+        # argv is built in this script from fixed tool names and repository paths.
+        completed = subprocess.run(argv, capture_output=True, timeout=timeout, check=False)  # noqa: S603
     except subprocess.TimeoutExpired, OSError:
         return False
     return completed.returncode == 0
@@ -256,22 +258,7 @@ def main() -> int:
         print("::error::no SVG masters with palette sentinels found")
         return 1
 
-    problems: list[str] = []
-    variants: list[tuple[Path, Path, str]] = []
-    for master in found:
-        source = master.read_text(encoding="utf-8")
-        problems.extend(contrast_problems(source, master.name))
-        for theme in ("light", "dark"):
-            target = master.with_name(f"{master.stem}-{theme}.svg")
-            expected = variant(source, master.name, dark=theme == "dark")
-            variants.append((master, target, theme))
-            if args.check:
-                current = target.read_text(encoding="utf-8") if target.exists() else ""
-                if current != expected:
-                    problems.append(f"{target.relative_to(ROOT).as_posix()} is stale")
-            else:
-                target.write_text(expected, encoding="utf-8", newline="\n")
-
+    problems, variants = write_variants(found, check=args.check)
     if problems:
         for problem in problems:
             print(f"::error::{problem}")
@@ -283,19 +270,42 @@ def main() -> int:
         return 0
     print(f"Wrote {len(variants)} variants from {len(found)} masters.")
 
-    if args.no_raster:
-        return 0
+    if not args.no_raster:
+        export_rasters(variants, args.only)
+    return 0
+
+
+def write_variants(
+    found: list[Path], *, check: bool
+) -> tuple[list[str], list[tuple[Path, Path, str]]]:
+    """Write (or, with `check`, compare) each master's light and dark variants."""
+    problems: list[str] = []
+    variants: list[tuple[Path, Path, str]] = []
+    for master in found:
+        source = master.read_text(encoding="utf-8")
+        problems.extend(contrast_problems(source, master.name))
+        for theme in ("light", "dark"):
+            target = master.with_name(f"{master.stem}-{theme}.svg")
+            expected = variant(source, master.name, dark=theme == "dark")
+            variants.append((master, target, theme))
+            if not check:
+                target.write_text(expected, encoding="utf-8", newline="\n")
+            elif (target.read_text(encoding="utf-8") if target.exists() else "") != expected:
+                problems.append(f"{target.relative_to(ROOT).as_posix()} is stale")
+    return problems, variants
+
+
+def export_rasters(variants: list[tuple[Path, Path, str]], only: str | None) -> None:
     browser, ffmpeg = tool(BROWSERS), tool(("ffmpeg",))
     if browser is None or ffmpeg is None:
         print("Skipped PNG/GIF exports: a Chromium browser and ffmpeg are both required.")
-        return 0
+        return
     for master, target, theme in variants:
         wanted = {kind for kind, themes in RASTERS.get(master.stem, {}).items() if theme in themes}
-        if not wanted or (args.only and args.only not in master.stem):
+        if not wanted or (only and only not in master.stem):
             continue
         for path in render(target, wanted, browser, ffmpeg):
             print(f"  {path.relative_to(ROOT).as_posix()}  {path.stat().st_size / 1024:.0f} KB")
-    return 0
 
 
 if __name__ == "__main__":

@@ -43,8 +43,13 @@ MAP_ROW = re.compile(r"^\| `([^`/]+)/` \|", re.MULTILINE)
 
 
 def tracked_files() -> list[str]:
+    # `git` from PATH, as in CI and on every contributor machine.
     out = subprocess.run(
-        ["git", "ls-files"], cwd=ROOT, check=True, capture_output=True, text=True
+        ["git", "ls-files"],  # noqa: S607
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout
     return [line for line in out.splitlines() if line]
 

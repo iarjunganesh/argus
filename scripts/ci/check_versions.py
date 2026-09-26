@@ -59,17 +59,34 @@ def check(root: Path) -> list[str]:
     project = read_toml(root / "pyproject.toml")
     locked = read_toml(root / "uv.lock")
     pinned = (root / ".python-version").read_text("utf-8").strip()
-    problems = []
-    for label, value in [
-        ("project", project["project"]["requires-python"]),
-        ("lock", locked["requires-python"]),
-    ]:
-        if value != f">={pinned}":
-            problems.append(f"{label}: requires-python disagrees with .python-version")
+    problems = [
+        *_python_target_problems(project, locked, pinned),
+        *_requirement_problems(root, project, locked),
+        *_workflow_problems(root, pinned),
+    ]
+    if (root / "web/package.json").exists() or (root / "Dockerfile").exists():
+        problems.append("Extend the version inventory for web/container surfaces before Phase 5")
+    return problems
+
+
+def _python_target_problems(project: dict, locked: dict, pinned: str) -> list[str]:
+    problems = [
+        f"{label}: requires-python disagrees with .python-version"
+        for label, value in [
+            ("project", project["project"]["requires-python"]),
+            ("lock", locked["requires-python"]),
+        ]
+        if value != f">={pinned}"
+    ]
     if project["tool"]["ruff"]["target-version"] != "py" + pinned.replace(".", ""):
         problems.append("Ruff target disagrees with .python-version")
     if project["tool"]["mypy"]["python_version"] != pinned:
         problems.append("Mypy target disagrees with .python-version")
+    return problems
+
+
+def _requirement_problems(root: Path, project: dict, locked: dict) -> list[str]:
+    problems = []
     own = [p for p in locked["package"] if p["name"] == project["project"]["name"]]
     if len(own) != 1 or own[0]["version"] != project["project"]["version"]:
         problems.append("Project version disagrees with uv.lock")
@@ -81,6 +98,11 @@ def check(root: Path) -> list[str]:
             problems.append(f"{name}: requirement {req.specifier} disagrees with lock {versions}")
         if name.startswith("agent-framework") and not re.fullmatch(r"==[^*,]+", str(req.specifier)):
             problems.append(f"{name}: Agent Framework requires an exact pin")
+    return problems
+
+
+def _workflow_problems(root: Path, pinned: str) -> list[str]:
+    problems = []
     seen: dict[str, tuple[str, str]] = {}
     for path in workflows(root):
         text = path.read_text("utf-8")
@@ -92,20 +114,23 @@ def check(root: Path) -> list[str]:
             if repo in seen and seen[repo] != pin:
                 problems.append(f"{repo}: inconsistent action pins")
             seen[repo] = pin
-        for value in re.findall(r"python-version:\s*['\"]?([\d.]+)", text):
-            if value != pinned:
-                problems.append(f"{path.name}: Python {value} disagrees with {pinned}")
-    if (root / "web/package.json").exists() or (root / "Dockerfile").exists():
-        problems.append("Extend the version inventory for web/container surfaces before Phase 5")
+        problems.extend(
+            f"{path.name}: Python {value} disagrees with {pinned}"
+            for value in re.findall(r"python-version:\s*['\"]?([\d.]+)", text)
+            if value != pinned
+        )
     return problems
 
 
 @cache
 def fetch(url: str):
+    if not url.startswith("https://"):
+        raise ValueError(f"Refusing a non-https URL: {url}")
     headers = {"User-Agent": "ARGUS-dependency-inventory"}
     if url.startswith("https://api.github.com/") and os.environ.get("GH_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["GH_TOKEN"]
-    with urlopen(Request(url, headers=headers), timeout=30) as response:
+    request = Request(url, headers=headers)  # noqa: S310 - https only, checked above
+    with urlopen(request, timeout=30) as response:  # noqa: S310 - https only, checked above
         return json.load(response)
 
 
@@ -174,25 +199,44 @@ def wheel_ready(files: list[dict], minor: str) -> bool:
 def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | None]:
     inventory = packages(root)
     rows = ["| Surface | Locked | Latest | Status |", "| --- | --- | --- | --- |"]
-    metadata = {}
+    metadata = {name: fetch(f"https://pypi.org/pypi/{name}/json") for name in sorted(inventory)}
+    rows += _package_rows(inventory, metadata)
+    rows += _build_rows(root)
+    action_rows, actions = _action_rows(root)
+    rows += action_rows
+    python_row, candidate = _python_row(root, inventory, metadata)
+    rows.append(python_row)
+    return rows, actions, candidate
+
+
+def _package_rows(inventory: dict[str, list[str]], metadata: dict) -> list[str]:
+    rows = []
     for name, versions in sorted(inventory.items()):
-        data = fetch(f"https://pypi.org/pypi/{name}/json")
-        metadata[name] = data
         allow_pre = name.startswith("agent-framework") and any(
             Version(v).is_prerelease for v in versions
         )
-        latest = latest_package(data, allow_pre)
+        latest = latest_package(metadata[name], allow_pre)
         current = min(map(Version, versions))
         status = "current"
         if Version(latest) > current:
             status = "MAJOR" if Version(latest).major > current.major else "update"
         rows.append(f"| {name} | {', '.join(versions)} | {latest} | {status} |")
+    return rows
+
+
+def _build_rows(root: Path) -> list[str]:
+    rows = []
     for raw in read_toml(root / "pyproject.toml").get("build-system", {}).get("requires", []):
         req = Requirement(raw)
         latest = latest_package(fetch(f"https://pypi.org/pypi/{req.name}/json"), False)
         status = "within range" if req.specifier.contains(latest) else "update build range"
         rows.append(f"| Build: {req.name} | {req.specifier} | {latest} | {status} |")
-    actions = {}
+    return rows
+
+
+def _action_rows(root: Path) -> tuple[list[str], dict[str, tuple[str, str]]]:
+    rows = []
+    actions: dict[str, tuple[str, str]] = {}
     for path in workflows(root):
         for match in ACTION.finditer(path.read_text("utf-8")):
             repo = match["repo"]
@@ -204,6 +248,13 @@ def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | N
             if match["tag"] and Version(tag).major > Version(match["tag"]).major:
                 status = "MAJOR"
             rows.append(f"| {repo} | {match['tag']} | {tag} | {status} |")
+    return rows, actions
+
+
+def _python_row(
+    root: Path, inventory: dict[str, list[str]], metadata: dict
+) -> tuple[str, str | None]:
+    """The CPython row, and the next minor version if every locked package is ready for it."""
     refs = fetch("https://api.github.com/repos/python/cpython/git/matching-refs/tags/v3.")
     stable = [
         Version(ref["ref"].rsplit("/", 1)[1][1:])
@@ -213,17 +264,18 @@ def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | N
     latest_python = max(stable)
     candidate = f"{latest_python.major}.{latest_python.minor}"
     current_python = (root / ".python-version").read_text("utf-8").strip()
-    blocked = []
     if Version(candidate) > Version(current_python):
-        for name, versions in inventory.items():
-            for version in versions:
-                if not wheel_ready(metadata[name]["releases"][version], candidate):
-                    blocked.append(f"{name}=={version}")
+        blocked = [
+            f"{name}=={version}"
+            for name, versions in inventory.items()
+            for version in versions
+            if not wheel_ready(metadata[name]["releases"][version], candidate)
+        ]
         state = "blocked: " + ", ".join(blocked) if blocked else "ready for separate PR"
     else:
         state = "current minor"
-    rows.append(f"| CPython | {current_python} | {latest_python} | {state} |")
-    return rows, actions, candidate if state == "ready for separate PR" else None
+    row = f"| CPython | {current_python} | {latest_python} | {state} |"
+    return row, candidate if state == "ready for separate PR" else None
 
 
 def write_minimums(root: Path) -> None:

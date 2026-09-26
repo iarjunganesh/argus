@@ -55,7 +55,7 @@ def generate_sanctions_entry() -> dict:
 
 def main():
     print("Generating synthetic sanctions dataset...")
-    with open(OUTPUT_FILE, "w") as f:
+    with OUTPUT_FILE.open("w") as f:
         for _ in range(500):
             f.write(json.dumps(generate_sanctions_entry()) + "\n")
     print(f"Generated 500 sanctions entries → {OUTPUT_FILE}")

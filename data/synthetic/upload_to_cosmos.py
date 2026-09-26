@@ -77,7 +77,7 @@ def _upsert_batch(container, docs: list[dict], id_field: str) -> int:
                 container.upsert_item(doc)
                 ok += 1
                 break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - retried on throttling, reported otherwise
                 attempt += 1
                 # Handle throttling (429) and transient server errors with backoff
                 status = getattr(e, "status_code", None)

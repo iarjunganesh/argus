@@ -79,7 +79,10 @@ def run(root: Path, tag: str, steps: list[tuple[str, list[str]]]) -> int:
     for label, command in steps:
         print(f"::group::{label}", flush=True)
         try:
-            code = subprocess.run(command, cwd=root, env=env, timeout=900, check=False).returncode
+            # `steps` is the fixed list of repository commands defined above.
+            code = subprocess.run(  # noqa: S603
+                command, cwd=root, env=env, timeout=900, check=False
+            ).returncode
         except OSError, subprocess.TimeoutExpired:
             code = 1
         results.append((label, code))

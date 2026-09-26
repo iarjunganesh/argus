@@ -49,7 +49,7 @@ try:
     from reportlab.pdfgen import canvas as rl_canvas
 
     _REPORTLAB = True
-except Exception:
+except ImportError:
     HexColor = None  # type: ignore[assignment]
     A4 = letter = None  # type: ignore[assignment]
     landscape = None  # type: ignore[assignment]
@@ -120,8 +120,8 @@ class DocFactory:
         for name in candidates:
             try:
                 return ImageFont.truetype(name, size)
-            except Exception:
-                pass
+            except OSError:  # this font is not installed; try the next one
+                continue
         return ImageFont.load_default()
 
     # ── Image quality transforms ─────────────────────────────────────────────
@@ -429,7 +429,7 @@ class DocFactory:
                         )
                     )
                     print(f"  ✓ {fname_png}")
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - report the document and carry on
                     print(f"  ✗ {fname_png}: {exc}")
 
                 # PDF
@@ -464,7 +464,7 @@ class DocFactory:
                             )
                         )
                         print(f"  ✓ {fname_pdf}")
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001 - report the document and carry on
                         print(f"  ✗ {fname_pdf}: {exc}")
                 else:
                     print("  [skip PDF] reportlab not installed — run: pip install reportlab")
@@ -489,7 +489,7 @@ def upload_documents(
     for record in records:
         ct = "application/pdf" if record.format == "pdf" else "image/png"
         blob = container.get_blob_client(record.blob_name)
-        with open(record.local_path, "rb") as fh:
+        with Path(record.local_path).open("rb") as fh:
             blob.upload_blob(fh, overwrite=True, content_settings=ContentSettings(content_type=ct))
         record.blob_url = blob.url
         print(f"  ↑ uploaded {record.file_name}")

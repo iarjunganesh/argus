@@ -72,7 +72,7 @@ def main():
         try:
             rid = submit(name)
             print("  report_id", rid)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - log the failed entity and carry on
             print(f"  ❌ submit failed for {name}: {e}")
             with errors_file.open("a", encoding="utf-8") as eh:
                 eh.write(json.dumps({"entity": name, "error": str(e)}) + "\n")
@@ -80,7 +80,7 @@ def main():
 
         try:
             report = poll(rid, timeout=args.poll_timeout)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - log the failed report and carry on
             print(f"  ❌ poll failed for {rid}: {e}")
             with errors_file.open("a", encoding="utf-8") as eh:
                 eh.write(json.dumps({"report_id": rid, "entity": name, "error": str(e)}) + "\n")
