@@ -151,7 +151,7 @@ async def test_local_ocr_reports_it_cannot_read():
 def test_regulation_documents_carry_the_index_fields():
     docs = corpus.regulation_documents()
 
-    assert {d["id"] for d in docs} >= {"fatf-rec-10", "fatf-rec-12", "fatf-rec-20"}
+    assert {d["id"] for d in docs} >= {"fatf-rec-6", "fatf-rec-10", "fatf-rec-12", "fatf-rec-20"}
     assert all(d["entity_name"] == "" and d["metadata_json"] == "{}" for d in docs)
 
 
