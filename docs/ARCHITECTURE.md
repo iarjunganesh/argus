@@ -82,14 +82,23 @@ scores adverse media alone at 15.
 `not_run` case is reported as incomplete whatever its tier, because no match found is not the same
 as no screening done.
 
-**What the report does not claim.** It carries no confidence figure: nothing in ARGUS computes
-one. A PEP match raises the score and adds the enhanced due diligence actions and the FATF
-Recommendation 12 gap, but does not set a minimum tier: Recommendation 12 makes enhanced measures
-mandatory for foreign PEPs and risk-based for domestic ones, and ARGUS does not yet tell them apart.
+**A PEP match requires enhanced due diligence, whatever the tier** (`risk_summary.edd_required`).
+PEP status calls for measures, not a higher risk tier: the EU AML Regulation (Article 42) and the
+UK Money Laundering Regulations (regulation 35) apply senior management approval, source of wealth
+and funds, and enhanced ongoing monitoring to every PEP; FATF Recommendation 12 applies them to
+every foreign PEP and to domestic PEPs in higher-risk relationships; and the FCA's guidance says
+no single factor should automatically make a customer higher risk. So the tier stays as scored, the
+recommendation names the three measures (unless a sanctions hold, an incomplete screening or a
+CRITICAL tier says more), and the actions list them. ARGUS does not yet tell foreign from
+domestic PEPs, so it applies the all-PEP rule.
+
+**What the report does not claim.** It carries no confidence figure: nothing in ARGUS computes one.
 
 Sources: [FATF Recommendations](https://www.fatf-gafi.org/en/publications/Fatfrecommendations/Fatf-recommendations.html)
 (R.6, R.12 and the glossary's "without delay");
-[Wolfsberg Guidance on Sanctions Screening](https://wolfsberg-group.org/resources/168/53).
+[Wolfsberg Guidance on Sanctions Screening](https://wolfsberg-group.org/resources/168/53);
+[EU AML Regulation, Article 42](https://eur-lex.europa.eu/eli/reg/2024/1624/oj/eng);
+[FCA FG25/3 on PEPs](https://www.fca.org.uk/publication/finalised-guidance/fg25-3.pdf).
 
 ## Provenance: where each result came from
 

@@ -11,7 +11,8 @@
   critical whatever the score, and maps each risk indicator to FATF recommendations. Steps 2
   and 3 are deterministic code. 4, explain: a language model writes three to five plain-English
   sentences; it cannot change the score or the tier, and without a model a fixed template is used.
-  5, report: decision, sanctions screening status, findings, actions, citations, dimension
+  5, report: decision, sanctions screening status, whether enhanced due diligence is required
+  (always for a PEP match, whatever the tier), findings, actions, citations, dimension
   scores and an audit trace that records where each result came from and names any tool that
   fell back. A compliance reviewer confirms the findings before any onboarding decision.</desc>
 
@@ -240,6 +241,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="body" x="1584" y="462">• five dimension scores</text>
   <text class="body" x="1584" y="490">• audit trace and timeline</text>
   <text class="body" x="1584" y="518">• sanctions screening status</text>
+  <text class="body" x="1584" y="546">• whether EDD is required</text>
   <rect class="card2" x="1580" y="770" width="260" height="70" rx="10"/>
   <text class="mono" x="1596" y="799">source: "fallback"</text>
   <text class="small" x="1596" y="823">names each tool that fell back</text>

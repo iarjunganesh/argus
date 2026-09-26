@@ -100,6 +100,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   and says to freeze and report if it is confirmed. The weights and score bands are unchanged.
   Checked: a sanctions-only case (weighted score 21) now reports CRITICAL; the six demo scenarios
   keep every score, and only Cayman Synth Capital changes tier (HIGH to CRITICAL).
+- **A PEP match requires enhanced due diligence, whatever the tier** (`risk_summary.edd_required`).
+  A PEP-only case could score LOW and be recommended for standard onboarding. PEP status calls for
+  measures, not a higher tier (EU AMLR Article 42 and UK MLR regulation 35 for every PEP, FATF
+  Recommendation 12 for foreign PEPs; FCA FG25/3: no single factor makes a customer higher risk
+  automatically), so the tier stays as scored and the recommendation and actions name senior
+  management approval, source of wealth and funds, and enhanced ongoing monitoring. Checked: a
+  PEP-only case stays LOW with the EDD recommendation; in the demo scenarios no tier or score
+  moved, Synthetic Holdings B.V. gets the EDD recommendation and both PEP scenarios gain the
+  monitoring action.
 - **The report says whether sanctions screening ran** (`risk_summary.sanctions_screening`:
   `potential_match`, `no_match` or `not_run`). A case whose screening agent failed or whose
   sanctions search fell back is reported as incomplete instead of being recommended for standard
@@ -230,7 +239,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
 - **No local OCR engine yet.** With the local backend, identity documents are reported as unread
   (`fallback`) until Tesseract is added.
-- **A PEP match does not set a minimum tier.** It raises the score and adds the enhanced due
-  diligence actions, but a PEP-only case can be LOW or MEDIUM. FATF Recommendation 12 makes
-  enhanced measures mandatory for foreign PEPs and risk-based for domestic ones, and ARGUS does not
-  yet tell them apart.
+- **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
+  every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
+  in lower-risk relationships.
