@@ -1,0 +1,5 @@
+# Normalise text files to LF in the repository and in working trees, on every OS and tool.
+* text=auto eol=lf
+
+# PowerShell scripts keep CRLF for Windows PowerShell 5.1.
+*.ps1 text eol=crlf
