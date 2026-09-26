@@ -1,0 +1,307 @@
+[
+  {
+    "request": {
+      "entity_name": "Jane Synthetic",
+      "entity_type": "individual",
+      "jurisdiction": "DE"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "LOW",
+      "overall_risk_score": 5.8,
+      "confidence": 0.83,
+      "decision_recommendation": "Standard onboarding — periodic review recommended."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 4,
+        "tier": "LOW",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 5,
+        "tier": "LOW",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 20,
+        "tier": "LOW",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 0.0,
+        "tier": "LOW",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 5,
+        "tier": "LOW",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "No high-risk indicators found across all screening dimensions"
+    ],
+    "recommended_actions": [
+      "Continue standard periodic review cycle"
+    ]
+  },
+  {
+    "request": {
+      "entity_name": "Synthetic Holdings B.V.",
+      "entity_type": "corporate",
+      "jurisdiction": "NL"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "MEDIUM",
+      "overall_risk_score": 49.5,
+      "confidence": 0.83,
+      "decision_recommendation": "Proceed with caution. Enhanced monitoring required."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 25,
+        "tier": "LOW",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 40,
+        "tier": "MEDIUM",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 45,
+        "tier": "MEDIUM",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 95.0,
+        "tier": "CRITICAL",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 20,
+        "tier": "LOW",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "PEP identified: Director identified as a domestic PEP with elevated scrutiny requirements",
+      "Adverse media coverage found — review required",
+      "Layered ownership chain requires enhanced review of beneficial ownership documentation"
+    ],
+    "recommended_actions": [
+      "Obtain source of wealth and source of funds declaration",
+      "Escalate to Senior Compliance Officer for EDD sign-off",
+      "Obtain beneficial owner register for all offshore entities",
+      "FATF Rec.12 — Enhanced due diligence for PEPs not yet evidenced",
+      "Source of wealth documentation required but not obtained"
+    ]
+  },
+  {
+    "request": {
+      "entity_name": "Cayman Synth Capital",
+      "entity_type": "corporate",
+      "jurisdiction": "KY"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "HIGH",
+      "overall_risk_score": 73.5,
+      "confidence": 0.83,
+      "decision_recommendation": "Enhanced Due Diligence required before onboarding."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 45,
+        "tier": "MEDIUM",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 85,
+        "tier": "CRITICAL",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 60,
+        "tier": "HIGH",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 100,
+        "tier": "CRITICAL",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 50,
+        "tier": "MEDIUM",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "PEP identified: Beneficial owner linked to a former minister requiring enhanced due diligence",
+      "Adverse media coverage found — review required",
+      "⚠️ Sanctions match detected",
+      "High-risk jurisdiction node: Blue Reef Nominees (PA)",
+      "High-risk jurisdiction node: Harbor Frontier SPC (KY)",
+      "Transaction structuring pattern detected"
+    ],
+    "recommended_actions": [
+      "Obtain source of wealth and source of funds declaration",
+      "Escalate to Senior Compliance Officer for EDD sign-off",
+      "Immediately escalate — do not proceed with onboarding",
+      "Notify Compliance Officer and legal team",
+      "Obtain beneficial owner register for all offshore entities",
+      "Consider filing Suspicious Activity Report (SAR)",
+      "Conduct in-person verification or enhanced video KYC",
+      "FATF Rec.12 — Enhanced due diligence for PEPs not yet evidenced",
+      "Source of wealth documentation required but not obtained"
+    ]
+  },
+  {
+    "request": {
+      "entity_name": "Wirecard AG",
+      "entity_type": "corporate",
+      "jurisdiction": "DE"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "HIGH",
+      "overall_risk_score": 55.2,
+      "confidence": 0.83,
+      "decision_recommendation": "Enhanced Due Diligence required before onboarding."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 8,
+        "tier": "LOW",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 72,
+        "tier": "HIGH",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 40,
+        "tier": "MEDIUM",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 50.0,
+        "tier": "MEDIUM",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 15,
+        "tier": "LOW",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "Adverse media coverage found — review required",
+      "Public adverse-media profile warrants enhanced governance review"
+    ],
+    "recommended_actions": [
+      "Obtain beneficial owner register for all offshore entities",
+      "Conduct in-person verification or enhanced video KYC",
+      "Risk-based approach requires adverse media to be weighed in onboarding decision",
+      "FATF Rec.19 — Enhanced measures for high-risk countries required"
+    ]
+  },
+  {
+    "request": {
+      "entity_name": "Danske Bank A/S",
+      "entity_type": "corporate",
+      "jurisdiction": "DK"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "MEDIUM",
+      "overall_risk_score": 42.2,
+      "confidence": 0.83,
+      "decision_recommendation": "Proceed with caution. Enhanced monitoring required."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 6,
+        "tier": "LOW",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 68,
+        "tier": "HIGH",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 42,
+        "tier": "MEDIUM",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 50.0,
+        "tier": "MEDIUM",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 18,
+        "tier": "LOW",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "Adverse media coverage found — review required",
+      "Legacy controls issue requires remediation evidence review"
+    ],
+    "recommended_actions": [
+      "Obtain beneficial owner register for all offshore entities",
+      "Risk-based approach requires adverse media to be weighed in onboarding decision",
+      "FATF Rec.19 — Enhanced measures for high-risk countries required"
+    ]
+  },
+  {
+    "request": {
+      "entity_name": "Westpac Banking Corporation",
+      "entity_type": "corporate",
+      "jurisdiction": "AU"
+    },
+    "risk_summary": {
+      "overall_risk_tier": "MEDIUM",
+      "overall_risk_score": 42.1,
+      "confidence": 0.83,
+      "decision_recommendation": "Proceed with caution. Enhanced monitoring required."
+    },
+    "dimension_scores": {
+      "identity": {
+        "score": 7,
+        "tier": "LOW",
+        "weight": "20%"
+      },
+      "screening": {
+        "score": 66,
+        "tier": "HIGH",
+        "weight": "30%"
+      },
+      "corporate_ubo": {
+        "score": 43,
+        "tier": "MEDIUM",
+        "weight": "15%"
+      },
+      "regulatory": {
+        "score": 50.0,
+        "tier": "MEDIUM",
+        "weight": "25%"
+      },
+      "transaction": {
+        "score": 20,
+        "tier": "LOW",
+        "weight": "10%"
+      }
+    },
+    "key_findings": [
+      "Adverse media coverage found — review required",
+      "Public compliance remediation case requires control evidence"
+    ],
+    "recommended_actions": [
+      "Obtain beneficial owner register for all offshore entities",
+      "Risk-based approach requires adverse media to be weighed in onboarding decision",
+      "FATF Rec.19 — Enhanced measures for high-risk countries required"
+    ]
+  }
+]

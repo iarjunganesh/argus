@@ -1,37 +1,34 @@
-"""pep_checker — checks entity against synthetic PEP database in Cosmos DB."""
+"""pep_checker — checks the entity against the politically exposed persons in the data plane."""
 
-from argus.config import get_cosmos_database
+from argus.data_plane import DataPlaneUnavailable, get_data_plane
+from argus.utils.structured_logger import get_logger
+
+logger = get_logger("tool.pep_checker")
 
 
 async def pep_checker(entity_name: str, dob: str, nationality: str) -> dict:
+    plane = get_data_plane()
     try:
-        db = get_cosmos_database()
-        container = db.get_container_client("pep_database")
-        query = "SELECT * FROM c WHERE LOWER(c.name) = LOWER(@name)"
-        params = [{"name": "@name", "value": entity_name}]
-        items = list(
-            container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-        )
+        pep = await plane.entities.find_pep(entity_name)
+    except DataPlaneUnavailable as exc:
+        logger.warning("tool.fallback", extra={"tool": "pep_checker", "reason": str(exc)})
+        return {"hit": False, "findings": [], "source": "fallback"}
 
-        if items:
-            pep = items[0]
-            return {
-                "hit": True,
-                "findings": [
-                    {
-                        "type": "pep",
-                        "match": (
-                            f"{pep.get('name')} — {pep.get('role', 'Unknown role')} "
-                            f"({pep.get('country', nationality)}, "
-                            f"{pep.get('period', 'Unknown period')})"
-                        ),
-                        "confidence": 0.92,
-                        "source": "synthetic_pep_db",
-                    }
-                ],
+    if not pep:
+        return {"hit": False, "findings": [], "source": plane.backend}
+    country = pep.get("country") or pep.get("nationality") or nationality
+    return {
+        "hit": True,
+        "findings": [
+            {
+                "type": "pep",
+                "match": (
+                    f"{pep.get('name')} — {pep.get('role', 'Unknown role')} "
+                    f"({country}, {pep.get('period', 'Unknown period')})"
+                ),
+                "confidence": 0.92,
+                "source": f"{plane.backend}_entities",
             }
-        return {"hit": False, "findings": []}
-
-    except Exception as e:
-        print(f"[pep_checker] Cosmos DB unavailable: {e}. Using mock.")
-        return {"hit": False, "findings": [], "source": "mock"}
+        ],
+        "source": plane.backend,
+    }

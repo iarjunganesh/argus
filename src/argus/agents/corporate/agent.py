@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 from argus.agents.corporate.tools.registry_lookup import registry_lookup
 from argus.agents.corporate.tools.ubo_resolver import ubo_resolver
+from argus.agents.provenance import demo_provenance, provenance
 from argus.utils.demo_profiles import get_demo_profile
 from argus.utils.structured_logger import get_logger
 
@@ -39,6 +40,7 @@ async def invoke(message: A2AMessage):
             "agent": "corporate",
             "task_id": message.task_id,
             "status": "completed",
+            **demo_provenance(),
             "result": demo_profile["corporate"],
         }
 
@@ -48,6 +50,7 @@ async def invoke(message: A2AMessage):
             "agent": "corporate",
             "task_id": message.task_id,
             "status": "completed",
+            **provenance(),
             "result": {"skipped": True, "reason": "Entity is individual — UBO not applicable"},
         }
 
@@ -74,6 +77,7 @@ async def invoke(message: A2AMessage):
         "agent": "corporate",
         "task_id": message.task_id,
         "status": "completed",
+        **provenance(registry_lookup=registry_result, ubo_resolver=ubo_result),
         "result": {
             "registry": registry_result,
             "ubo_chain": ubo_result,

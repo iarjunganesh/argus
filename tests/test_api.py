@@ -11,10 +11,8 @@ REQUEST = {"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "N
 
 
 @pytest.fixture
-def client(monkeypatch):
-    monkeypatch.setattr(main, "_reports", {})
-    monkeypatch.setattr(main, "_status", {})
-    return TestClient(main.app)
+def client():
+    return TestClient(main.app)  # conftest gives each test a fresh in-memory report store
 
 
 def test_submitted_assessment_can_be_polled_and_fetched(client, monkeypatch):
@@ -91,3 +89,32 @@ def test_api_root():
     resp = client.get("/")
     assert resp.status_code == 200
     assert resp.json()["service"] == "ARGUS"
+
+
+def test_reports_are_written_through_the_report_store(client, use_plane, monkeypatch):
+    from argus.data_plane.local import MemoryReportStore
+
+    store = MemoryReportStore()
+    use_plane(reports=store)
+
+    async def assessment(request):
+        return {"risk_summary": {}}
+
+    monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
+    report_id = client.post("/api/v1/kyc/assess", json=REQUEST).json()["report_id"]
+
+    assert store._status[report_id] == "completed"
+    assert store._reports[report_id]["report_id"] == report_id
+
+
+def test_cors_origins_come_from_settings(monkeypatch):
+    monkeypatch.setenv("ARGUS_CORS_ORIGINS", " https://ui.example , ,http://localhost:3000")
+
+    assert main.cors_origins() == ["https://ui.example", "http://localhost:3000"]
+
+
+def test_no_browser_origin_is_allowed_by_default(client):
+    response = client.get("/", headers={"Origin": "https://elsewhere.example"})
+
+    assert main.cors_origins() == []
+    assert "access-control-allow-origin" not in response.headers

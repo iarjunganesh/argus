@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+from argus.data_plane.corpus import adverse_media_documents, sanctions_documents
 from argus.utils.env_loader import load_repo_env
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,34 +30,7 @@ def index_sanctions():
     records = [json.loads(line) for line in SANCTIONS_FILE.read_text().splitlines() if line.strip()]
     print(f"  Loaded {len(records)} synthetic sanctions entries")
 
-    docs = []
-    for r in records:
-        aliases = r.get("aliases", [])
-        name = r.get("name", "")
-        all_names = " | ".join([name, *aliases])
-        content = (
-            f"{name}. Aliases: {', '.join(aliases)}. "
-            f"List: {r.get('list_type', '')}. Program: {r.get('program', '')}. "
-            f"Reason: {r.get('reason', '')}. "
-            f"Nationality/Country: {r.get('nationality') or r.get('country', '')}."
-        )
-        docs.append(
-            {
-                "id": r["sanctions_id"],
-                "title": f"{name} — {r.get('list_type', 'SANCTIONS')}",
-                "content": content,
-                "entity_name": all_names,
-                "source_doc": r.get("list_type", "SYNTHETIC_SANCTIONS"),
-                "category": "sanctions",
-                "metadata_json": json.dumps(
-                    {
-                        "program": r.get("program"),
-                        "is_active": r.get("is_active"),
-                        "entity_type": r.get("entity_type"),
-                    }
-                ),
-            }
-        )
+    docs = sanctions_documents(records)
 
     try:
         from azure.core.credentials import AzureKeyCredential
@@ -98,40 +72,9 @@ def _load_jsonl_records(path: Path) -> list[dict]:
 
 
 def _build_adverse_media_documents() -> list[dict]:
-    synthetic_records = _load_jsonl_records(MEDIA_FILE)
-    public_records = _load_jsonl_records(PUBLIC_MEDIA_FILE)
-
-    if not synthetic_records and not public_records:
-        return []
-
-    negative_only = [r for r in synthetic_records if r.get("sentiment") == "negative"]
-    public_negative = [r for r in public_records if r.get("sentiment", "negative") == "negative"]
-
-    docs = []
-    for r in [*negative_only, *public_negative]:
-        docs.append(
-            {
-                "id": r.get("article_id") or r.get("document_id") or r.get("id"),
-                "title": r.get("headline", "")[:200],
-                "content": r.get("body", r.get("headline", ""))[:2000],
-                "entity_name": "",  # entity extracted at query time
-                "source_doc": r.get("source", "SYNTHETIC_NEWS"),
-                "category": "adverse_media",
-                "metadata_json": json.dumps(
-                    {
-                        "source_kind": r.get(
-                            "source_kind", "synthetic" if r in negative_only else "public"
-                        ),
-                        "published_at": r.get("published_at"),
-                        "sentiment": r.get("sentiment"),
-                        "tags": r.get("tags", []),
-                        "source_reference": r.get("source_reference"),
-                    }
-                ),
-            }
-        )
-
-    return docs
+    return adverse_media_documents(
+        _load_jsonl_records(MEDIA_FILE), _load_jsonl_records(PUBLIC_MEDIA_FILE)
+    )
 
 
 def _export_adverse_media_documents(docs: list[dict]) -> None:

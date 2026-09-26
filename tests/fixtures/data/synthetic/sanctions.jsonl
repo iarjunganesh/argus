@@ -1,0 +1,3 @@
+{"sanctions_id": "SYN-T-1", "list_type": "OFAC_SDN", "program": "RUSSIA", "entity_type": "individual", "is_active": true, "name": "Viktor Testovich", "aliases": ["V. Testovich"], "country": "RU", "reason": "Synthetic test listing."}
+{"sanctions_id": "SYN-T-2", "list_type": "EU_CONSOLIDATED", "program": "TERRORISM", "entity_type": "entity", "is_active": true, "name": "Blue Reef Test Trading", "aliases": [], "country": "PA", "reason": "Synthetic test listing."}
+{"sanctions_id": "SYN-T-3", "list_type": "UN_SC", "program": "DPRK", "entity_type": "entity", "is_active": false, "name": "Gamma Group", "aliases": [], "country": "KP", "reason": "Synthetic test listing."}

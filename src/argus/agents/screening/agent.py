@@ -1,12 +1,13 @@
 """
 ARGUS Screening Agent
 Screens entities against sanctions, adverse media, and PEP databases.
-sanctions_checker and adverse_media_scanner are powered by Foundry IQ.
+sanctions_checker and adverse_media_scanner search the knowledge bases in the data plane.
 """
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from argus.agents.provenance import demo_provenance, provenance
 from argus.agents.screening.tools.adverse_media_scanner import adverse_media_scanner
 from argus.agents.screening.tools.pep_checker import pep_checker
 from argus.agents.screening.tools.sanctions_checker import sanctions_checker
@@ -44,6 +45,7 @@ async def invoke(message: A2AMessage):
             "agent": "screening",
             "task_id": message.task_id,
             "status": "completed",
+            **demo_provenance(),
             "result": demo_profile["screening"],
         }
 
@@ -73,13 +75,21 @@ async def invoke(message: A2AMessage):
         "agent": "screening",
         "task_id": message.task_id,
         "status": "completed",
+        **provenance(
+            sanctions_checker=sanctions_result,
+            adverse_media_scanner=adverse_media_result,
+            pep_checker=pep_result,
+        ),
         "result": {
             "sanctions_hit": sanctions_result.get("hit", False),
             "adverse_media_hit": adverse_media_result.get("hit", False),
             "pep_hit": pep_result.get("hit", False),
             "findings": all_findings,
             "screening_risk_score": screening_risk_score,
-            "foundry_iq_queries": 2,  # sanctions + adverse_media
+            # Knowledge-base searches that answered (sanctions and adverse media).
+            "retrieval_queries": sum(
+                r.get("source") != "fallback" for r in (sanctions_result, adverse_media_result)
+            ),
         },
     }
 

@@ -1,0 +1,7 @@
+{"tx_id": "TX-T0", "entity_name": "Ada Synthetic", "amount": 9400, "currency": "EUR", "date": "2026-03-10", "counterparty": "Counterparty 0"}
+{"tx_id": "TX-T1", "entity_name": "Ada Synthetic", "amount": 9410, "currency": "EUR", "date": "2026-03-11", "counterparty": "Counterparty 1"}
+{"tx_id": "TX-T2", "entity_name": "Ada Synthetic", "amount": 9420, "currency": "EUR", "date": "2026-03-12", "counterparty": "Counterparty 2"}
+{"tx_id": "TX-T3", "entity_name": "Ada Synthetic", "amount": 9430, "currency": "EUR", "date": "2026-03-13", "counterparty": "Counterparty 3"}
+{"tx_id": "TX-T4", "entity_name": "Ada Synthetic", "amount": 9440, "currency": "EUR", "date": "2026-03-14", "counterparty": "Counterparty 4"}
+{"tx_id": "TX-T5", "entity_name": "Ada Synthetic", "amount": 9450, "currency": "EUR", "date": "2026-03-15", "counterparty": "Counterparty 5"}
+{"tx_id": "TX-T9", "entity_name": "Harbor Test Holdings", "amount": 50000, "currency": "EUR", "date": "2026-01-05", "counterparty": "Big Buyer"}

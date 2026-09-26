@@ -1,6 +1,6 @@
 """
 ARGUS Compliance & Risk Agent
-Fan-in agent — receives all upstream results, queries Foundry IQ for
+Fan-in agent — receives all upstream results, searches the regulations knowledge base for
 regulatory text with citations, produces final weighted risk score.
 """
 
@@ -11,6 +11,7 @@ from argus.agents.compliance.tools.explain_decision import explain_decision
 from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.regulations_rag import regulations_rag
 from argus.agents.compliance.tools.risk_scorer import risk_scorer
+from argus.agents.provenance import provenance
 from argus.utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Compliance & Risk Agent")
@@ -51,7 +52,7 @@ async def invoke(message: A2AMessage):
     if transaction.get("structuring_flag"):
         risk_indicators.append("structuring")
 
-    # Query Foundry IQ for applicable regulations (cited)
+    # Search the regulations knowledge base for applicable rules (cited)
     reg_query = f"KYC AML obligations for {entity_type} entities"
     if risk_indicators:
         reg_query += f" with {', '.join(risk_indicators)} indicators"
@@ -79,7 +80,7 @@ async def invoke(message: A2AMessage):
     regulatory_triggers = [
         {
             "rule": r.get("text", "")[:120],
-            "foundry_iq_citation": r.get("foundry_iq_citation"),
+            "citation": r.get("citation"),
         }
         for r in regulations.get("regulations", [])[:4]
     ]
@@ -104,8 +105,10 @@ async def invoke(message: A2AMessage):
         "agent": "compliance",
         "task_id": message.task_id,
         "status": "completed",
+        **provenance(regulations_rag=regulations),
         "result": {
-            "explanation": explanation,
+            "explanation": explanation["text"],
+            "explanation_source": explanation["source"],
             "risk_summary": {
                 "overall_risk_tier": tier,
                 "overall_risk_score": overall_score,
@@ -117,7 +120,7 @@ async def invoke(message: A2AMessage):
             "regulatory_triggers": regulatory_triggers,
             "recommended_actions": recommended_actions,
             "compliance_gaps": gaps,
-            "foundry_iq_queries": 1,
+            "retrieval_queries": int(regulations.get("source") != "fallback"),
         },
     }
 

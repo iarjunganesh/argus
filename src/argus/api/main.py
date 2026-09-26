@@ -3,32 +3,41 @@ ARGUS API Gateway — FastAPI
 Accepts KYC requests and routes to the Orchestrator.
 """
 
+import os
 import uuid
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from argus.api.schemas import KYCRequest, StatusResponse
+from argus.data_plane import get_data_plane
 from argus.utils.structured_logger import get_logger
 
 logger = get_logger("api.gateway")
 
 app = FastAPI(
     title="ARGUS — Agentic KYC Risk Assessment",
-    description="Multi-agent KYC system powered by Azure AI Foundry + Foundry IQ",
+    description="Multi-agent KYC risk screening with explainable, cited findings",
     version="0.1.0",
 )
 
+
+def cors_origins() -> list[str]:
+    """Browser origins allowed to call the API, from `ARGUS_CORS_ORIGINS` (comma-separated).
+
+    Empty by default: the Gradio UI calls the API from its own server, so no browser origin needs
+    access until a web UI is deployed.
+    """
+    raw = os.getenv("ARGUS_CORS_ORIGINS", "")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins(),
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
-
-# In-memory store for demo (replace with Cosmos DB in production)
-_reports: dict = {}
-_status: dict = {}
 
 
 @app.get("/")
@@ -41,7 +50,7 @@ def root():
 async def assess(request: KYCRequest, background_tasks: BackgroundTasks):
     """Submit a KYC request. Returns report_id immediately; assessment runs async."""
     report_id = f"argus-rpt-{uuid.uuid4().hex[:12]}"
-    _status[report_id] = "processing"
+    await get_data_plane().reports.save_status(report_id, "processing")
 
     logger.info(
         "kyc.request.submitted", extra={"report_id": report_id, "entity": request.entity_name}
@@ -51,19 +60,19 @@ async def assess(request: KYCRequest, background_tasks: BackgroundTasks):
 
 
 @app.get("/api/v1/kyc/report/{report_id}")
-def get_report(report_id: str):
-    if report_id not in _reports:
-        status = _status.get(report_id, "not_found")
+async def get_report(report_id: str):
+    reports = get_data_plane().reports
+    report = await reports.report(report_id)
+    if report is None:
+        status = await reports.status(report_id) or "not_found"
         raise HTTPException(status_code=404, detail=f"Report not found. Status: {status}")
-    return _reports[report_id]
+    return report
 
 
 @app.get("/api/v1/kyc/status/{report_id}", response_model=StatusResponse)
-def get_status(report_id: str):
-    return StatusResponse(
-        report_id=report_id,
-        status=_status.get(report_id, "not_found"),
-    )
+async def get_status(report_id: str):
+    status = await get_data_plane().reports.status(report_id)
+    return StatusResponse(report_id=report_id, status=status or "not_found")
 
 
 @app.get("/api/v1/admin/agents")
@@ -117,16 +126,19 @@ def aggregated_health():
 
 async def _run_assessment(report_id: str, kyc_request: dict):
     """Background task: runs the full orchestration and stores result."""
+    reports = get_data_plane().reports
     try:
         from argus.agents.orchestrator.agent import run_kyc_assessment
 
         logger.info("kyc.assessment.start", extra={"report_id": report_id})
         report = await run_kyc_assessment(kyc_request)
         report["report_id"] = report_id
-        _reports[report_id] = report
-        _status[report_id] = "completed"
+        await reports.save_report(report_id, report)
+        await reports.save_status(report_id, "completed")
         logger.info("kyc.assessment.completed", extra={"report_id": report_id})
     except Exception as e:
-        _status[report_id] = "error"
-        _reports[report_id] = {"report_id": report_id, "error": str(e), "status": "error"}
+        await reports.save_status(report_id, "error")
+        await reports.save_report(
+            report_id, {"report_id": report_id, "error": str(e), "status": "error"}
+        )
         logger.exception("kyc.assessment.error", extra={"report_id": report_id, "error": str(e)})

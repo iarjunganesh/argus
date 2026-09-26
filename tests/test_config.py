@@ -1,6 +1,4 @@
-"""Client factories: which endpoint and credential each one is built with."""
-
-import sys
+"""Azure client factories: which endpoint and credential each one is built with."""
 
 import pytest
 
@@ -18,30 +16,8 @@ class Recorder:
 def test_missing_setting_raises_so_callers_fall_back(monkeypatch):
     monkeypatch.delenv("COSMOS_ENDPOINT", raising=False)
 
-    with pytest.raises(RuntimeError, match="COSMOS_ENDPOINT not set"):
+    with pytest.raises(RuntimeError, match="COSMOS_ENDPOINT is not set"):
         config.get_cosmos_client()
-
-
-def test_llm_client_for_github_models(monkeypatch):
-    monkeypatch.setattr(config, "USE_GITHUB_MODELS", True)
-    monkeypatch.setenv("GITHUB_TOKEN", "gh-test")
-
-    client = config.get_llm_client()
-
-    assert str(client.base_url).startswith("https://models.inference.ai.azure.com")
-    assert client.api_key == "gh-test"
-
-
-def test_llm_client_for_azure_openai(monkeypatch):
-    monkeypatch.setattr(config, "USE_GITHUB_MODELS", False)
-    monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://aoai.example")
-    monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-    monkeypatch.setenv("AZURE_OPENAI_API_KEY", "aoai-test")
-
-    client = config.get_llm_client()
-
-    assert str(client.base_url) == "https://aoai.example/openai/deployments/gpt-4o/"
-    assert client.default_headers["api-version"] == "2025-01-01-preview"
 
 
 def test_cosmos_uses_key_when_given(monkeypatch):
@@ -77,19 +53,13 @@ def test_search_client(monkeypatch):
     assert client.kwargs["credential"].key == "search-test"
 
 
-def test_foundry_client(monkeypatch):
-    monkeypatch.setattr("azure.ai.projects.AIProjectClient", Recorder)
-    monkeypatch.setattr("azure.identity.DefaultAzureCredential", Recorder)
-    monkeypatch.setenv("FOUNDRY_ENDPOINT", "https://foundry.example")
+def test_cosmos_database_name_defaults_and_can_be_set(monkeypatch):
+    class Client:
+        def get_database_client(self, name):
+            return name
 
-    client = config.get_foundry_client()
+    monkeypatch.setattr(config, "get_cosmos_client", Client)
+    assert config.get_cosmos_database() == "argus-db"
 
-    assert client.kwargs["endpoint"] == "https://foundry.example"
-
-
-def test_foundry_client_without_sdk_raises_runtime_error(monkeypatch):
-    monkeypatch.setenv("FOUNDRY_ENDPOINT", "https://foundry.example")
-    monkeypatch.setitem(sys.modules, "azure.ai.projects", None)
-
-    with pytest.raises(RuntimeError, match="azure-ai-projects not installed"):
-        config.get_foundry_client()
+    monkeypatch.setenv("COSMOS_DATABASE", "other-db")
+    assert config.get_cosmos_database() == "other-db"

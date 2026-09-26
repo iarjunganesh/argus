@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 
 import httpx
 
+from argus.agents.provenance import UNAVAILABLE, demo_provenance
+from argus.data_plane import configured_backend
 from argus.utils.env_loader import load_repo_env
 
 load_repo_env(__file__)
@@ -22,16 +24,6 @@ AGENT_URLS = {
     "transaction": os.getenv("TRANSACTION_AGENT_URL", "http://localhost:8004"),
     "compliance": os.getenv("COMPLIANCE_AGENT_URL", "http://localhost:8005"),
 }
-
-SYSTEM_PROMPT = """
-You are ARGUS Orchestrator, a financial compliance reasoning agent.
-You coordinate specialist agents to perform a complete KYC assessment.
-You reason step-by-step, cite evidence from each agent's findings,
-and produce a structured, auditable risk decision.
-You never hallucinate regulatory rules — cite only what the Compliance
-Agent has retrieved from the Foundry IQ regulations knowledge base.
-All citations must include the source document and knowledge base reference.
-"""
 
 
 async def call_agent(agent_name: str, payload: dict, task_id: str) -> dict:
@@ -56,6 +48,7 @@ async def call_agent(agent_name: str, payload: dict, task_id: str) -> dict:
             return {
                 "agent": agent_name,
                 "status": "error",
+                "source": UNAVAILABLE,
                 "error": str(e),
                 "result": None,
             }
@@ -97,21 +90,25 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
         identity_result = {
             "agent": "identity",
             "status": "completed",
+            **demo_provenance(),
             "result": profile.get("identity", {}),
         }
         screening_result = {
             "agent": "screening",
             "status": "completed",
+            **demo_provenance(),
             "result": profile.get("screening", {}),
         }
         corporate_result = {
             "agent": "corporate",
             "status": "completed",
+            **demo_provenance(),
             "result": profile.get("corporate", {}),
         }
         transaction_result = {
             "agent": "transaction",
             "status": "completed",
+            **demo_provenance(),
             "result": profile.get("transaction", {}),
         }
     else:
@@ -198,15 +195,23 @@ async def synthesise_report(
             "has_risk_summary": "risk_summary" in comp_result,
         },
     )
-    foundry_iq_queries = int(screening_result.get("foundry_iq_queries", 0)) + int(
-        compliance_result.get("foundry_iq_queries", 0)
+    retrieval_queries = int(screening_result.get("retrieval_queries", 0)) + int(
+        compliance_result.get("retrieval_queries", 0)
     )
+    agents = {
+        "identity": identity,
+        "screening": screening,
+        "corporate": corporate,
+        "transaction": transaction,
+        "compliance": compliance,
+    }
     explanation = comp_result.get("explanation", "")
 
     report = {
         "report_id": f"argus-rpt-{task_id}",
         "generated_at": datetime.now(UTC).isoformat(),
         "explanation": explanation,
+        "explanation_source": comp_result.get("explanation_source", "fallback"),
         "entity": {
             "name": kyc_request.get("entity_name"),
             "type": kyc_request.get("entity_type"),
@@ -220,8 +225,14 @@ async def synthesise_report(
         "audit_trace": {
             "task_id": task_id,
             "agents_invoked": ["identity", "screening", "corporate", "transaction", "compliance"],
-            "tool_calls": 15,
-            "foundry_iq_queries": foundry_iq_queries,
+            "retrieval_queries": retrieval_queries,
+            "data_backend": configured_backend(),
+            "agent_sources": {name: result.get("source") for name, result in agents.items()},
+            "fallbacks": {
+                name: result["fallbacks"]
+                for name, result in agents.items()
+                if result.get("fallbacks")
+            },
             "identity_status": identity.get("status"),
             "screening_status": screening.get("status"),
             "corporate_status": corporate.get("status"),

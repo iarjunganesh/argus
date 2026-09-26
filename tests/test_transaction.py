@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 import argus.agents.transaction.agent as tx
 from argus.agents.transaction.tools.pattern_detector import pattern_detector
-from argus.agents.transaction.tools.typology_matcher import _mock_typology_hits
+from argus.agents.transaction.tools.typology_matcher import _rule_typology_hits
 
 
 def _msg(payload: dict) -> tx.A2AMessage:
@@ -71,111 +71,63 @@ def test_pattern_detector_without_transactions():
     }
 
 
-def test_mock_typology_for_layering_only():
-    hits = _mock_typology_hits({"layering_flag": True})
+def test_rule_typology_for_layering_only_cites_no_document():
+    hits = _rule_typology_hits({"layering_flag": True})
 
     assert [h["typology"] for h in hits] == ["Layering via multiple counterparties"]
+    assert hits[0]["fatf_ref"] == "" and hits[0]["source"] == "rules"
 
 
-async def test_transaction_monitor_db_hit(monkeypatch):
-    import argus.agents.transaction.tools.transaction_monitor as tm
+async def test_transaction_monitor_reads_the_local_history():
+    from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
 
-    class FakeContainer:
-        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
+    result = await transaction_monitor("Ada Synthetic")
+
+    assert result["count"] == 6
+    assert result["date_range"] == {"from": "2026-03-10", "to": "2026-03-15"}
+    assert result["source"] == "local"
+
+
+async def test_transaction_monitor_without_history():
+    from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
+
+    result = await transaction_monitor("Nobody")
+
+    assert result == {"count": 0, "transactions": [], "date_range": {}, "source": "local"}
+
+
+async def test_typology_matcher_cites_retrieved_guidance(use_plane):
+    from argus.agents.transaction.tools.typology_matcher import typology_matcher
+    from argus.data_plane import Passage
+
+    class Retriever:
+        async def search(self, knowledge_base, query, top=5):
+            assert knowledge_base == "regulations" and "structuring" in query
             return [
-                {"id": "T1", "amount": 5000, "date": "2026-01-10", "counterparty": "Alpha"},
-                {"id": "T2", "amount": 3000, "date": "2026-02-15", "counterparty": "Beta"},
+                Passage("fatf-rec-20", "FATF Recommendation 20", "Report STRs", "fatf.pdf", 0.6)
             ]
 
-    class FakeDB:
-        def get_container_client(self, name):
-            return FakeContainer()
+    use_plane(retriever=Retriever())
+    hits = await typology_matcher({"structuring_flag": True})
 
-    monkeypatch.setattr(tm, "get_cosmos_database", lambda: FakeDB())
-    result = await tm.transaction_monitor("TestCorp")
-    assert result["count"] == 2
-    assert result["date_range"]["from"] == "2026-01-10"
-    assert result["date_range"]["to"] == "2026-02-15"
-
-
-async def test_transaction_monitor_db_empty(monkeypatch):
-    import argus.agents.transaction.tools.transaction_monitor as tm
-
-    class FakeContainer:
-        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
-            return []
-
-    class FakeDB:
-        def get_container_client(self, name):
-            return FakeContainer()
-
-    monkeypatch.setattr(tm, "get_cosmos_database", lambda: FakeDB())
-    result = await tm.transaction_monitor("Nobody")
-    assert result["count"] == 0
-    assert result["transactions"] == []
+    assert hits == [
+        {
+            "typology": "FATF Recommendation 20",
+            "description": "Report STRs",
+            "fatf_ref": "fatf.pdf",
+            "score": 0.6,
+            "source": "retrieved",
+        }
+    ]
 
 
-async def test_typology_matcher_search_hit(monkeypatch):
-    import argus.agents.transaction.tools.typology_matcher as tmt
+async def test_typology_matcher_names_the_rule_when_nothing_is_retrieved(use_plane, unavailable):
+    from argus.agents.transaction.tools.typology_matcher import typology_matcher
 
-    class FakeResult:
-        def __init__(self, hits):
-            self._hits = hits
+    use_plane(retriever=unavailable)
+    hits = await typology_matcher({"structuring_flag": True, "layering_flag": True})
 
-        def __iter__(self):
-            return iter(self._hits)
-
-    class FakeClient:
-        def search(self, search_text=None, top=None):
-            return FakeResult(
-                [
-                    {
-                        "typology_name": "Smurfing",
-                        "description": "Cash structuring below threshold",
-                        "fatf_reference": "FATF-2023-3.2",
-                        "@search.score": 0.95,
-                    }
-                ]
-            )
-
-    monkeypatch.setattr(tmt, "get_search_client", lambda index: FakeClient())
-    hits = await tmt.typology_matcher({"structuring_flag": True})
-    assert hits
-    assert hits[0]["typology"] == "Smurfing"
-
-
-async def test_typology_matcher_regulations_fallback(monkeypatch):
-    import argus.agents.transaction.tools.typology_matcher as tmt
-
-    call_count = 0
-
-    class EmptyResult:
-        def __iter__(self):
-            return iter([])
-
-    class RegResult:
-        def __iter__(self):
-            return iter(
-                [
-                    {
-                        "title": "Layering typology",
-                        "content": "Multi-hop rapid movement",
-                        "source_doc": "FATF-4.1",
-                        "@search.score": 0.88,
-                    }
-                ]
-            )
-
-    class FakeClient:
-        def search(self, search_text=None, top=None):
-            nonlocal call_count
-            call_count += 1
-            return EmptyResult() if call_count == 1 else RegResult()
-
-    monkeypatch.setattr(tmt, "get_search_client", lambda index: FakeClient())
-    hits = await tmt.typology_matcher({"layering_flag": True})
-    assert hits
-    assert "typology" in hits[0]
+    assert [h["source"] for h in hits] == ["rules", "rules"]
 
 
 def test_pattern_detector_structuring():
@@ -214,23 +166,27 @@ async def test_typology_matcher_without_flags_returns_nothing():
     assert await typology_matcher.typology_matcher({}) == []
 
 
-async def test_typology_matcher_falls_back_to_mock_hits(monkeypatch):
-    import argus.agents.transaction.tools.typology_matcher as tmt
+async def test_transaction_monitor_falls_back_when_the_store_is_down(use_plane, unavailable):
+    from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
 
-    def no_search(index):
-        raise RuntimeError("no search")
+    use_plane(entities=unavailable)
+    result = await transaction_monitor("Ada Synthetic")
 
-    monkeypatch.setattr(tmt, "get_search_client", no_search)
-
-    assert await tmt.typology_matcher({"structuring_flag": True})
+    assert result == {"count": 0, "transactions": [], "date_range": {}, "source": "fallback"}
 
 
-async def test_transaction_monitor_falls_back_to_mock_without_cosmos(monkeypatch):
-    import argus.agents.transaction.tools.transaction_monitor as tm
+async def test_agent_reports_its_provenance(use_plane, unavailable):
+    response = await tx.invoke(_msg({"entity_name": "Ada Synthetic"}))
+    assert response["source"] == "computed" and response["fallbacks"] == []
+    assert response["result"]["structuring_flag"] is True
 
-    def no_db():
-        raise RuntimeError("no db")
+    use_plane(entities=unavailable)
+    response = await tx.invoke(_msg({"entity_name": "Ada Synthetic"}))
+    assert response["source"] == "fallback"
+    assert response["fallbacks"] == ["transaction_monitor"]
 
-    monkeypatch.setattr(tm, "get_cosmos_database", no_db)
 
-    assert (await tm.transaction_monitor("Someone"))["source"] == "mock"
+async def test_demo_profile_is_labelled():
+    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
+
+    assert (await tx.invoke(_msg(payload)))["source"] == "demo_profile"

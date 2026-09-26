@@ -1,31 +1,14 @@
 """
-regulations_rag — Foundry IQ powered tool
-Queries KB-Regulations through the Foundry IQ knowledge base API for applicable
-FATF/4AMLD/6AMLD/GDPR text.
-Returns cited, grounded regulatory references — no hallucination.
+regulations_rag — searches the regulations knowledge base for the obligations that apply.
+Every returned rule carries a citation to its source document and section.
 """
 
-from argus.config import FOUNDRY_IQ_KB_REGULATIONS, get_foundry_client
+from argus.data_plane import DataPlaneUnavailable, get_data_plane
+from argus.utils.structured_logger import get_logger
 
+logger = get_logger("tool.regulations_rag")
 
-def _item_field(item, name: str, default=None):
-    if isinstance(item, dict):
-        return item.get(name, default)
-    return getattr(item, name, default)
-
-
-def _citation_field(citation, name: str, default=None):
-    if citation is None:
-        return default
-    if isinstance(citation, dict):
-        return citation.get(name, default)
-    return getattr(citation, name, default)
-
-
-def _normalize_relevance(score: float) -> float:
-    if score <= 1:
-        return round(max(score, 0.0), 3)
-    return round(min(score / 4.0, 1.0), 3)
+MATCH_THRESHOLD = 0.15  # minimum retrieval score, 0 to 1, that counts as relevant
 
 
 async def regulations_rag(
@@ -34,63 +17,43 @@ async def regulations_rag(
     entity_type: str,
     risk_indicators: list[str],
 ) -> dict:
-    """
-    Query Foundry IQ KB-Regulations for relevant regulatory requirements.
-    All returned text includes citations to the source document and article.
-    """
     enriched_query = (
         f"{query} jurisdiction {jurisdiction} {entity_type} {' '.join(risk_indicators)}"
     )
-
+    plane = get_data_plane()
     try:
-        client = get_foundry_client()
-        results = client.knowledge_bases.query(
-            knowledge_base_name=FOUNDRY_IQ_KB_REGULATIONS,
-            query=enriched_query,
-            top=8,
-            include_citations=True,
-        )
-
-        regulations = []
-        for item in _item_field(results, "items", []):
-            score = float(_item_field(item, "relevance_score", 0) or 0)
-            citation = _item_field(item, "citation")
-            if score >= 0.15:
-                regulations.append(
-                    {
-                        "text": _item_field(item, "content", ""),
-                        "relevance": _normalize_relevance(score),
-                        "foundry_iq_citation": {
-                            "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
-                            "document": _citation_field(citation, "document_title", "unknown"),
-                            "article": _citation_field(
-                                citation, "section", _citation_field(citation, "article", "unknown")
-                            ),
-                            "snippet_id": _citation_field(
-                                citation, "snippet_id", _item_field(item, "id")
-                            ),
-                        },
-                    }
-                )
-
-        if not regulations:
-            # Always return at least the core FATF CDD requirement
-            regulations = _fallback_regulations()
-
+        passages = await plane.retriever.search("regulations", enriched_query, top=8)
+    except DataPlaneUnavailable as exc:
+        logger.warning("tool.fallback", extra={"tool": "regulations_rag", "reason": str(exc)})
         return {
-            "regulations": regulations,
+            "regulations": _baseline_regulations(),
             "query": enriched_query,
-            "source": "foundry_iq",
-            "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
+            "source": "fallback",
         }
 
-    except (ImportError, KeyError, RuntimeError, AttributeError, TypeError, ValueError) as e:
-        print(f"[regulations_rag] Foundry IQ unavailable: {e}. Using mock.")
-        return _mock_regulations_response()
+    regulations = [
+        {
+            "text": p.content,
+            "relevance": p.score,
+            "citation": {
+                "knowledge_base": "regulations",
+                "document": p.source_doc,
+                "article": p.title,
+                "snippet_id": p.id,
+            },
+        }
+        for p in passages
+        if p.score >= MATCH_THRESHOLD
+    ]
+    return {
+        "regulations": regulations or _baseline_regulations(),
+        "query": enriched_query,
+        "source": plane.backend,
+    }
 
 
-def _fallback_regulations() -> list:
-    """Returns core FATF CDD text as a baseline when no strong matches found."""
+def _baseline_regulations() -> list:
+    """Core FATF customer due diligence text, used when nothing more specific is retrieved."""
     return [
         {
             "text": (
@@ -100,34 +63,11 @@ def _fallback_regulations() -> list:
                 "is suspicion of money laundering or terrorist financing."
             ),
             "relevance": 0.75,
-            "foundry_iq_citation": {
-                "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
+            "citation": {
+                "knowledge_base": "regulations",
                 "document": "fatf-40-recommendations.pdf",
                 "article": "Recommendation 10 — Customer Due Diligence",
                 "snippet_id": "fatf-rec-10",
             },
         }
     ]
-
-
-def _mock_regulations_response() -> dict:
-    """Mock for local development before Foundry IQ is provisioned."""
-    return {
-        "regulations": [
-            {
-                "text": (
-                    "FATF Recommendation 12: Countries should take measures to prevent the "
-                    "misuse of legal persons for money laundering or terrorist financing."
-                ),
-                "relevance": 0.91,
-                "foundry_iq_citation": {
-                    "knowledge_base": "mock",
-                    "document": "fatf-40-recommendations.pdf",
-                    "article": "Recommendation 12",
-                    "snippet_id": "fatf-rec-12",
-                },
-            }
-        ],
-        "source": "mock",
-        "note": "Foundry IQ not yet provisioned. Run: make index-knowledge-bases",
-    }
