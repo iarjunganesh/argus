@@ -21,7 +21,9 @@ jobs:
   quality:
     if: github.event_name == 'push'
     uses: ./.github/workflows/ci.yml
-    secrets: inherit
+    # Pass only what CI uses; DEPS_BOT_TOKEN must not reach the CI jobs.
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   validate:
     runs-on: ubuntu-latest
@@ -67,11 +69,15 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
         run: uv run --locked python scripts/ci/release_notes.py "$RELEASE_TAG" --output .tmp/release-notes.md
-      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          body_path: .tmp/release-notes.md
-          fail_on_unmatched_files: true
-          prerelease: ${{ contains(needs.validate.outputs.tag, '-') }}
+      # The runner's own gh CLI publishes, so no third-party action holds contents: write.
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          prerelease=()
+          case "$RELEASE_TAG" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag             --title "$RELEASE_TAG" --notes-file .tmp/release-notes.md "${prerelease[@]}"
 
   refresh-deps:
     needs: [validate, publish]
@@ -136,7 +142,7 @@ jobs:
           fi
       - name: Open the dependency review PR even when checks fail
         if: always()
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.DEPS_BOT_TOKEN }}
           branch: deps/after-${{ needs.validate.outputs.tag }}
@@ -175,7 +181,7 @@ jobs:
           .venv/bin/python scripts/ci/check_versions.py --check-python-wheels "$PYTHON_MINOR"
           uv sync --locked --python "$PYTHON_MINOR" --no-build --no-install-project
       - name: Open interpreter PR for the full CI gate
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.DEPS_BOT_TOKEN }}
           branch: deps/python-${{ needs.refresh-deps.outputs.python }}
