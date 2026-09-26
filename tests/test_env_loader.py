@@ -40,3 +40,21 @@ def test_no_env_file_anywhere_changes_nothing(tmp_path, monkeypatch):
     env_loader.load_repo_env(tmp_path)
 
     assert dict(env_loader.os.environ) == before
+
+
+def test_modules_that_read_settings_load_the_repository_env_first(monkeypatch):
+    """The gateway, the data plane and the model factory each load `.env` when imported.
+
+    Any of them can be the first module a service imports, so each must load it; otherwise a
+    setting in `.env` (backend, model provider, CORS origins) is silently ignored.
+    """
+    import importlib.util
+
+    loaded = []
+    monkeypatch.setattr(env_loader, "load_repo_env", lambda start: loaded.append(start))
+    for name in ("argus.data_plane", "argus.models", "argus.api.main"):
+        # A fresh copy of each module, run without replacing the one the other tests use.
+        spec = importlib.util.find_spec(name)
+        spec.loader.exec_module(importlib.util.module_from_spec(spec))
+
+    assert [env_loader.Path(p).parent.name for p in loaded] == ["data_plane", "argus", "api"]

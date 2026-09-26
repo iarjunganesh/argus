@@ -11,7 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from argus.api.schemas import KYCRequest, StatusResponse
 from argus.data_plane import get_data_plane
+from argus.utils.env_loader import load_repo_env
 from argus.utils.structured_logger import get_logger
+
+load_repo_env(__file__)  # before the CORS middleware reads ARGUS_CORS_ORIGINS
 
 logger = get_logger("api.gateway")
 
