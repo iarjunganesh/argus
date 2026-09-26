@@ -51,7 +51,7 @@ Tool results carry a `source` field that reads `mock` when a fallback ran.
 | Azure OpenAI GPT-4o, or GitHub Models (`USE_GITHUB_MODELS=true`) | Compliance explanation | Fixed template text |
 | Cosmos DB | Customer lookup, registry, UBO, PEP, transactions | Mock records |
 | Azure AI Search | Transaction typology matching | Mock result |
-| Azure Document Intelligence | OCR | Mock fields |
+| Azure Document Intelligence | OCR | Mock fields. **Also the path taken in every run today**: `ocr_processor` imports `azure.ai.formrecognizer`, which is not a project dependency. |
 | Foundry IQ knowledge bases (regulations, sanctions, adverse media) | `regulations_rag`, `sanctions_checker`, `adverse_media_scanner` | Mock results. **This is the path taken in every run today**: the tools call `AIProjectClient.knowledge_bases.query`, which does not exist in `azure-ai-projects` 1.0.0 or 2.6.1. |
 
 Configuration comes from environment variables loaded from `.env` (see `.env.example`).
@@ -67,4 +67,5 @@ populates the search indexes.
 ## Tests
 
 `tests/` runs without any cloud credentials: external clients are mocked or fall back. Run
-`python -m pytest` from the repository root.
+`uv run pytest --cov` from the repository root. CI (`.github/workflows/ci.yml`) also runs ruff,
+mypy, a dependency audit, a secret scan and the documentation checks.

@@ -6,27 +6,28 @@ https://www.w3.org/TR/WCAG21/#contrast-minimum (Success Criterion 1.4.3).
 """
 
 from __future__ import annotations
-from enum import Enum
+
 import re
+from enum import Enum
 
 
 class WCAGLevel(Enum):
-    AA = 4.5       # Normal text minimum
-    AA_LARGE = 3.0 # Large text (18pt+ or 14pt bold)
-    AAA = 7.0      # Enhanced
+    AA = 4.5  # Normal text minimum
+    AA_LARGE = 3.0  # Large text (18pt+ or 14pt bold)
+    AAA = 7.0  # Enhanced
 
 
 # Risk tier palette — these are what ARGUS renders for every report.
 ARGUS_PALETTE = {
-    "risk_low":       ("#2ecc71", "#ffffff"),
-    "risk_medium":    ("#f39c12", "#ffffff"),
-    "risk_high":      ("#e74c3c", "#ffffff"),
-    "risk_critical":  ("#8e1a0e", "#ffffff"),
-    "accent_blue":    ("#1d4ed8", "#ffffff"),
-    "accent_teal":    ("#0f766e", "#ffffff"),
-    "accent_amber":   ("#a16207", "#ffffff"),
-    "subdued_text":   ("#64748b", "#ffffff"),
-    "subdued_dark":   ("#475569", "#ffffff"),
+    "risk_low": ("#2ecc71", "#ffffff"),
+    "risk_medium": ("#f39c12", "#ffffff"),
+    "risk_high": ("#e74c3c", "#ffffff"),
+    "risk_critical": ("#8e1a0e", "#ffffff"),
+    "accent_blue": ("#1d4ed8", "#ffffff"),
+    "accent_teal": ("#0f766e", "#ffffff"),
+    "accent_amber": ("#a16207", "#ffffff"),
+    "subdued_text": ("#64748b", "#ffffff"),
+    "subdued_dark": ("#475569", "#ffffff"),
 }
 
 

@@ -3,10 +3,12 @@ Generate synthetic adverse media news articles.
 Uses templates — no real entities, no GPT-4o API calls needed.
 Output: data/synthetic/adverse_media.jsonl
 """
+
 import json
 import random
-from faker import Faker
 from pathlib import Path
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(77)
@@ -33,29 +35,44 @@ POSITIVE_TEMPLATES = [
     "Industry awards recognise {company} for compliance excellence.",
 ]
 
-CRIMES      = ["money laundering", "fraud", "bribery", "tax evasion", "sanctions evasion", "procurement irregularities"]
-REGULATORS  = ["Financial Intelligence Unit", "Central Bank", "SEC equivalent", "Anti-Corruption Bureau", "Tax Authority"]
+CRIMES = [
+    "money laundering",
+    "fraud",
+    "bribery",
+    "tax evasion",
+    "sanctions evasion",
+    "procurement irregularities",
+]
+REGULATORS = [
+    "Financial Intelligence Unit",
+    "Central Bank",
+    "SEC equivalent",
+    "Anti-Corruption Bureau",
+    "Tax Authority",
+]
+
 
 def generate_article(negative: bool = True) -> dict:
-    templates  = NEGATIVE_TEMPLATES if negative else POSITIVE_TEMPLATES
-    template   = random.choice(templates)
+    templates = NEGATIVE_TEMPLATES if negative else POSITIVE_TEMPLATES
+    template = random.choice(templates)
     article_text = template.format(
-        company   = fake.company(),
-        person    = fake.name(),
-        crime     = random.choice(CRIMES),
-        regulator = random.choice(REGULATORS),
-        country   = fake.country(),
-        year      = random.randint(2018, 2025),
+        company=fake.company(),
+        person=fake.name(),
+        crime=random.choice(CRIMES),
+        regulator=random.choice(REGULATORS),
+        country=fake.country(),
+        year=random.randint(2018, 2025),
     )
     return {
-        "article_id":   f"NEWS-{fake.uuid4()[:8].upper()}",
-        "headline":     article_text,
-        "body":         article_text + " " + fake.paragraph(nb_sentences=5),
-        "source":       f"Synthetic {fake.company()} News",
+        "article_id": f"NEWS-{fake.uuid4()[:8].upper()}",
+        "headline": article_text,
+        "body": article_text + " " + fake.paragraph(nb_sentences=5),
+        "source": f"Synthetic {fake.company()} News",
         "published_at": fake.date_between(start_date="-5y", end_date="today").isoformat(),
-        "sentiment":    "negative" if negative else "neutral",
-        "tags":         [random.choice(CRIMES)] if negative else ["business"],
+        "sentiment": "negative" if negative else "neutral",
+        "tags": [random.choice(CRIMES)] if negative else ["business"],
     }
+
 
 def main():
     print("Generating synthetic adverse media corpus...")
@@ -67,6 +84,7 @@ def main():
         for _ in range(600):
             f.write(json.dumps(generate_article(negative=False)) + "\n")
     print(f"Generated 1,000 articles → {OUTPUT_FILE}")
+
 
 if __name__ == "__main__":
     main()

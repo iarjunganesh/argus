@@ -6,6 +6,7 @@ in one place without touching rendering logic.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 

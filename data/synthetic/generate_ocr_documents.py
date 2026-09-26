@@ -27,47 +27,58 @@ Optional env vars:
     OCR_STORAGE_CONTAINER             Container name (default: argus-ocr-docs)
     OCR_STORAGE_PREFIX                Blob prefix   (default: ocr-documents)
 """
+
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import random
 import textwrap
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from faker import Faker
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 try:
     from reportlab.lib.colors import HexColor
-    from reportlab.lib.pagesizes import A4, letter, landscape
+    from reportlab.lib.pagesizes import A4, landscape, letter
     from reportlab.pdfgen import canvas as rl_canvas
+
     _REPORTLAB = True
 except Exception:
-    HexColor = None          # type: ignore[assignment]
-    A4 = letter = None       # type: ignore[assignment]
-    landscape = None         # type: ignore[assignment]
-    rl_canvas = None         # type: ignore[assignment]
+    HexColor = None  # type: ignore[assignment]
+    A4 = letter = None  # type: ignore[assignment]
+    landscape = None  # type: ignore[assignment]
+    rl_canvas = None  # type: ignore[assignment]
     _REPORTLAB = False
 
 DATA_DIR = Path(__file__).parent
-DEFAULT_OUTPUT_DIR = DATA_DIR / "ocr_documents"          # images / PDFs
-DEFAULT_MANIFEST    = DATA_DIR / "ocr_documents_manifest.jsonl"  # stays in data/synthetic/
+DEFAULT_OUTPUT_DIR = DATA_DIR / "ocr_documents"  # images / PDFs
+DEFAULT_MANIFEST = DATA_DIR / "ocr_documents_manifest.jsonl"  # stays in data/synthetic/
 DEFAULT_CONTAINER = os.getenv("OCR_STORAGE_CONTAINER", "argus-ocr-docs")
 DEFAULT_PREFIX = os.getenv("OCR_STORAGE_PREFIX", "ocr-documents")
-DEFAULT_CONN = os.getenv("OCR_STORAGE_CONNECTION_STRING") or os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+DEFAULT_CONN = os.getenv("OCR_STORAGE_CONNECTION_STRING") or os.getenv(
+    "AZURE_STORAGE_CONNECTION_STRING"
+)
 
 # ── Quality definitions ───────────────────────────────────────────────────────
 QUALITY_STYLES: dict[str, dict] = {
-    "clean":          {"noise": 0,   "blur": 0.0, "contrast": 1.00, "rotate": 0.0,  "brightness": 1.00},
-    "slightly_noisy": {"noise": 18,  "blur": 0.2, "contrast": 0.95, "rotate": 0.0,  "brightness": 0.98},
-    "degraded":       {"noise": 34,  "blur": 0.5, "contrast": 0.85, "rotate": -2.0, "brightness": 0.92},
-    "low_contrast":   {"noise": 24,  "blur": 0.3, "contrast": 0.70, "rotate": 1.0,  "brightness": 0.88},
-    "photocopy":      {"noise": 44,  "blur": 0.8, "contrast": 0.65, "rotate": 0.0,  "brightness": 0.80},
-    "skewed":         {"noise": 20,  "blur": 0.3, "contrast": 0.88, "rotate": -4.5, "brightness": 0.90},
+    "clean": {"noise": 0, "blur": 0.0, "contrast": 1.00, "rotate": 0.0, "brightness": 1.00},
+    "slightly_noisy": {
+        "noise": 18,
+        "blur": 0.2,
+        "contrast": 0.95,
+        "rotate": 0.0,
+        "brightness": 0.98,
+    },
+    "degraded": {"noise": 34, "blur": 0.5, "contrast": 0.85, "rotate": -2.0, "brightness": 0.92},
+    "low_contrast": {"noise": 24, "blur": 0.3, "contrast": 0.70, "rotate": 1.0, "brightness": 0.88},
+    "photocopy": {"noise": 44, "blur": 0.8, "contrast": 0.65, "rotate": 0.0, "brightness": 0.80},
+    "skewed": {"noise": 20, "blur": 0.3, "contrast": 0.88, "rotate": -4.5, "brightness": 0.90},
 }
 
 DOC_TYPES = ("passport", "drivers_license", "id_card", "tax_invoice")
@@ -102,7 +113,8 @@ class DocFactory:
 
     def _font(self, size: int, bold: bool = False) -> ImageFont.ImageFont:
         candidates = (
-            ["arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf"] if bold
+            ["arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf"]
+            if bold
             else ["arial.ttf", "Arial.ttf", "DejaVuSans.ttf"]
         )
         for name in candidates:
@@ -133,7 +145,9 @@ class DocFactory:
         if s["brightness"] != 1.0:
             img = ImageEnhance.Brightness(img).enhance(s["brightness"])
         if s["rotate"] != 0.0:
-            img = img.rotate(s["rotate"], resample=Image.Resampling.BICUBIC, expand=True, fillcolor="white")
+            img = img.rotate(
+                s["rotate"], resample=Image.Resampling.BICUBIC, expand=True, fillcolor="white"
+            )
         return img
 
     # ── PNG renderer ─────────────────────────────────────────────────────────
@@ -171,8 +185,12 @@ class DocFactory:
             y += 31
 
         draw.rectangle([14, h - 52, w - 14, h - 14], outline=accent, width=2)
-        draw.text((24, h - 42), "SYNTHETIC DOCUMENT — FOR OCR DEMOS ONLY — NOT A REAL DOCUMENT",
-                  font=self._font(13), fill=accent)
+        draw.text(
+            (24, h - 42),
+            "SYNTHETIC DOCUMENT — FOR OCR DEMOS ONLY — NOT A REAL DOCUMENT",
+            font=self._font(13),
+            fill=accent,
+        )
 
         img = self._apply_quality(img, quality)
         path = self.output_dir / file_name
@@ -208,7 +226,7 @@ class DocFactory:
         c.setFillColorRGB(0.09, 0.09, 0.09)
         y = h - 92
         for line in lines:
-            for chunk in (textwrap.wrap(line, 88) or [line]):
+            for chunk in textwrap.wrap(line, 88) or [line]:
                 if ": " in chunk:
                     lbl, rest = chunk.split(": ", 1)
                     c.setFont("Helvetica-Bold", 10)
@@ -247,8 +265,14 @@ class DocFactory:
             f"Expiry date: {exp}",
             f"Issuing country: {iss}",
         ]
-        return lines, {"full_name": name, "date_of_birth": dob, "nationality": nat,
-                       "passport_number": num, "expiry_date": exp, "issuing_country": iss}
+        return lines, {
+            "full_name": name,
+            "date_of_birth": dob,
+            "nationality": nat,
+            "passport_number": num,
+            "expiry_date": exp,
+            "issuing_country": iss,
+        }
 
     def _license_data(self) -> tuple[list[str], dict]:
         name = self.fake.name()
@@ -265,8 +289,14 @@ class DocFactory:
             f"Address: {addr}",
             f"Issuing state: {state}",
         ]
-        return lines, {"full_name": name, "date_of_birth": dob, "licence_number": num,
-                       "expiry_date": exp, "address": addr, "issuing_state": state}
+        return lines, {
+            "full_name": name,
+            "date_of_birth": dob,
+            "licence_number": num,
+            "expiry_date": exp,
+            "address": addr,
+            "issuing_state": state,
+        }
 
     def _id_card_data(self) -> tuple[list[str], dict]:
         name = self.fake.name()
@@ -281,8 +311,13 @@ class DocFactory:
             f"ID number: {num}",
             f"Expiry date: {exp}",
         ]
-        return lines, {"full_name": name, "date_of_birth": dob, "nationality": nat,
-                       "id_number": num, "expiry_date": exp}
+        return lines, {
+            "full_name": name,
+            "date_of_birth": dob,
+            "nationality": nat,
+            "id_number": num,
+            "expiry_date": exp,
+        }
 
     def _invoice_data(self) -> tuple[list[str], dict]:
         company = self.fake.company()
@@ -299,27 +334,59 @@ class DocFactory:
             f"Date: {date}",
             f"Amount: USD {amount}",
         ]
-        return lines, {"entity_name": company, "tax_id": tax_id, "address": addr,
-                       "invoice_number": inv_num, "date": date, "amount": f"USD {amount}"}
+        return lines, {
+            "entity_name": company,
+            "tax_id": tax_id,
+            "address": addr,
+            "invoice_number": inv_num,
+            "date": date,
+            "amount": f"USD {amount}",
+        }
 
-    _DOC_META: dict[str, dict] = {
-        "passport":       {"title": "PASSENGER PASSPORT",   "accent": "#1d4ed8", "size": (900,  580), "entity_type": "individual", "ps": "A4"},
-        "drivers_license":{"title": "DRIVER'S LICENSE",     "accent": "#0f766e", "size": (1020, 620), "entity_type": "individual", "ps": "letter"},
-        "id_card":        {"title": "NATIONAL ID CARD",     "accent": "#7c3aed", "size": (860,  530), "entity_type": "individual", "ps": "A4"},
-        "tax_invoice":    {"title": "TAX INVOICE",          "accent": "#b45309", "size": (1200, 820), "entity_type": "corporate",  "ps": "letter_landscape"},
+    _DOC_META: ClassVar[dict[str, dict]] = {
+        "passport": {
+            "title": "PASSENGER PASSPORT",
+            "accent": "#1d4ed8",
+            "size": (900, 580),
+            "entity_type": "individual",
+            "ps": "A4",
+        },
+        "drivers_license": {
+            "title": "DRIVER'S LICENSE",
+            "accent": "#0f766e",
+            "size": (1020, 620),
+            "entity_type": "individual",
+            "ps": "letter",
+        },
+        "id_card": {
+            "title": "NATIONAL ID CARD",
+            "accent": "#7c3aed",
+            "size": (860, 530),
+            "entity_type": "individual",
+            "ps": "A4",
+        },
+        "tax_invoice": {
+            "title": "TAX INVOICE",
+            "accent": "#b45309",
+            "size": (1200, 820),
+            "entity_type": "corporate",
+            "ps": "letter_landscape",
+        },
     }
 
     def _pagesize(self, key: str) -> Any:
-        if key == "A4":      return A4
-        if key == "letter":  return letter
+        if key == "A4":
+            return A4
+        if key == "letter":
+            return letter
         return landscape(letter) if landscape else letter
 
     def _data_for(self, doc_type: str) -> tuple[list[str], dict]:
         return {
-            "passport":        self._passport_data,
+            "passport": self._passport_data,
             "drivers_license": self._license_data,
-            "id_card":         self._id_card_data,
-            "tax_invoice":     self._invoice_data,
+            "id_card": self._id_card_data,
+            "tax_invoice": self._invoice_data,
         }[doc_type]()
 
     # ── Full matrix ───────────────────────────────────────────────────────────
@@ -344,13 +411,23 @@ class DocFactory:
                         size=meta["size"],
                         quality=quality,
                     )
-                    records.append(OCRDocument(
-                        doc_id=path_png.stem, doc_type=doc_type, layout="png",
-                        quality=quality, format="png", file_name=fname_png,
-                        local_path=str(path_png), blob_name=f"{prefix}/{fname_png}",
-                        blob_url=None, entity_name=entity_name,
-                        entity_type=meta["entity_type"], jurisdiction=jur, ground_truth=gt,
-                    ))
+                    records.append(
+                        OCRDocument(
+                            doc_id=path_png.stem,
+                            doc_type=doc_type,
+                            layout="png",
+                            quality=quality,
+                            format="png",
+                            file_name=fname_png,
+                            local_path=str(path_png),
+                            blob_name=f"{prefix}/{fname_png}",
+                            blob_url=None,
+                            entity_name=entity_name,
+                            entity_type=meta["entity_type"],
+                            jurisdiction=jur,
+                            ground_truth=gt,
+                        )
+                    )
                     print(f"  ✓ {fname_png}")
                 except Exception as exc:
                     print(f"  ✗ {fname_png}: {exc}")
@@ -369,22 +446,33 @@ class DocFactory:
                             accent=meta["accent"],
                             pagesize=self._pagesize(meta["ps"]),
                         )
-                        records.append(OCRDocument(
-                            doc_id=path_pdf.stem, doc_type=doc_type, layout="pdf",
-                            quality=quality, format="pdf", file_name=fname_pdf,
-                            local_path=str(path_pdf), blob_name=f"{prefix}/{fname_pdf}",
-                            blob_url=None, entity_name=ename_pdf,
-                            entity_type=meta["entity_type"], jurisdiction=jur, ground_truth=gt_pdf,
-                        ))
+                        records.append(
+                            OCRDocument(
+                                doc_id=path_pdf.stem,
+                                doc_type=doc_type,
+                                layout="pdf",
+                                quality=quality,
+                                format="pdf",
+                                file_name=fname_pdf,
+                                local_path=str(path_pdf),
+                                blob_name=f"{prefix}/{fname_pdf}",
+                                blob_url=None,
+                                entity_name=ename_pdf,
+                                entity_type=meta["entity_type"],
+                                jurisdiction=jur,
+                                ground_truth=gt_pdf,
+                            )
+                        )
                         print(f"  ✓ {fname_pdf}")
                     except Exception as exc:
                         print(f"  ✗ {fname_pdf}: {exc}")
                 else:
-                    print(f"  [skip PDF] reportlab not installed — run: pip install reportlab")
+                    print("  [skip PDF] reportlab not installed — run: pip install reportlab")
         return records
 
 
 # ── Blob upload ───────────────────────────────────────────────────────────────
+
 
 def upload_documents(
     records: list[OCRDocument],
@@ -395,10 +483,8 @@ def upload_documents(
 
     svc = BlobServiceClient.from_connection_string(connection_string)
     container = svc.get_container_client(container_name)
-    try:
+    with contextlib.suppress(Exception):
         container.create_container()
-    except Exception:
-        pass
 
     for record in records:
         ct = "application/pdf" if record.format == "pdf" else "image/png"
@@ -412,6 +498,7 @@ def upload_documents(
 
 # ── Manifest ──────────────────────────────────────────────────────────────────
 
+
 def write_manifest(records: list[OCRDocument], manifest_path: Path) -> None:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with manifest_path.open("w", encoding="utf-8") as fh:
@@ -421,29 +508,38 @@ def write_manifest(records: list[OCRDocument], manifest_path: Path) -> None:
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate synthetic OCR documents (all doc types × all quality levels × PNG + PDF)"
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
-    parser.add_argument("--manifest", default=None,
-                        help="Path for manifest JSONL (default: data/synthetic/ocr_documents_manifest.jsonl)")
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help="Path for manifest JSONL (default: data/synthetic/ocr_documents_manifest.jsonl)",
+    )
     parser.add_argument("--seed", type=int, default=20260608)
-    parser.add_argument("--no-upload", action="store_true",
-                        help="Skip Azure Blob upload even if a connection string is set")
+    parser.add_argument(
+        "--no-upload",
+        action="store_true",
+        help="Skip Azure Blob upload even if a connection string is set",
+    )
     parser.add_argument("--container", default=DEFAULT_CONTAINER)
     parser.add_argument("--prefix", default=DEFAULT_PREFIX)
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    manifest_path = (Path(args.manifest) if args.manifest else DEFAULT_MANIFEST)
+    manifest_path = Path(args.manifest) if args.manifest else DEFAULT_MANIFEST
 
     n_types = len(DOC_TYPES)
     n_quality = len(QUALITY_STYLES)
     n_formats = 2 if _REPORTLAB else 1
-    print(f"Generating {n_types} doc types × {n_quality} quality levels × {n_formats} formats "
-          f"= {n_types * n_quality * n_formats} documents …")
+    print(
+        f"Generating {n_types} doc types × {n_quality} quality levels × {n_formats} formats "
+        f"= {n_types * n_quality * n_formats} documents …"
+    )
 
     factory = DocFactory(output_dir=output_dir, seed=args.seed)
     records = factory.create_documents(prefix=args.prefix)

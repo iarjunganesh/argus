@@ -19,9 +19,22 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   request flow, the demo-profile shortcut and every service fallback, checked against the code.
 - **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
   code review rather than from the old README.
+- **A CI quality gate** (`.github/workflows/ci.yml`) that fails a pull request on: ruff lint or
+  format drift, mypy errors, a failing test or coverage below the measured floor (74%), a known
+  vulnerability in the locked dependency graph (pip-audit), a committed secret (gitleaks), or
+  documentation drift (markdownlint plus `scripts/check_docs.py`: broken links, unfinished
+  markers, Python version disagreement, unlisted docs, tracked local files).
+- **Codecov configuration** (`codecov.yml`): the project status fails on a coverage drop of more
+  than 0.5 points; the patch status is informational until coverage reaches 100%.
+- **Reproducible environments:** `pyproject.toml` with dependency groups, `uv.lock` and
+  `.python-version` (3.14). CI, local runs and the Windows demo script use the same lock.
 
 ### Changed
 
+- **Python 3.14 and the latest dependency releases.** This crosses majors (openai 3.x,
+  azure-search-documents 12.x, azure-ai-projects 2.x). Checked: the suite passes unchanged on
+  the new lock.
+- **Line endings are normalised to LF** by `.gitattributes`; PowerShell scripts keep CRLF.
 - **Hackathon material is archived, not deleted.** Submission runbooks, narration, slides, the
   original architecture spec and the v1 changelog moved to `archive/hackathon-2026/` with
   `git mv`, so their history is preserved.
@@ -40,6 +53,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **Unused dependencies:** semantic-kernel, pandas, numpy, networkx, tenacity, rich,
+  asyncio-throttle, opentelemetry-sdk, azure-monitor-opentelemetry, azure-ai-inference,
+  azure-ai-documentintelligence, python-multipart, pytest-httpx, requests. Checked: nothing imports
+  them.
+- **`requirements.txt`, `.coveragerc` and `python-tests.yml`**, replaced by `pyproject.toml`,
+  `uv.lock` and `ci.yml`.
 - **Generated files are no longer tracked:** `coverage.xml` and `data/reports_batch.jsonl`.
 
 ### Known issues
@@ -47,3 +66,5 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **Foundry IQ queries never reach Foundry IQ.** `regulations_rag`, `sanctions_checker` and
   `adverse_media_scanner` call `AIProjectClient.knowledge_bases.query`, which does not exist in
   `azure-ai-projects` 1.0.0 or 2.6.1 (checked 2026-09-26). Every call falls back to mock results.
+- **OCR never reaches Document Intelligence.** `ocr_processor` imports `azure.ai.formrecognizer`,
+  which is not a project dependency, so every call returns mock fields.

@@ -16,14 +16,15 @@ Key differences from the full Azure-backed edition:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 
 
 class LLMTier(Enum):
-    FULL = "gpt-4o"            # Enterprise: best reasoning, highest cost
+    FULL = "gpt-4o"  # Enterprise: best reasoning, highest cost
     COMMUNITY = "gpt-4o-mini"  # Community: fast, low cost, still capable
-    LOCAL = "ollama/llama3"    # Fully local: no API calls, for air-gapped use
+    LOCAL = "ollama/llama3"  # Fully local: no API calls, for air-gapped use
 
 
 class OCRBackend(Enum):
@@ -47,6 +48,7 @@ class CommunityConfig:
     Runtime configuration for Community Edition.
     Defaults are chosen to require zero cloud credentials.
     """
+
     llm_tier: LLMTier = LLMTier.COMMUNITY
     ocr_backend: OCRBackend = OCRBackend.TESSERACT
     vector_backend: VectorBackend = VectorBackend.QDRANT
@@ -66,13 +68,28 @@ class CommunityConfig:
     open_corpus_path: str = "community/knowledge_base/"
 
     # NGO onboarding — relaxed defaults for known low-risk entity types
-    ngo_jurisdiction_allowlist: list[str] = field(default_factory=lambda: [
-        "DE", "NL", "SE", "NO", "DK", "FI", "CH", "AT", "FR", "GB",
-        "CA", "AU", "NZ", "JP", "SG",
-    ])
+    ngo_jurisdiction_allowlist: list[str] = field(
+        default_factory=lambda: [
+            "DE",
+            "NL",
+            "SE",
+            "NO",
+            "DK",
+            "FI",
+            "CH",
+            "AT",
+            "FR",
+            "GB",
+            "CA",
+            "AU",
+            "NZ",
+            "JP",
+            "SG",
+        ]
+    )
 
     @classmethod
-    def for_ngo(cls) -> "CommunityConfig":
+    def for_ngo(cls) -> CommunityConfig:
         """Preset for NGOs — open corpus, relaxed defaults, SQLite + Qdrant."""
         return cls(
             llm_tier=LLMTier.COMMUNITY,
@@ -83,7 +100,7 @@ class CommunityConfig:
         )
 
     @classmethod
-    def for_microfinance(cls) -> "CommunityConfig":
+    def for_microfinance(cls) -> CommunityConfig:
         """Preset for microfinance lenders — higher volume, batch-optimized."""
         return cls(
             llm_tier=LLMTier.COMMUNITY,
@@ -94,7 +111,7 @@ class CommunityConfig:
         )
 
     @classmethod
-    def air_gapped(cls) -> "CommunityConfig":
+    def air_gapped(cls) -> CommunityConfig:
         """Fully local — no outbound API calls. Requires local Ollama instance."""
         return cls(
             llm_tier=LLMTier.LOCAL,

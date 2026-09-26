@@ -2,16 +2,19 @@
 ARGUS Identity Agent
 Verifies entity identity via registry lookups and document OCR.
 """
+
 from fastapi import FastAPI
-from utils.structured_logger import get_logger
 from pydantic import BaseModel
+
 from agents.identity.tools.customer_lookup import customer_lookup
-from agents.identity.tools.ocr_processor import ocr_processor
 from agents.identity.tools.identity_validator import identity_validator
+from agents.identity.tools.ocr_processor import ocr_processor
 from utils.demo_profiles import get_demo_profile
+from utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Identity Agent")
-logger = get_logger('agent.identity')
+logger = get_logger("agent.identity")
+
 
 class A2AMessage(BaseModel):
     a2a_version: str
@@ -20,23 +23,24 @@ class A2AMessage(BaseModel):
     task_id: str
     payload: dict
 
+
 @app.post("/a2a/invoke")
 async def invoke(message: A2AMessage):
     p = message.payload
     entity_name = p.get("entity_name", "")
     entity_type = p.get("entity_type", "individual")
-    reg_number  = p.get("registration_number")
-    documents   = p.get("documents", [])   # list of base64 doc images
+    reg_number = p.get("registration_number")
+    documents = p.get("documents", [])  # list of base64 doc images
     jurisdiction = p.get("jurisdiction", "")
 
-    logger.info('invoke', extra={"task_id": message.task_id, "entity": entity_name})
+    logger.info("invoke", extra={"task_id": message.task_id, "entity": entity_name})
     demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
     if demo_profile and demo_profile.get("identity"):
         return {
-            "agent":   "identity",
+            "agent": "identity",
             "task_id": message.task_id,
-            "status":  "completed",
-            "result":  demo_profile["identity"],
+            "status": "completed",
+            "result": demo_profile["identity"],
         }
 
     # Step 1: Registry lookup
@@ -55,22 +59,24 @@ async def invoke(message: A2AMessage):
     validation = await identity_validator(registry_result, ocr_results)
 
     identity_score = validation.get("confidence_score", 50)
-    logger.info('invoke.completed', extra={"task_id": message.task_id, "identity_score": identity_score})
+    logger.info(
+        "invoke.completed", extra={"task_id": message.task_id, "identity_score": identity_score}
+    )
 
     return {
-        "agent":   "identity",
+        "agent": "identity",
         "task_id": message.task_id,
-        "status":  "completed",
+        "status": "completed",
         "result": {
-            "registry_match":    registry_result.get("found", False),
-            "ocr_documents":     len(ocr_results),
-            "discrepancies":     validation.get("discrepancies", []),
-            "identity_score":    identity_score,
-            "verified_fields":   validation.get("verified_fields", []),
+            "registry_match": registry_result.get("found", False),
+            "ocr_documents": len(ocr_results),
+            "discrepancies": validation.get("discrepancies", []),
+            "identity_score": identity_score,
+            "verified_fields": validation.get("verified_fields", []),
         },
     }
 
 
-@app.get('/health')
+@app.get("/health")
 def health():
     return {"status": "ok", "service": "identity", "version": "0.1.0"}

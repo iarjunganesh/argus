@@ -1,6 +1,7 @@
 """Run ARGUS demo in-process by invoking agent `invoke` functions directly.
 This avoids network A2A calls and allows a quick end-to-end smoke test.
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -26,12 +27,22 @@ async def call_agent_local(agent_name: str, payload: dict, task_id: str) -> dict
 
     mod = __import__(mod_name, fromlist=["app", "invoke"])
     # Build A2A message using the module's A2AMessage model
-    A2A = getattr(mod, "A2AMessage")
-    msg = A2A(a2a_version="1.0", source_agent="argus-demo", target_agent=f"argus-{agent_name}", task_id=task_id, payload=payload)
+    A2A = mod.A2AMessage
+    msg = A2A(
+        a2a_version="1.0",
+        source_agent="argus-demo",
+        target_agent=f"argus-{agent_name}",
+        task_id=task_id,
+        payload=payload,
+    )
 
     res = await mod.invoke(msg)
     # Normalise to expected call_agent shape
-    return {"agent": agent_name, "status": res.get("status", "completed"), "result": res.get("result", {})}
+    return {
+        "agent": agent_name,
+        "status": res.get("status", "completed"),
+        "result": res.get("result", {}),
+    }
 
 
 async def main():
@@ -43,6 +54,7 @@ async def main():
     print("Running in-process KYC assessment for:", kyc)
     report = await orchestrator.run_kyc_assessment(kyc)
     import json
+
     print(json.dumps(report, indent=2))
 
 

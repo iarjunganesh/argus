@@ -1,6 +1,7 @@
 """Augments the ARGUS architecture SVG with traveling pulse dots along
 edges to simulate request/response flow, for GIF capture."""
-import re
+
+from pathlib import Path
 
 SVG_PATH = "assets/argus-architecture.svg"
 OUT_HTML = "assets/argus-architecture-animated.html"
@@ -29,7 +30,7 @@ STAGES = [
 
 
 def build():
-    svg = open(SVG_PATH, encoding="utf-8").read()
+    svg = Path(SVG_PATH).read_text(encoding="utf-8")
 
     dots = []
     for edge_id, start, end, color in STAGES:

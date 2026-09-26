@@ -69,7 +69,12 @@ DEMO_PROFILES = {
             "registry_match": True,
             "ocr_documents": 0,
             "discrepancies": [
-                {"field": "address", "registry": "Amsterdam", "document": "Rotterdam", "severity": "medium"}
+                {
+                    "field": "address",
+                    "registry": "Amsterdam",
+                    "document": "Rotterdam",
+                    "severity": "medium",
+                }
             ],
             "identity_score": 75,
             "verified_fields": ["name"],
@@ -102,7 +107,10 @@ DEMO_PROFILES = {
             "foundry_iq_queries": 2,
         },
         "corporate": {
-            "registry": {"found": True, "record": {"name": "Synthetic Holdings B.V.", "jurisdiction": "NL"}},
+            "registry": {
+                "found": True,
+                "record": {"name": "Synthetic Holdings B.V.", "jurisdiction": "NL"},
+            },
             "ubo_chain": {
                 "ownership_chain": [
                     {"name": "Synthetic Holdings B.V.", "jurisdiction": "NL"},
@@ -111,7 +119,9 @@ DEMO_PROFILES = {
                 "depth": 2,
             },
             "jurisdiction_info": {"fatf_risk_tier": "standard"},
-            "risk_flags": ["Layered ownership chain requires enhanced review of beneficial ownership documentation"],
+            "risk_flags": [
+                "Layered ownership chain requires enhanced review of beneficial ownership documentation"
+            ],
             "corporate_score": 55,
         },
         "transaction": {
@@ -131,7 +141,12 @@ DEMO_PROFILES = {
             "registry_match": True,
             "ocr_documents": 0,
             "discrepancies": [
-                {"field": "incorporation_status", "registry": "active", "document": "pending verification", "severity": "high"}
+                {
+                    "field": "incorporation_status",
+                    "registry": "active",
+                    "document": "pending verification",
+                    "severity": "high",
+                }
             ],
             "identity_score": 55,
             "verified_fields": ["name"],
@@ -176,7 +191,10 @@ DEMO_PROFILES = {
             "foundry_iq_queries": 2,
         },
         "corporate": {
-            "registry": {"found": True, "record": {"name": "Cayman Synth Capital", "jurisdiction": "KY"}},
+            "registry": {
+                "found": True,
+                "record": {"name": "Cayman Synth Capital", "jurisdiction": "KY"},
+            },
             "ubo_chain": {
                 "ownership_chain": [
                     {"name": "Cayman Synth Capital", "jurisdiction": "KY"},
@@ -198,10 +216,17 @@ DEMO_PROFILES = {
             "structuring_flag": True,
             "layering_flag": True,
             "anomalous_transactions": [
-                {"id": "TX-HIGH-01", "amount": 9850, "note": "series of threshold-adjacent transfers"},
+                {
+                    "id": "TX-HIGH-01",
+                    "amount": 9850,
+                    "note": "series of threshold-adjacent transfers",
+                },
                 {"id": "TX-HIGH-02", "amount": 9900, "note": "rapid offshore onward transfer"},
             ],
-            "typology_hits": ["Structuring below reporting threshold", "Rapid offshore layering activity"],
+            "typology_hits": [
+                "Structuring below reporting threshold",
+                "Rapid offshore layering activity",
+            ],
             "transaction_risk_score": 50,
         },
     },
@@ -284,7 +309,10 @@ DEMO_PROFILES = {
             "foundry_iq_queries": 1,
         },
         "corporate": {
-            "registry": {"found": True, "record": {"name": "Danske Bank A/S", "jurisdiction": "DK"}},
+            "registry": {
+                "found": True,
+                "record": {"name": "Danske Bank A/S", "jurisdiction": "DK"},
+            },
             "ubo_chain": {
                 "ownership_chain": [{"name": "Danske Bank A/S", "jurisdiction": "DK"}],
                 "depth": 1,
@@ -333,7 +361,10 @@ DEMO_PROFILES = {
             "foundry_iq_queries": 1,
         },
         "corporate": {
-            "registry": {"found": True, "record": {"name": "Westpac Banking Corporation", "jurisdiction": "AU"}},
+            "registry": {
+                "found": True,
+                "record": {"name": "Westpac Banking Corporation", "jurisdiction": "AU"},
+            },
             "ubo_chain": {
                 "ownership_chain": [{"name": "Westpac Banking Corporation", "jurisdiction": "AU"}],
                 "depth": 1,

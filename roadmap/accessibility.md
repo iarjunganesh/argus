@@ -8,6 +8,7 @@
 ## Why this matters for compliance tools
 
 KYC reports are read by:
+
 - Compliance analysts who may be colorblind (affecting ~8% of men)
 - Case workers using screen readers in resource-constrained environments
 - Bank customers in Explain Mode who may have visual or cognitive disabilities
@@ -34,7 +35,9 @@ A compliance tool that is inaccessible is itself a compliance risk.
 ## v2 targets
 
 ### Color contrast
+
 All risk tier colors verified against `accessibility/wcag.py`:
+
 - HIGH (#e74c3c on #ffffff) — currently 3.98:1, fails AA. Fix: darken to #c0392b (4.56:1 ✅)
 - MEDIUM (#f39c12 on #ffffff) — currently 2.82:1, fails AA. Fix: darken to #d68910 — or pair with bold + underline as a non-color cue
 - LOW (#2ecc71 on #ffffff) — currently 2.33:1, fails AA. Fix: darken text to #1e8449 or use on dark background
@@ -43,6 +46,7 @@ All risk tier colors verified against `accessibility/wcag.py`:
 Strategy: every risk tier MUST use both color AND a non-color cue (icon, pattern, text label). Color contrast ratios are secondary validation.
 
 ### ARIA live regions
+
 The async report generation currently gives no feedback to screen readers while agents are running.
 
 ```html
@@ -54,12 +58,14 @@ The async report generation currently gives no feedback to screen readers while 
 States: idle → "Assessment in progress. Agents are running." → "Assessment complete. Report is ready."
 
 ### Keyboard navigation
+
 - Tab order: Form inputs → Submit → Report sections → Expand/collapse controls
 - Skip link: "Skip to report" anchor at top of page
 - All `<details>` elements keyboard-accessible (already is in most browsers — verify)
 - Focus visible on all interactive elements (no `outline: none`)
 
 ### Reduced motion
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   .risk-bar { transition: none; }
@@ -68,7 +74,9 @@ States: idle → "Assessment in progress. Agents are running." → "Assessment c
 ```
 
 ### High contrast mode toggle
+
 User preference stored in `localStorage`. Swaps to a high-contrast palette:
+
 - Background: #000000
 - Foreground: #ffffff
 - Risk HIGH: #ff6666 (meets AA on black)
@@ -82,6 +90,7 @@ User preference stored in `localStorage`. Swaps to a high-contrast palette:
 ```python
 # tests/test_accessibility.py
 from accessibility.wcag import audit_palette, WCAGLevel, ARGUS_PALETTE
+
 
 def test_argus_palette_aa_compliance():
     results = audit_palette(ARGUS_PALETTE, level=WCAGLevel.AA)

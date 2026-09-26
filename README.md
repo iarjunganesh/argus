@@ -19,13 +19,13 @@
 </p>
 
 <!-- Row 1 — status -->
-[![Tests](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/python-tests.yml)
+[![CI](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Watch demo](https://img.shields.io/badge/▶_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
 
 <!-- Row 2 — what the code uses today -->
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Azure OpenAI GPT-4o](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 [![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-Vector-0078D4?logo=microsoftazure&logoColor=white)](https://learn.microsoft.com/azure/search/)
@@ -69,7 +69,7 @@ ARGUS is being rebuilt after the hackathon. This table is the honest state of th
 | Plain-English decision explanation | ✅ Works with Azure OpenAI GPT-4o or GitHub Models; falls back to a fixed template when no model is configured |
 | Cosmos DB entity, ownership and transaction lookups | ✅ Works when configured; falls back to mock records otherwise |
 | Azure AI Search typology matching | ✅ Works when configured |
-| Azure Document Intelligence OCR | ✅ Works when configured; falls back to mock fields otherwise |
+| Azure Document Intelligence OCR | ⚠️ **Not working.** `ocr_processor` imports `azure.ai.formrecognizer`, which isn't a project dependency, so it always returns mock fields. |
 | **Foundry IQ knowledge-base queries** (regulations, sanctions, adverse media) | ⚠️ **Not working.** The tools call `AIProjectClient.knowledge_bases.query`, which doesn't exist in `azure-ai-projects` (checked 1.0.0 and 2.6.1), so every query falls back to mock results. Fixing this is part of the rebuild. |
 | The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
 | Gradio UI | ✅ Works |
@@ -173,29 +173,34 @@ These use recorded demo profiles for the parallel agents (see the status table a
 
 Runs locally without any Azure credentials: every tool falls back to mock data, and the demo scenarios use their recorded profiles.
 
+Requires [uv](https://docs.astral.sh/uv/). It installs the Python version pinned in `.python-version` (3.14) and the locked dependencies.
+
 ```bash
 git clone https://github.com/iarjunganesh/argus.git
 cd argus
-python -m pip install -r requirements.txt
+uv sync
 cp .env.example .env    # optional: add Azure credentials for live calls
 ```
 
 Start the stack. On Windows, `scripts/start_demo.ps1` starts everything and `scripts/end_demo.ps1` stops it. Elsewhere, start each process in its own terminal:
 
 ```bash
-python -m uvicorn agents.identity.agent:app --port 8001
-python -m uvicorn agents.screening.agent:app --port 8002
-python -m uvicorn agents.corporate.agent:app --port 8003
-python -m uvicorn agents.transaction.agent:app --port 8004
-python -m uvicorn agents.compliance.agent:app --port 8005
-python -m uvicorn api.main:app --port 8000
-python ui/gradio_app.py    # then open http://localhost:7860
+uv run uvicorn agents.identity.agent:app --port 8001
+uv run uvicorn agents.screening.agent:app --port 8002
+uv run uvicorn agents.corporate.agent:app --port 8003
+uv run uvicorn agents.transaction.agent:app --port 8004
+uv run uvicorn agents.compliance.agent:app --port 8005
+uv run uvicorn api.main:app --port 8000
+uv run python ui/gradio_app.py    # then open http://localhost:7860
 ```
 
-Run the tests:
+Run the same checks as CI:
 
 ```bash
-python -m pytest
+uv run ruff check . && uv run ruff format --check .
+uv run mypy agents api utils accessibility community ui config.py
+uv run pytest --cov
+uv run python scripts/check_docs.py
 ```
 
 To use live Azure services, provision them (`infra/`), generate the synthetic data (`data/synthetic/generate_*.py`, then `data/synthetic/upload_to_cosmos.py`) and index the knowledge bases (`foundry_iq/`).

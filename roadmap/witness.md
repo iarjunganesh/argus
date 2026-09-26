@@ -8,6 +8,7 @@
 ## The gap
 
 ARGUS currently pulls adverse media from indexed public sources. It has no mechanism for:
+
 - Employees at financial institutions who want to flag suspicious activity without using internal channels
 - Journalists who have documented financial crime and want it surfaced in compliance screening
 - Regulators who want to share pre-publication adverse event signals with the compliance ecosystem
@@ -39,6 +40,7 @@ This is deliberately modest — no AI processing of raw submissions, no automate
 ## Non-goals
 
 ARGUS Witness is NOT:
+
 - A replacement for official regulatory reporting (FinCEN SARs, etc.)
 - A real-time intelligence feed
 - Fully automated — every submission has a human in the loop

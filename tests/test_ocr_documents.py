@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 def test_generate_ocr_documents_creates_manifest_and_assets(tmp_path, monkeypatch):
     from data.synthetic import generate_ocr_documents as god
 
@@ -25,7 +22,9 @@ def test_generate_ocr_documents_creates_manifest_and_assets(tmp_path, monkeypatc
     god.write_manifest(records, manifest_path)
 
     assert manifest_path.exists()
-    manifest_lines = [line for line in manifest_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    manifest_lines = [
+        line for line in manifest_path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     assert len(manifest_lines) == len(records)
 
     created_files = {path.name for path in output_dir.iterdir() if path.is_file()}
@@ -69,7 +68,9 @@ def test_upload_documents_uses_blob_urls(monkeypatch, tmp_path):
 
     class FakeContainer:
         def __init__(self):
-            self.blob = FakeBlobClient("https://example.blob.core.windows.net/container/ocr-documents/sample.png")
+            self.blob = FakeBlobClient(
+                "https://example.blob.core.windows.net/container/ocr-documents/sample.png"
+            )
 
         def create_container(self):
             return None

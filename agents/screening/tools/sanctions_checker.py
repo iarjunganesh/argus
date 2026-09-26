@@ -3,7 +3,9 @@ sanctions_checker — Foundry IQ powered tool
 Queries KB-Sanctions through the Foundry IQ knowledge base API for entity matches.
 Returns cited, grounded results — no hallucination risk.
 """
+
 import json
+
 from config import FOUNDRY_IQ_KB_SANCTIONS, get_foundry_client
 
 
@@ -33,7 +35,7 @@ def _load_metadata(item) -> dict:
         return raw
     try:
         return json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
+    except json.JSONDecodeError, TypeError:
         return {}
 
 
@@ -46,7 +48,7 @@ async def sanctions_checker(
     Query Foundry IQ KB-Sanctions for the entity and its aliases.
     Uses Azure AI Search semantic search with citation metadata.
     """
-    query_terms = [entity_name] + aliases
+    query_terms = [entity_name, *aliases]
     query = " ".join(query_terms) + (f" {nationality}" if nationality else "")
 
     try:
@@ -59,7 +61,7 @@ async def sanctions_checker(
         )
 
         findings = []
-        hit      = False
+        hit = False
         for item in _item_field(results, "items", []):
             score = float(_item_field(item, "relevance_score", 0) or 0)
             threshold = 0.2
@@ -67,18 +69,22 @@ async def sanctions_checker(
                 hit = True
                 citation = _item_field(item, "citation")
                 meta = _load_metadata(item)
-                findings.append({
-                    "type":       "sanctions",
-                    "match":      _item_field(item, "content", "")[:200],
-                    "confidence": _normalize_relevance(score),
-                    "foundry_iq_citation": {
-                        "knowledge_base": FOUNDRY_IQ_KB_SANCTIONS,
-                        "document":       _citation_field(citation, "document_title", "unknown"),
-                        "snippet_id":     _citation_field(citation, "snippet_id", _item_field(item, "id")),
-                        "program":        meta.get("program"),
-                        "is_active":      meta.get("is_active"),
-                    },
-                })
+                findings.append(
+                    {
+                        "type": "sanctions",
+                        "match": _item_field(item, "content", "")[:200],
+                        "confidence": _normalize_relevance(score),
+                        "foundry_iq_citation": {
+                            "knowledge_base": FOUNDRY_IQ_KB_SANCTIONS,
+                            "document": _citation_field(citation, "document_title", "unknown"),
+                            "snippet_id": _citation_field(
+                                citation, "snippet_id", _item_field(item, "id")
+                            ),
+                            "program": meta.get("program"),
+                            "is_active": meta.get("is_active"),
+                        },
+                    }
+                )
 
         return {"hit": hit, "findings": findings, "source": "foundry_iq"}
 

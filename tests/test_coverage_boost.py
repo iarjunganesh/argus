@@ -1,6 +1,5 @@
-import asyncio
 import base64
-import types
+
 import pytest
 
 from agents.orchestrator import agent as orchestrator
@@ -9,13 +8,22 @@ from agents.orchestrator import agent as orchestrator
 @pytest.mark.asyncio
 async def test_synthesise_report_handles_missing_and_present_fields():
     # compliance with result keys
-    comp = {"status": "ok", "result": {"risk_summary": {"tier": "HIGH"}, "explanation": "Found risks", "foundry_iq_queries": 2}}
+    comp = {
+        "status": "ok",
+        "result": {
+            "risk_summary": {"tier": "HIGH"},
+            "explanation": "Found risks",
+            "foundry_iq_queries": 2,
+        },
+    }
     identity = {"status": "ok"}
     screening = {"status": "ok", "result": {"foundry_iq_queries": 1}}
     corporate = {"status": "ok"}
     transaction = {"status": "ok"}
 
-    rpt = await orchestrator.synthesise_report("tid", {"entity_name": "Acme"}, identity, screening, corporate, transaction, comp)
+    rpt = await orchestrator.synthesise_report(
+        "tid", {"entity_name": "Acme"}, identity, screening, corporate, transaction, comp
+    )
     assert rpt["report_id"].startswith("argus-rpt-")
     assert rpt["entity"]["name"] == "Acme"
     assert rpt["risk_summary"]["tier"] == "HIGH"
@@ -35,7 +43,13 @@ async def test_run_kyc_assessment_with_mocked_call_agent(monkeypatch):
     report = await orchestrator.run_kyc_assessment(kyc)
     assert report["entity"]["name"] == "TestCo"
     assert "audit_trace" in report
-    assert report["audit_trace"]["agents_invoked"] == ["identity", "screening", "corporate", "transaction", "compliance"]
+    assert report["audit_trace"]["agents_invoked"] == [
+        "identity",
+        "screening",
+        "corporate",
+        "transaction",
+        "compliance",
+    ]
 
 
 @pytest.mark.asyncio
@@ -78,12 +92,13 @@ def test_regulations_helpers_and_normalize():
 
 @pytest.mark.asyncio
 async def test_regulations_rag_returns_mock(monkeypatch):
-    from agents.compliance.tools import regulations_rag as rr
-
     # Force Foundry client errors by patching get_foundry_client in the module
     import agents.compliance.tools.regulations_rag as mod
+    from agents.compliance.tools import regulations_rag as rr
 
-    monkeypatch.setattr(mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client")))
+    monkeypatch.setattr(
+        mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
 
     res = await rr.regulations_rag("Q", "NL", "company", ["fraud"])
     assert res["source"] == "mock"
@@ -96,7 +111,20 @@ async def test_regulations_and_adverse_positive(monkeypatch):
 
     class FakeKB:
         def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
-            return {"items": [{"relevance_score": 0.5, "content": "Some rule text", "citation": {"document_title": "doc.pdf", "section": "sec1", "snippet_id": "s1"}, "id": "i1"}]}
+            return {
+                "items": [
+                    {
+                        "relevance_score": 0.5,
+                        "content": "Some rule text",
+                        "citation": {
+                            "document_title": "doc.pdf",
+                            "section": "sec1",
+                            "snippet_id": "s1",
+                        },
+                        "id": "i1",
+                    }
+                ]
+            }
 
     class FakeClient:
         knowledge_bases = FakeKB()
@@ -114,7 +142,17 @@ async def test_adverse_and_sanctions_positive(monkeypatch):
 
     class FakeKB:
         def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
-            return {"items": [{"relevance_score": 0.6, "content": "bad news about X", "citation": {"document_title": "news.pdf", "snippet_id": "nid"}, "metadata_json": '{"published_at": "2025-01-01", "tags": ["fraud"]}', "id": "x1"}]}
+            return {
+                "items": [
+                    {
+                        "relevance_score": 0.6,
+                        "content": "bad news about X",
+                        "citation": {"document_title": "news.pdf", "snippet_id": "nid"},
+                        "metadata_json": '{"published_at": "2025-01-01", "tags": ["fraud"]}',
+                        "id": "x1",
+                    }
+                ]
+            }
 
     class FakeClient:
         knowledge_bases = FakeKB()
@@ -132,12 +170,20 @@ async def test_adverse_and_sanctions_positive(monkeypatch):
 @pytest.mark.asyncio
 async def test_registry_customer_and_ubo_with_db(monkeypatch):
     import agents.corporate.tools.registry_lookup as reg
-    import agents.identity.tools.customer_lookup as cust
     import agents.corporate.tools.ubo_resolver as ubo
+    import agents.identity.tools.customer_lookup as cust
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
-            return [{"name": "Acme", "incorporated_date": "2020-01-01", "ownership_percentage": 60, "entity_type": "individual", "jurisdiction": "GB"}]
+            return [
+                {
+                    "name": "Acme",
+                    "incorporated_date": "2020-01-01",
+                    "ownership_percentage": 60,
+                    "entity_type": "individual",
+                    "jurisdiction": "GB",
+                }
+            ]
 
     class FakeDB:
         def get_container_client(self, name):
@@ -163,17 +209,28 @@ async def test_corporate_agent_invoke(monkeypatch):
 
     # Patch dependent functions
     monkeypatch.setattr(corp, "get_demo_profile", lambda name, etype, j: None)
+
     async def fake_registry(name, rn):
         return {"found": True}
+
     async def fake_ubo(name, rr):
         return {"ownership_chain": [{"name": "X", "jurisdiction": "GB"}], "depth": 1}
+
     monkeypatch.setattr(corp, "registry_lookup", fake_registry)
     monkeypatch.setattr(corp, "ubo_resolver", fake_ubo)
+
     async def fake_jmap(j):
         return {"fatf_risk_tier": "high"}
+
     monkeypatch.setattr(corp, "jurisdiction_mapper", fake_jmap)
 
-    msg = corp.A2AMessage(a2a_version="1.0", source_agent="x", target_agent="y", task_id="t1", payload={"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "GB"})
+    msg = corp.A2AMessage(
+        a2a_version="1.0",
+        source_agent="x",
+        target_agent="y",
+        task_id="t1",
+        payload={"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "GB"},
+    )
     res = await corp.invoke(msg)
     assert res["result"]["corporate_score"] <= 100
 
@@ -183,17 +240,27 @@ async def test_identity_agent_invoke(monkeypatch):
     import agents.identity.agent as ident
 
     monkeypatch.setattr(ident, "get_demo_profile", lambda name, etype, j: None)
+
     async def fake_customer(name, etype, rn):
         return {"found": True}
+
     async def fake_ocr(img, dt):
         return {"fields": {}, "confidence": 0.9}
+
     async def fake_validator(reg, ocr):
         return {"confidence_score": 88, "verified_fields": []}
+
     monkeypatch.setattr(ident, "customer_lookup", fake_customer)
     monkeypatch.setattr(ident, "ocr_processor", fake_ocr)
     monkeypatch.setattr(ident, "identity_validator", fake_validator)
 
-    msg = ident.A2AMessage(a2a_version="1.0", source_agent="x", target_agent="y", task_id="t2", payload={"entity_name": "Bob", "entity_type": "individual", "documents": []})
+    msg = ident.A2AMessage(
+        a2a_version="1.0",
+        source_agent="x",
+        target_agent="y",
+        task_id="t2",
+        payload={"entity_name": "Bob", "entity_type": "individual", "documents": []},
+    )
     res = await ident.invoke(msg)
     assert res["result"]["identity_score"] >= 0
 
@@ -205,11 +272,18 @@ async def test_compliance_agent_invoke(monkeypatch):
     # Patch external tool calls
     async def fake_reg(q, j, t, ri):
         return {"regulations": []}
+
     monkeypatch.setattr(comp, "regulations_rag", fake_reg)
-    monkeypatch.setattr(comp, "risk_scorer", lambda i, s, c, t: {"overall": 60, "dimensions": {}, "confidence": 0.85})
-    monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"]) 
+    monkeypatch.setattr(
+        comp,
+        "risk_scorer",
+        lambda i, s, c, t: {"overall": 60, "dimensions": {}, "confidence": 0.85},
+    )
+    monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"])
+
     async def fake_explain(*args, **kwargs):
         return "explanation"
+
     monkeypatch.setattr(comp, "explain_decision", fake_explain)
 
     payload = {
@@ -218,12 +292,16 @@ async def test_compliance_agent_invoke(monkeypatch):
         "jurisdiction": "GB",
         "upstream_results": {
             "identity": {"result": {}},
-            "screening": {"result": {"pep_hit": True, "findings": [{"type":"pep","match":"John"}]}},
+            "screening": {
+                "result": {"pep_hit": True, "findings": [{"type": "pep", "match": "John"}]}
+            },
             "corporate": {"result": {"risk_flags": []}},
             "transaction": {"result": {}},
-        }
+        },
     }
-    msg = comp.A2AMessage(a2a_version="1.0", source_agent="x", target_agent="y", task_id="t3", payload=payload)
+    msg = comp.A2AMessage(
+        a2a_version="1.0", source_agent="x", target_agent="y", task_id="t3", payload=payload
+    )
     res = await comp.invoke(msg)
     assert res["result"]["risk_summary"]["overall_risk_tier"] == "HIGH"
 
@@ -231,13 +309,19 @@ async def test_compliance_agent_invoke(monkeypatch):
 @pytest.mark.asyncio
 async def test_registry_and_customer_and_ubo_mock(monkeypatch):
     import agents.corporate.tools.registry_lookup as reg
-    import agents.identity.tools.customer_lookup as cust
     import agents.corporate.tools.ubo_resolver as ubo
+    import agents.identity.tools.customer_lookup as cust
 
     # Patch get_cosmos_database in each module to raise, hitting mock branches
-    monkeypatch.setattr(reg, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
-    monkeypatch.setattr(cust, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
-    monkeypatch.setattr(ubo, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
+    monkeypatch.setattr(
+        reg, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db"))
+    )
+    monkeypatch.setattr(
+        cust, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db"))
+    )
+    monkeypatch.setattr(
+        ubo, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db"))
+    )
 
     r = await reg.registry_lookup("Acme", None)
     assert r.get("source") == "mock"
@@ -255,8 +339,12 @@ async def test_screening_tools_mock_and_metadata(monkeypatch):
     import agents.screening.tools.sanctions_checker as sc
 
     # Patch get_foundry_client to raise
-    monkeypatch.setattr(am, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client")))
-    monkeypatch.setattr(sc, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client")))
+    monkeypatch.setattr(
+        am, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
+    monkeypatch.setattr(
+        sc, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
 
     r = await am.adverse_media_scanner("Alice", ["A"])
     assert r["source"] == "mock"
@@ -267,8 +355,8 @@ async def test_screening_tools_mock_and_metadata(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_typology_and_transaction_monitor_and_ocr():
-    from agents.transaction.tools import typology_matcher, transaction_monitor
     from agents.identity.tools import ocr_processor
+    from agents.transaction.tools import transaction_monitor, typology_matcher
 
     # typology: empty patterns -> []
     assert await typology_matcher.typology_matcher({}) == []
@@ -278,10 +366,12 @@ async def test_typology_and_transaction_monitor_and_ocr():
     assert isinstance(hits, list) and hits
 
     # force DB error path for transaction monitor to get mock
-    import agents.transaction.tools.transaction_monitor as tm
-    import pytest
+
     # monkeypatch the get_cosmos_database used inside module
     from pytest import MonkeyPatch
+
+    import agents.transaction.tools.transaction_monitor as tm
+
     mp = MonkeyPatch()
     mp.setattr(tm, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
     try:
@@ -302,7 +392,9 @@ async def test_pep_checker_db_hit(monkeypatch):
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
-            return [{"name": "John Doe", "role": "Minister", "country": "DE", "period": "2020-2024"}]
+            return [
+                {"name": "John Doe", "role": "Minister", "country": "DE", "period": "2020-2024"}
+            ]
 
     class FakeDB:
         def get_container_client(self, name):
@@ -388,10 +480,16 @@ async def test_typology_matcher_search_hit(monkeypatch):
 
     class FakeClient:
         def search(self, search_text=None, top=None):
-            return FakeResult([
-                {"typology_name": "Smurfing", "description": "Cash structuring below threshold",
-                 "fatf_reference": "FATF-2023-3.2", "@search.score": 0.95}
-            ])
+            return FakeResult(
+                [
+                    {
+                        "typology_name": "Smurfing",
+                        "description": "Cash structuring below threshold",
+                        "fatf_reference": "FATF-2023-3.2",
+                        "@search.score": 0.95,
+                    }
+                ]
+            )
 
     monkeypatch.setattr(tmt, "get_search_client", lambda index: FakeClient())
     hits = await tmt.typology_matcher({"structuring_flag": True})
@@ -411,10 +509,16 @@ async def test_typology_matcher_regulations_fallback(monkeypatch):
 
     class RegResult:
         def __iter__(self):
-            return iter([
-                {"title": "Layering typology", "content": "Multi-hop rapid movement",
-                 "source_doc": "FATF-4.1", "@search.score": 0.88}
-            ])
+            return iter(
+                [
+                    {
+                        "title": "Layering typology",
+                        "content": "Multi-hop rapid movement",
+                        "source_doc": "FATF-4.1",
+                        "@search.score": 0.88,
+                    }
+                ]
+            )
 
     class FakeClient:
         def search(self, search_text=None, top=None):
@@ -432,7 +536,6 @@ async def test_typology_matcher_regulations_fallback(monkeypatch):
 @pytest.mark.asyncio
 async def test_ocr_processor_mock_all_doc_types(monkeypatch):
     from agents.identity.tools import ocr_processor as ocp
-    import base64
 
     # Force the Azure import to fail so we exercise _mock_ocr for each doc type
     monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "")
@@ -451,6 +554,7 @@ async def test_ocr_processor_mock_all_doc_types(monkeypatch):
 @pytest.mark.asyncio
 async def test_call_agent_http_error(monkeypatch):
     import httpx
+
     from agents.orchestrator import agent as orch
 
     async def raise_http(*args, **kwargs):

@@ -22,6 +22,7 @@ REGULATION_GAP_MAP = {
     ],
 }
 
+
 def gap_analyzer(risk_indicators: list, regulations: dict, scores: dict) -> list:
     gaps = []
     for indicator in risk_indicators:

@@ -6,10 +6,10 @@ $repoRoot = Resolve-Path (Join-Path $scriptDir "..")
 $env:PYTHONPATH = $repoRoot.Path
 Set-Location $repoRoot.Path
 
-$pythonExe = "C:/Users/arjunganesh/AppData/Local/Programs/Python/Python314/python.exe"
+# Use the uv-managed environment created by `uv sync`.
+$pythonExe = Join-Path $repoRoot.Path ".venv/Scripts/python.exe"
 if (-not (Test-Path $pythonExe)) {
-	$pythonExe = "python"
-}
+	Write-Error "No .venv found. Run uv sync in the repository root first."{nl}	exit 1{nl}}}
 
 $ports = @(8000, 8001, 8002, 8003, 8004, 8005, 7860)
 $procIds = @()
