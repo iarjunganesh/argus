@@ -1,0 +1,19 @@
+{
+  "config": {
+    "default": true,
+    // README and docs use HTML for centred images and badges.
+    "MD033": false,
+    // Prose is not hard-wrapped; tables and URLs are long.
+    "MD013": false,
+    // Several docs repeat sub-headings like "Added" under each version.
+    "MD024": { "siblings_only": true }
+  },
+  "ignores": [
+    ".venv/**",
+    "node_modules/**",
+    ".tmp/**",
+    "HANDOFF.md",
+    // Frozen hackathon material is kept exactly as submitted.
+    "archive/**"
+  ]
+}

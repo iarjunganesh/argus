@@ -8,6 +8,7 @@
 ## Why open?
 
 The knowledge that determines who gets a bank account is currently locked behind:
+
 - Licensed compliance data providers ($10k–$100k/year)
 - Proprietary risk scoring models (opaque, unauditable)
 - Vendor-specific knowledge bases (Foundry IQ, Dow Jones, LexisNexis)
@@ -23,7 +24,7 @@ The ARGUS Open KG makes the base regulatory layer a public good.
 ### v1 Open KG (launch target)
 
 | Dataset | Source | Format | License |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | FATF 40 Recommendations | FATF | JSON-LD | Public domain |
 | FATF Mutual Evaluation Reports (summaries) | FATF | JSON | Public domain |
 | Basel AML Index | Basel Institute | JSON | CC-BY 4.0 |
@@ -35,6 +36,7 @@ The ARGUS Open KG makes the base regulatory layer a public good.
 ### v2 Open KG (contribution target)
 
 Community-contributed, peer-reviewed:
+
 - NGO legal structure templates (common UBO patterns that look like layering but aren't)
 - Microfinance typology library (legitimate high-volume small transactions vs. structuring)
 - Country risk narrative summaries (FATF language translated to plain English per jurisdiction)

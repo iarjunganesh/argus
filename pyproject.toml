@@ -77,6 +77,8 @@ source = ["agents", "api", "utils", "accessibility", "community", "ui", "config"
 branch = true
 
 [tool.coverage.report]
+# Set to the measured value (75% on 2026-09-26). Raise it as coverage rises; never lower it silently.
+fail_under = 75
 show_missing = true
 skip_covered = true
 

@@ -8,7 +8,7 @@ import json
 import time
 from pathlib import Path
 
-import requests
+import httpx
 
 API = "http://127.0.0.1:8000"
 
@@ -25,10 +25,10 @@ def submit(entity_name):
     # Retry on transient connection errors
     for attempt in range(1, 6):
         try:
-            r = requests.post(f"{API}/api/v1/kyc/assess", json=payload, timeout=10)
+            r = httpx.post(f"{API}/api/v1/kyc/assess", json=payload, timeout=10)
             r.raise_for_status()
             return r.json()["report_id"]
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPError as e:
             print(f"  ⚠️ submit attempt {attempt} failed: {e}")
             time.sleep(attempt)
     raise ConnectionError("Failed to submit after retries")
@@ -38,15 +38,15 @@ def poll(report_id, timeout=30):
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            r = requests.get(f"{API}/api/v1/kyc/status/{report_id}", timeout=5)
+            r = httpx.get(f"{API}/api/v1/kyc/status/{report_id}", timeout=5)
             r.raise_for_status()
             status = r.json().get("status")
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPError as e:
             print(f"  ⚠️ poll transient error: {e}")
             time.sleep(1)
             continue
         if status == "completed":
-            r2 = requests.get(f"{API}/api/v1/kyc/report/{report_id}")
+            r2 = httpx.get(f"{API}/api/v1/kyc/report/{report_id}")
             r2.raise_for_status()
             return r2.json()
         time.sleep(1)

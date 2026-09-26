@@ -394,10 +394,9 @@ demo = gr.Interface(
     title="ARGUS - Agentic KYC Risk Assessment",
     description=(
         branding_header
-        + "Powered by Azure AI Foundry · Foundry IQ · A2A · GPT-4o | "
+        + "Five specialist agents · Azure OpenAI GPT-4o | "
         + "Synthetic core data with public-source adverse-media demos."
     ),
-    theme=gr.themes.Soft(),
     flagging_mode="never",
     examples=[
         ["Synthetic Holdings B.V.", "corporate", "NL"],
@@ -410,4 +409,4 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, theme=gr.themes.Soft())

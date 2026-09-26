@@ -8,6 +8,7 @@
 ## The problem
 
 Every ARGUS report is currently written for a compliance analyst. The language assumes familiarity with:
+
 - Regulatory frameworks (FATF, AMLD, BSA)
 - Risk tier semantics (what "HIGH" means operationally)
 - Foundry IQ citation format (KB-Regulations › FATF-40 › R.16)
@@ -48,6 +49,7 @@ graph LR
 ```
 
 The Gradio UI gains a toggle:
+
 - "Analyst Report" (default) — current output
 - "Plain Language" — Explain Mode output
 
@@ -58,6 +60,7 @@ Both are generated in the same compliance agent pass. No extra latency.
 ## Prompt design
 
 The `explain_decision` tool calls the LLM with a system prompt that enforces:
+
 - Plain English (Flesch-Kincaid grade level ≤ 8)
 - No acronyms without expansion
 - Active voice
@@ -70,6 +73,7 @@ The `explain_decision` tool calls the LLM with a system prompt that enforces:
 ## Localization
 
 Explain Mode is the natural first step for i18n — the plain language version is easier to translate than the analyst report. Target languages for v2:
+
 - Spanish (es) — largest unbanked population in Latin America
 - French (fr) — West Africa NGO operations
 - Arabic (ar) — Middle East/North Africa microfinance
