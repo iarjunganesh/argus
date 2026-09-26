@@ -65,7 +65,7 @@ def generate_corporate() -> dict:
 
 def main():
     print("Generating synthetic entity profiles...")
-    with open(OUTPUT_FILE, "w") as f:
+    with OUTPUT_FILE.open("w") as f:
         for _ in range(7000):  # 70% individuals
             entity = generate_individual()
             f.write(json.dumps(entity) + "\n")

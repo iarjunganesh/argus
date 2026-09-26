@@ -9,7 +9,7 @@ from pathlib import Path
 from azure.cosmos import CosmosClient
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=Path(".") / ".env")
+load_dotenv(dotenv_path=Path() / ".env")
 
 endpoint = os.environ.get("COSMOS_ENDPOINT")
 key = os.environ.get("COSMOS_KEY")
@@ -36,6 +36,6 @@ for cid in containers:
         query = "SELECT VALUE COUNT(1) FROM c"
         res = list(container.query_items(query, enable_cross_partition_query=True))
         count = res[0] if res else 0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - show the error for this container and carry on
         count = f"ERROR: {e}"
     print(f"  {cid}: {count}")

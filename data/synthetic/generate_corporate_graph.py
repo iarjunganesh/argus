@@ -54,7 +54,7 @@ def _split_ownership(n: int) -> list[float]:
 def main():
     print("Generating synthetic corporate ownership graph...")
     edges = build_graph()
-    with open(OUTPUT, "w") as f:
+    with OUTPUT.open("w") as f:
         for e in edges:
             f.write(json.dumps(e) + "\n")
     print(f"Generated {len(edges)} ownership relationships → {OUTPUT}")

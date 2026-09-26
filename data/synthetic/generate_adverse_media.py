@@ -76,7 +76,7 @@ def generate_article(negative: bool = True) -> dict:
 
 def main():
     print("Generating synthetic adverse media corpus...")
-    with open(OUTPUT_FILE, "w") as f:
+    with OUTPUT_FILE.open("w") as f:
         # 400 negative articles (main screening signal)
         for _ in range(400):
             f.write(json.dumps(generate_article(negative=True)) + "\n")
