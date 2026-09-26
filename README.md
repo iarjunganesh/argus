@@ -1,7 +1,11 @@
-# ARGUS — Agentic Risk & Governance Unified Screening
+# ARGUS
 
 <p align="center">
-  <img src="assets/argus.svg" width="300" alt="ARGUS logo"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/brand/banner-light.svg">
+    <img width="900" src="assets/brand/banner-light.svg" alt="ARGUS — Agentic Risk & Governance Unified Screening. Explainable KYC screening, built for the people automated compliance fails."/>
+  </picture>
 </p>
 
 <p align="center">
@@ -52,9 +56,13 @@ Not just by making KYC faster — but by building compliance infrastructure that
 
 A single KYC request fans out across **five specialist agents**. The Identity, Screening, Corporate and Transaction agents run in parallel; the Compliance & Risk agent combines their results into one risk report. Risk scores, tiers and compliance gaps are computed by deterministic code. A language model writes the plain-English explanation of the decision. The report keeps an audit trail of which agents ran, which tools they called, and the citations each finding rests on.
 
-```text
-Submit entity  →  4 agents run in parallel  →  Compliance fan-in  →  Traceable risk report
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/investigation-flow-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/investigation-flow-light.svg">
+    <img width="100%" src="assets/architecture/investigation-flow-light.svg" alt="One KYC request in five steps: submit; four agents run in parallel with fixed scoring rules; the Compliance and Risk agent weights the dimensions and sets the tier; a language model writes the explanation but cannot change the score; the report goes to a human reviewer."/>
+  </picture>
+</p>
 
 📹 [Watch the demo](https://youtu.be/yaTNCgCwX4s)
 
@@ -86,36 +94,13 @@ ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents L
 
 ## How ARGUS works
 
-```mermaid
-graph TD
-    Human([Person or Institution]) -->|KYC request| ORC
-
-    ORC[🎯 Orchestrator<br/>fan-out and fan-in]
-
-    ORC -->|HTTP / JSON| IDA[🪪 Identity Agent]
-    ORC -->|HTTP / JSON| SCA[🔍 Screening Agent]
-    ORC -->|HTTP / JSON| CIA[🏢 Corporate Intelligence Agent]
-    ORC -->|HTTP / JSON| TIA[💳 Transaction Intelligence Agent]
-
-    IDA -->|identity_result| ORC
-    SCA -->|screening_result| ORC
-    CIA -->|corporate_result| ORC
-    TIA -->|transaction_result| ORC
-
-    ORC -->|all results| CRA[⚖️ Compliance & Risk Agent]
-    CRA -->|compliance_result| ORC
-    ORC -->|Explainable risk report| Human
-
-    IDA --- T1[customer_lookup<br/>ocr_processor<br/>identity_validator]
-    SCA --- T2[sanctions_checker<br/>adverse_media_scanner<br/>pep_checker]
-    CIA --- T3[ubo_resolver<br/>registry_lookup<br/>jurisdiction_mapper]
-    CRA --- T4[regulations_rag<br/>risk_scorer<br/>gap_analyzer]
-    TIA --- T5[transaction_monitor<br/>pattern_detector<br/>typology_matcher]
-
-    FIQ[🧠 Foundry IQ knowledge bases<br/>Regulations · Sanctions · Adverse media]
-    T2 -.->|intended; mock today| FIQ
-    T4 -.->|intended; mock today| FIQ
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/system-overview-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/system-overview-light.svg">
+    <img width="100%" src="assets/architecture/system-overview-light.svg" alt="The current runtime: Gradio UI, FastAPI gateway, orchestrator and five agent services over HTTP, and the Azure data plane. Azure OpenAI, Cosmos DB and AI Search are live when configured; Foundry IQ and Document Intelligence return mock data today."/>
+  </picture>
+</p>
 
 | Agent | Tools | Knowledge source |
 | --- | --- | --- |
@@ -130,7 +115,17 @@ graph TD
 
 ## Where ARGUS is going
 
-The next version is planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md). In short:
+The next version is planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
+    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The planned v2 runtime, not built yet: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with Explain Mode and human review, one model-provider setting, Foundry IQ, Fabric IQ and Work IQ, and a data plane with Azure and local implementations."/>
+  </picture>
+</p>
+
+In short:
 
 - **A focused experiment first.** Can ARGUS produce simpler explanations while preserving evidence, uncertainty, and the need for human review? It will be measured on a fixed evaluation set and written up, including failures.
 - **A simpler runtime.** One process instead of six, built on Microsoft Agent Framework (replacing the custom HTTP envelope), with a Next.js UI replacing Gradio.

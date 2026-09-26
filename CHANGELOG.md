@@ -15,6 +15,18 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **A brand built around the ARGUS eye**, in light and dark themes: README banner, 16:9 title
+  card, GitHub social preview, stacked logo and the mark on its own (`assets/brand/`). The mark
+  is an open eye in a diamond; five orbiting nodes stand for the five agents.
+- **Three architecture diagrams that match the code** (`assets/architecture/`): the current
+  runtime with each Azure service marked "live or mock" or "mock today"; one request end to
+  end with the scoring weights and thresholds as coded, showing which steps are deterministic
+  and which use a language model; and the planned v2 runtime, labelled as not built. They
+  replace the Mermaid chart and the ASCII flow in the README.
+- **`scripts/render_assets.py`** writes each master's light and dark variants and its PNG/GIF
+  exports. `--check` runs in CI: it fails if a variant is out of date or if any declared
+  text/background pair is below WCAG AA in either theme. Checked: it caught a 4.49:1 gold on
+  the review band before merge, which was darkened to 5.25:1.
 - **An architecture page that matches the running code** (`docs/ARCHITECTURE.md`): processes,
   request flow, the demo-profile shortcut and every service fallback, checked against the code.
 - **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
@@ -35,6 +47,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The Gradio UI shows the new logo** (`assets/brand/logo-light.svg`).
 - **Python 3.14 and the latest dependency releases.** This crosses majors (openai 3.x,
   azure-search-documents 12.x, azure-ai-projects 2.x). Checked: the suite passes unchanged on
   the new lock.
@@ -60,6 +73,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **Hackathon-era images and the scripts that made them** (the pentagon logo, the Mermaid
+  architecture sources, the 1300×500 banner and GIFs, `build_animated_diagram.py`,
+  `capture_gif_frames.js`) moved to `archive/hackathon-2026/` with `git mv`.
 - **Unreachable code:** a `try/except` around plain dictionary reads in `risk_scorer`, and an
   empty-JSON guard in the UI that `json.dumps` can never trigger.
 - **Unused dependencies:** semantic-kernel, pandas, numpy, networkx, tenacity, rich,

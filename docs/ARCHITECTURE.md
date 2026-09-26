@@ -5,6 +5,18 @@ v2 runtime is described in [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original ha
 is archived in [`archive/hackathon-2026/docs/`](../archive/hackathon-2026/docs/ARGUS_Architecture.md)
 and is no longer maintained.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../assets/architecture/system-overview-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="../assets/architecture/system-overview-light.svg">
+    <img width="100%" src="../assets/architecture/system-overview-light.svg" alt="The current ARGUS runtime: UI, gateway, orchestrator, five agent services and the Azure data plane, with each service's live or mock status."/>
+  </picture>
+</p>
+
+The diagram's sources and the one-request walkthrough
+([`investigation-flow.svg`](../assets/architecture/investigation-flow.svg)) are indexed in
+[`assets/README.md`](../assets/README.md). They are kept in step with this page.
+
 ## Processes
 
 A local run is seven processes:
@@ -68,4 +80,5 @@ populates the search indexes.
 
 `tests/` runs without any cloud credentials: external clients are mocked or fall back. Run
 `uv run pytest --cov` from the repository root. CI (`.github/workflows/ci.yml`) also runs ruff,
-mypy, a dependency audit, a secret scan and the documentation checks.
+mypy, a dependency audit, a secret scan, the documentation checks, and a check that the
+diagram variants match their SVG masters and pass WCAG AA contrast.

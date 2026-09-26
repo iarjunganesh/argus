@@ -17,7 +17,7 @@ API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
 
 def _logo_data_uri() -> str:
-    logo_path = Path(__file__).resolve().parents[1] / "assets" / "argus.svg"
+    logo_path = Path(__file__).resolve().parents[1] / "assets" / "brand" / "logo-light.svg"
     try:
         svg = logo_path.read_bytes()
         encoded = base64.b64encode(svg).decode("ascii")
