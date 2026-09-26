@@ -145,7 +145,7 @@ Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): 
 
 | Scenario | Entity | Type | Jurisdiction | Expected |
 | --- | --- | --- | --- | --- |
-| 🔴 High Risk | `Cayman Synth Capital` | corporate | KY | HIGH — Enhanced Due Diligence |
+| 🔴 Sanctions Hold | `Cayman Synth Capital` | corporate | KY | CRITICAL — Hold until the sanctions match is confirmed or cleared |
 | 🟠 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM — Elevated monitoring |
 | 🟢 Low Risk | `Jane Synthetic` | individual | DE | LOW — Standard onboarding |
 | 🔴 Public High Risk | `Wirecard AG` | corporate | DE | HIGH — Enhanced Due Diligence |
@@ -156,7 +156,7 @@ These use recorded demo profiles for the parallel agents (see the status table a
 
 ### What a report shows
 
-- **Decision card** — risk tier, score, confidence, top three drivers
+- **Decision card** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, top three drivers
 - **Risk dimensions** — score and tier for Identity, Screening, Corporate, Regulatory and Transaction
 - **Investigation timeline** — completion time for each agent and total latency
 - **Citations** — the knowledge base, source document and article behind each regulatory trigger

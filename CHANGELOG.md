@@ -92,6 +92,22 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **A potential sanctions match holds the case at CRITICAL, whatever the weighted score.**
+  Sanctions are not a weighted risk: FATF Recommendation 6 requires funds of listed persons to be
+  frozen without delay, and the Wolfsberg Group's sanctions-screening guidance has a person confirm
+  or clear each match. The report says what set the tier (`risk_summary.tier_basis`: `score` or
+  `sanctions_match`), recommends a hold until a compliance officer confirms or clears the match,
+  and says to freeze and report if it is confirmed. The weights and score bands are unchanged.
+  Checked: a sanctions-only case (weighted score 21) now reports CRITICAL; the six demo scenarios
+  keep every score, and only Cayman Synth Capital changes tier (HIGH to CRITICAL).
+- **The report says whether sanctions screening ran** (`risk_summary.sanctions_screening`:
+  `potential_match`, `no_match` or `not_run`). A case whose screening agent failed or whose
+  sanctions search fell back is reported as incomplete instead of being recommended for standard
+  onboarding. Checked: a test for each way screening can fail to run.
+- **Risk scoring is written down** in `docs/ARCHITECTURE.md`, including two rules that were in the
+  code but in no document: the Regulatory dimension is estimated from PEP, adverse-media and
+  ownership flags, not from retrieved regulations, and adverse media alone adds 12 points when the
+  screening score is at least 70 (reached today only by recorded demo profiles).
 - **Reports are stored through the report store:** in memory with the local backend, in Cosmos
   DB (`kyc_reports`) with the Azure one, replacing the gateway's module-level dicts.
 - **Browser origins allowed to call the API come from `ARGUS_CORS_ORIGINS`** (none by default)
@@ -143,6 +159,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **The report no longer shows a confidence it never computed.** Every report said 83%
+  (`risk_summary.confidence`), and every PEP finding said 0.92; both were fixed numbers. The
+  Gradio decision card shows what set the tier and the sanctions screening status instead.
+- **The regulations knowledge base says what its sources say.** Checked against the published
+  texts: FATF Recommendation 20 no longer carries two sentences that are not in it; the 6th AML
+  Directive's predicate offences are cited to Article 2, not Article 3; the enhanced due diligence
+  entry names 4AMLD Article 18a; the DORA entry separates Article 5 from Article 6; the Wolfsberg
+  entry is the AML Principles for Private Banking, which it quotes; and FATF Recommendation 12
+  now includes family members and close associates. FATF Recommendation 6 (targeted financial
+  sanctions) was missing and is added, so a sanctions case can cite it.
 - **Unknown entities no longer get invented evidence.** When a data service was unavailable,
   tools returned fabricated positives: a registry match (`MOCK-001`), a 51% beneficial owner, a
   transaction history with a structuring pattern for any name, OCR fields that then failed the
@@ -191,6 +217,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
 - **No local OCR engine yet.** With the local backend, identity documents are reported as unread
   (`fallback`) until Tesseract is added.
-- **A sanctions match alone scores LOW.** Screening weighs 30% and the regulatory estimate has no
-  sanctions term, so an entity whose only signal is a sanctions hit scores about 18 (seen with the
-  generated data). The weights and thresholds are unchanged by this work.
+- **A PEP match does not set a minimum tier.** It raises the score and adds the enhanced due
+  diligence actions, but a PEP-only case can be LOW or MEDIUM. FATF Recommendation 12 makes
+  enhanced measures mandatory for foreign PEPs and risk-based for domestic ones, and ARGUS does not
+  yet tell them apart.
