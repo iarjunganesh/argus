@@ -48,7 +48,7 @@ async def test_layering_is_scored(monkeypatch):
         return {"count": 1}
 
     async def typologies(patterns):
-        return [{"typology": "Layering"}]
+        return {"hits": [{"typology": "Layering"}], "source": "local"}
 
     monkeypatch.setattr(tx, "transaction_monitor", monitor)
     monkeypatch.setattr(tx, "pattern_detector", lambda history: {"layering_flag": True})
@@ -108,9 +108,10 @@ async def test_typology_matcher_cites_retrieved_guidance(use_plane):
             ]
 
     use_plane(retriever=Retriever())
-    hits = await typology_matcher({"structuring_flag": True})
+    result = await typology_matcher({"structuring_flag": True})
 
-    assert hits == [
+    assert result["source"] == "local"
+    assert result["hits"] == [
         {
             "typology": "FATF Recommendation 20",
             "description": "Report STRs",
@@ -125,9 +126,27 @@ async def test_typology_matcher_names_the_rule_when_nothing_is_retrieved(use_pla
     from argus.agents.transaction.tools.typology_matcher import typology_matcher
 
     use_plane(retriever=unavailable)
-    hits = await typology_matcher({"structuring_flag": True, "layering_flag": True})
+    result = await typology_matcher({"structuring_flag": True, "layering_flag": True})
 
-    assert [h["source"] for h in hits] == ["rules", "rules"]
+    assert [h["source"] for h in result["hits"]] == ["rules", "rules"]
+    assert result["source"] == "fallback"
+
+
+async def test_an_unavailable_typology_search_marks_the_agent_as_fallback(
+    monkeypatch, use_plane, unavailable
+):
+    async def monitor(name):
+        return {"count": 7, "source": "local"}
+
+    monkeypatch.setattr(tx, "transaction_monitor", monitor)
+    monkeypatch.setattr(tx, "pattern_detector", lambda history: {"structuring_flag": True})
+    use_plane(retriever=unavailable)
+
+    response = await tx.invoke(_msg({"entity_name": "Busy Ltd"}))
+
+    assert response["source"] == "fallback"
+    assert response["fallbacks"] == ["typology_matcher"]
+    assert response["result"]["typology_hits"][0]["source"] == "rules"
 
 
 def test_pattern_detector_structuring():
@@ -163,7 +182,7 @@ def test_transaction_agent_invoke(a2a_request):
 async def test_typology_matcher_without_flags_returns_nothing():
     from argus.agents.transaction.tools import typology_matcher
 
-    assert await typology_matcher.typology_matcher({}) == []
+    assert await typology_matcher.typology_matcher({}) == {"hits": [], "source": "local"}
 
 
 async def test_transaction_monitor_falls_back_when_the_store_is_down(use_plane, unavailable):

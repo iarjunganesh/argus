@@ -2,7 +2,8 @@
 
 Searches the regulations knowledge base for guidance on each detected pattern. When nothing is
 retrieved, it names the pattern from ARGUS's own rules and cites no document, rather than
-inventing a reference.
+inventing a reference. Returns `{"hits": [...], "source": ...}`; `source` is `fallback` when the
+search was unavailable, so the transaction agent's provenance can say so.
 """
 
 from argus.data_plane import DataPlaneUnavailable, get_data_plane
@@ -13,22 +14,22 @@ logger = get_logger("tool.typology_matcher")
 MATCH_THRESHOLD = 0.2  # minimum retrieval score, 0 to 1, that counts as a match
 
 
-async def typology_matcher(patterns: dict) -> list:
+async def typology_matcher(patterns: dict) -> dict:
+    plane = get_data_plane()
     query_parts = []
     if patterns.get("structuring_flag"):
         query_parts.append("structuring smurfing cash threshold")
     if patterns.get("layering_flag"):
         query_parts.append("layering multiple counterparties rapid movement")
     if not query_parts:
-        return []
+        return {"hits": [], "source": plane.backend}
 
+    source: str = plane.backend
     try:
-        passages = await get_data_plane().retriever.search(
-            "regulations", " ".join(query_parts), top=3
-        )
+        passages = await plane.retriever.search("regulations", " ".join(query_parts), top=3)
     except DataPlaneUnavailable as exc:
         logger.warning("tool.fallback", extra={"tool": "typology_matcher", "reason": str(exc)})
-        passages = []
+        passages, source = [], "fallback"
 
     hits = [
         {
@@ -41,7 +42,7 @@ async def typology_matcher(patterns: dict) -> list:
         for p in passages
         if p.score >= MATCH_THRESHOLD
     ]
-    return hits or _rule_typology_hits(patterns)
+    return {"hits": hits or _rule_typology_hits(patterns), "source": source}
 
 
 def _rule_typology_hits(patterns: dict) -> list:
