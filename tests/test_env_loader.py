@@ -1,4 +1,4 @@
-from utils import env_loader
+from argus.utils import env_loader
 
 
 def test_loads_key_values_from_nearest_env_file(tmp_path, monkeypatch):

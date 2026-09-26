@@ -20,7 +20,7 @@ Checked against the code on 2026-09-26:
 
 - **Explain Mode.** `explain_decision()` (analyst-facing) is wired into the Compliance agent.
   `explain_decision_plain_language()` (customer-facing) exists in
-  `agents/compliance/tools/explain_decision.py` but nothing calls it and no test covers it.
+  `src/argus/agents/compliance/tools/explain_decision.py` but nothing calls it and no test covers it.
 - **The plain-language prompt works against this plan's criteria by design.** It tells the model
   not to quote findings, forbids tiers and regulatory references, passes only the first two
   findings, and never states that a human still decides.

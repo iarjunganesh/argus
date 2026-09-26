@@ -5,9 +5,9 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-import agents.screening.agent as screening
-import agents.screening.tools.adverse_media_scanner as am
-import agents.screening.tools.sanctions_checker as sc
+import argus.agents.screening.agent as screening
+import argus.agents.screening.tools.adverse_media_scanner as am
+import argus.agents.screening.tools.sanctions_checker as sc
 
 
 def _msg(payload: dict) -> screening.A2AMessage:
@@ -103,3 +103,104 @@ async def test_items_parse_from_objects_and_dicts(monkeypatch, module):
 @pytest.mark.parametrize("module", [am, sc])
 def test_metadata_of_wrong_type_is_ignored(module):
     assert module._load_metadata({"metadata_json": ["not", "a", "string"]}) == {}
+
+
+async def test_adverse_and_sanctions_positive(monkeypatch):
+    import argus.agents.screening.tools.adverse_media_scanner as am
+    import argus.agents.screening.tools.sanctions_checker as sc
+
+    class FakeKB:
+        def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
+            return {
+                "items": [
+                    {
+                        "relevance_score": 0.6,
+                        "content": "bad news about X",
+                        "citation": {"document_title": "news.pdf", "snippet_id": "nid"},
+                        "metadata_json": '{"published_at": "2025-01-01", "tags": ["fraud"]}',
+                        "id": "x1",
+                    }
+                ]
+            }
+
+    class FakeClient:
+        knowledge_bases = FakeKB()
+
+    monkeypatch.setattr(am, "get_foundry_client", lambda: FakeClient())
+    monkeypatch.setattr(sc, "get_foundry_client", lambda: FakeClient())
+
+    ares = await am.adverse_media_scanner("X", ["X"])
+    assert ares["hit"] is True
+
+    sres = await sc.sanctions_checker("X", ["X"], "NL")
+    assert sres["hit"] is True
+
+
+async def test_screening_tools_mock_and_metadata(monkeypatch):
+    import argus.agents.screening.tools.adverse_media_scanner as am
+    import argus.agents.screening.tools.sanctions_checker as sc
+
+    # Patch get_foundry_client to raise
+    monkeypatch.setattr(
+        am, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
+    monkeypatch.setattr(
+        sc, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
+
+    r = await am.adverse_media_scanner("Alice", ["A"])
+    assert r["source"] == "mock"
+
+    s = await sc.sanctions_checker("Alice", ["A"], "NL")
+    assert s["source"] == "mock"
+
+
+async def test_pep_checker_db_hit(monkeypatch):
+    import argus.agents.screening.tools.pep_checker as pc
+
+    class FakeContainer:
+        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
+            return [
+                {"name": "John Doe", "role": "Minister", "country": "DE", "period": "2020-2024"}
+            ]
+
+    class FakeDB:
+        def get_container_client(self, name):
+            return FakeContainer()
+
+    monkeypatch.setattr(pc, "get_cosmos_database", lambda: FakeDB())
+    result = await pc.pep_checker("John Doe", "1970-01-01", "DE")
+    assert result["hit"] is True
+    assert result["findings"][0]["type"] == "pep"
+    assert "Minister" in result["findings"][0]["match"]
+
+
+async def test_pep_checker_db_no_hit(monkeypatch):
+    import argus.agents.screening.tools.pep_checker as pc
+
+    class FakeContainer:
+        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
+            return []
+
+    class FakeDB:
+        def get_container_client(self, name):
+            return FakeContainer()
+
+    monkeypatch.setattr(pc, "get_cosmos_database", lambda: FakeDB())
+    result = await pc.pep_checker("Jane Clean", "", "US")
+    assert result["hit"] is False
+    assert result["findings"] == []
+
+
+def test_screening_agent_invoke(a2a_request):
+    from argus.agents.screening.agent import app
+
+    client = TestClient(app)
+    resp = client.post(
+        "/a2a/invoke", json={**a2a_request, "target_agent": "argus-screening-agent-v1"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["agent"] == "screening"
+    assert data["status"] == "completed"
+    assert "screening_risk_score" in data["result"]

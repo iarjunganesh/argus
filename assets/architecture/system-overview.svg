@@ -10,7 +10,7 @@
   Search are used when configured and fall back to mock data otherwise; Foundry IQ and Document
   Intelligence return mock data on every run today.</desc>
 
-  <!-- Hand-placed master. scripts/render_assets.py writes the -light and -dark variants.
+  <!-- Hand-placed master. scripts/ci/render_assets.py writes the -light and -dark variants.
        Every status here is checked against the code, not the plan: see docs/ARCHITECTURE.md.
        Animation is decoration only; frame 0 carries the whole diagram. Durations divide 6s. -->
   <style>

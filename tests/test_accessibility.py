@@ -8,7 +8,7 @@ assertions are marked xfail until the palette is updated.
 
 import pytest
 
-from accessibility.wcag import (
+from argus.accessibility.wcag import (
     ARGUS_PALETTE,
     WCAGLevel,
     assert_contrast_ratio,

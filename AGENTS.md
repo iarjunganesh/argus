@@ -1,7 +1,8 @@
 # AGENTS.md
 
 Instructions for coding agents (Claude Code, Codex, GitHub Copilot) and for humans working on
-ARGUS. This file is canonical: `CLAUDE.md` and `.github/copilot-instructions.md` only point here.
+ARGUS. This file is canonical: `CLAUDE.md` and `.github/copilot-instructions.md` only point here,
+and [`CONTRIBUTING.md`](CONTRIBUTING.md) is its short version for first-time contributors.
 
 ## What ARGUS is
 
@@ -51,13 +52,13 @@ is not needed.
 uv sync                                               # install the locked environment
 uv run ruff check .                                   # lint
 uv run ruff format --check .                          # formatting
-uv run mypy agents api utils accessibility community ui config.py
+uv run mypy
 uv run pytest --cov                                   # tests, 100% line + branch coverage required
-uv run python scripts/check_docs.py                   # docs agree with the repository
-uv run python scripts/render_assets.py --check        # image variants current, WCAG AA contrast
+uv run python scripts/ci/check_docs.py                   # docs agree with the repository
+uv run python scripts/ci/render_assets.py --check        # image variants current, WCAG AA contrast
 ```
 
-`uv run python scripts/render_assets.py` regenerates the image variants and PNG/GIF exports after
+`uv run python scripts/ci/render_assets.py` regenerates the image variants and PNG/GIF exports after
 you edit an SVG master (see [`assets/README.md`](assets/README.md)).
 
 Tests need no cloud credentials: `tests/conftest.py` ignores `.env` and removes Azure credentials,
@@ -96,24 +97,28 @@ then run every command above.
 
 | Path | What it holds |
 | --- | --- |
+| `src/` | The application: the installable package `argus` (see below) |
+| `data/` | Synthetic data generators and public-source demo data |
+| `infra/` | Bicep template, Azure setup scripts, and `foundry_iq/` (create and fill the knowledge bases) |
+| `tests/` | The test suite (hermetic; no cloud access) |
+| `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs check and the image renderer |
+| `assets/` | Brand and architecture images, each drawn from an SVG master |
+| `docs/` | Architecture as it runs today, the v2 plan, and `roadmap/` (ideas not yet scheduled) |
+| `archive/` | Frozen hackathon material. Never edit it except to add to its index. |
+
+Inside `src/argus/`:
+
+| Package | What it holds |
+| --- | --- |
 | `agents/` | The orchestrator and the five agent services, each with its `tools/` |
 | `api/` | The FastAPI gateway and its request/response schemas |
 | `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
 | `accessibility/` | WCAG contrast utilities, also used to check the images |
 | `community/` | Community Edition configuration presets (a design, not yet runnable) |
-| `data/` | Synthetic data generators and public-source demo data |
-| `foundry_iq/` | Scripts that create and fill the Foundry IQ knowledge bases |
-| `infra/` | Bicep template and Azure setup scripts |
-| `observability/` | Placeholder for monitoring configuration |
-| `tests/` | The test suite (hermetic; no cloud access) |
-| `scripts/` | Demo launchers, the docs check and the image renderer |
-| `assets/` | Brand and architecture images, each drawn from an SVG master |
-| `docs/` | Architecture as it runs today, and the v2 plan |
-| `roadmap/` | Longer-term ideas that are not scheduled |
-| `archive/` | Frozen hackathon material. Never edit it except to add to its index. |
+| `config.py` | Settings and the Azure client factories |
 
-`scripts/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
+`scripts/ci/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.
 
 ## Handoff between tools

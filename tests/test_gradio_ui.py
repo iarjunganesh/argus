@@ -1,8 +1,8 @@
 import httpx
 import pytest
 
-from ui import gradio_app
-from ui.gradio_app import format_report
+from argus.ui import gradio_app
+from argus.ui.gradio_app import format_report
 
 
 def test_format_report_includes_executive_summary_and_ocr_visibility():

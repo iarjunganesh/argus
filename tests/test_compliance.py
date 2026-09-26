@@ -4,11 +4,11 @@ from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
-import agents.compliance.agent as comp
-import agents.compliance.tools.explain_decision as ed
-import agents.compliance.tools.regulations_rag as rr
-from agents.compliance.tools.gap_analyzer import gap_analyzer
-from agents.compliance.tools.risk_scorer import risk_scorer
+import argus.agents.compliance.agent as comp
+import argus.agents.compliance.tools.explain_decision as ed
+import argus.agents.compliance.tools.regulations_rag as rr
+from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
+from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
 
 def _msg(upstream: dict) -> comp.A2AMessage:
@@ -248,3 +248,171 @@ async def test_regulations_without_strong_match_return_fatf_baseline(monkeypatch
 
     assert res["source"] == "foundry_iq"
     assert res["regulations"][0]["foundry_iq_citation"]["snippet_id"] == "fatf-rec-10"
+
+
+def test_regulations_helpers_and_normalize():
+    import argus.agents.compliance.tools.regulations_rag as rr
+
+    assert rr._normalize_relevance(0.5) == 0.5
+    assert rr._normalize_relevance(2.0) == 0.5
+
+
+async def test_regulations_rag_returns_mock(monkeypatch):
+    # Force Foundry client errors by patching get_foundry_client in the module
+    import argus.agents.compliance.tools.regulations_rag as mod
+    from argus.agents.compliance.tools import regulations_rag as rr
+
+    monkeypatch.setattr(
+        mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    )
+
+    res = await rr.regulations_rag("Q", "NL", "company", ["fraud"])
+    assert res["source"] == "mock"
+
+
+async def test_regulations_and_adverse_positive(monkeypatch):
+    # positive branch: fake foundry client returns items
+    import argus.agents.compliance.tools.regulations_rag as rrmod
+
+    class FakeKB:
+        def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
+            return {
+                "items": [
+                    {
+                        "relevance_score": 0.5,
+                        "content": "Some rule text",
+                        "citation": {
+                            "document_title": "doc.pdf",
+                            "section": "sec1",
+                            "snippet_id": "s1",
+                        },
+                        "id": "i1",
+                    }
+                ]
+            }
+
+    class FakeClient:
+        knowledge_bases = FakeKB()
+
+    monkeypatch.setattr(rrmod, "get_foundry_client", lambda: FakeClient())
+    res = await rrmod.regulations_rag("Q", "NL", "company", ["fraud"])
+    assert res["source"] == "foundry_iq"
+    assert res["regulations"]
+
+
+async def test_compliance_agent_invoke(monkeypatch):
+    import argus.agents.compliance.agent as comp
+
+    # Patch external tool calls
+    async def fake_reg(q, j, t, ri):
+        return {"regulations": []}
+
+    monkeypatch.setattr(comp, "regulations_rag", fake_reg)
+    monkeypatch.setattr(
+        comp,
+        "risk_scorer",
+        lambda i, s, c, t: {"overall": 60, "dimensions": {}, "confidence": 0.85},
+    )
+    monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"])
+
+    async def fake_explain(*args, **kwargs):
+        return "explanation"
+
+    monkeypatch.setattr(comp, "explain_decision", fake_explain)
+
+    payload = {
+        "entity_name": "Z",
+        "entity_type": "company",
+        "jurisdiction": "GB",
+        "upstream_results": {
+            "identity": {"result": {}},
+            "screening": {
+                "result": {"pep_hit": True, "findings": [{"type": "pep", "match": "John"}]}
+            },
+            "corporate": {"result": {"risk_flags": []}},
+            "transaction": {"result": {}},
+        },
+    }
+    msg = comp.A2AMessage(
+        a2a_version="1.0", source_agent="x", target_agent="y", task_id="t3", payload=payload
+    )
+    res = await comp.invoke(msg)
+    assert res["result"]["risk_summary"]["overall_risk_tier"] == "HIGH"
+
+
+def test_risk_scorer_high_risk():
+    from argus.agents.compliance.tools.risk_scorer import risk_scorer
+
+    identity = {"identity_score": 80}
+    screening = {
+        "screening_risk_score": 90,
+        "pep_hit": True,
+        "adverse_media_hit": True,
+        "sanctions_hit": False,
+    }
+    corporate = {"corporate_score": 40, "risk_flags": ["High-risk jurisdiction: KY"]}
+    transaction = {"transaction_risk_score": 60, "structuring_flag": True}
+    result = risk_scorer(identity, screening, corporate, transaction)
+    assert result["overall"] > 50
+    assert "screening" in result["dimensions"]
+
+
+def test_risk_scorer_low_risk():
+    from argus.agents.compliance.tools.risk_scorer import risk_scorer
+
+    result = risk_scorer(
+        {"identity_score": 95},
+        {
+            "screening_risk_score": 0,
+            "pep_hit": False,
+            "adverse_media_hit": False,
+            "sanctions_hit": False,
+        },
+        {"corporate_score": 90, "risk_flags": []},
+        {"transaction_risk_score": 0, "structuring_flag": False},
+    )
+    assert result["overall"] < 40
+
+
+def test_gap_analyzer_pep():
+    from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
+
+    gaps = gap_analyzer(["pep"], {}, {"overall": 60})
+    assert any("PEP" in g or "pep" in g.lower() or "wealth" in g.lower() for g in gaps)
+
+
+def test_gap_analyzer_clean():
+    from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
+
+    gaps = gap_analyzer([], {}, {"overall": 20})
+    assert isinstance(gaps, list)
+
+
+def test_compliance_agent_handles_none_upstream_results():
+    from argus.agents.compliance.agent import app
+
+    client = TestClient(app)
+    payload = {
+        "a2a_version": "1.0",
+        "source_agent": "argus-orchestrator-v1",
+        "target_agent": "argus-compliance-agent-v1",
+        "task_id": "test-task-none-upstream",
+        "payload": {
+            "entity_name": "Synthetic Entity Ltd.",
+            "entity_type": "corporate",
+            "jurisdiction": "KY",
+            "upstream_results": {
+                "identity": {"status": "error", "result": None},
+                "screening": {"status": "error", "result": None},
+                "corporate": {"status": "completed", "result": {}},
+                "transaction": {"status": "completed", "result": {}},
+            },
+        },
+    }
+
+    resp = client.post("/a2a/invoke", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "completed"
+    assert "risk_summary" in data["result"]
+    assert "explanation" in data["result"]

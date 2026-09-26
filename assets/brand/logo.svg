@@ -5,7 +5,7 @@
 
   <!-- Stacked logo on a transparent background.
        The emblem geometry is shared with logo-mark.svg, logo.svg, banner.svg, banner-16x9.svg
-       and social-preview.svg; change it in all of them together. scripts/render_assets.py
+       and social-preview.svg; change it in all of them together. scripts/ci/render_assets.py
        writes the -light and -dark variants. Durations divide 6 s; frame 0 carries the meaning. -->
   <style>
 /* PALETTE:LIGHT */

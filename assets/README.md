@@ -38,9 +38,9 @@ a fallback, a weight or a threshold, update the diagram in the same pull request
 ## How the files are made
 
 ```sh
-uv run python scripts/render_assets.py            # variants, then PNG/GIF exports
-uv run python scripts/render_assets.py --check    # what CI runs
-uv run python scripts/render_assets.py --no-raster
+uv run python scripts/ci/render_assets.py            # variants, then PNG/GIF exports
+uv run python scripts/ci/render_assets.py --check    # what CI runs
+uv run python scripts/ci/render_assets.py --no-raster
 ```
 
 - **Why two variants.** Each master holds a light palette and a dark palette (between
@@ -49,7 +49,7 @@ uv run python scripts/render_assets.py --no-raster
   `-light` and `-dark` files.
 - **Contrast is checked.** Each master lists its text/background colour pairs in a
   `/* CONTRAST ... */` comment. `--check` fails if any pair is below WCAG AA (4.5:1) in either
-  theme, using [`accessibility/wcag.py`](../accessibility/wcag.py).
+  theme, using [`accessibility/wcag.py`](../src/argus/accessibility/wcag.py).
 - **Rasters are exports, not sources.** PNG and GIF files need a Chromium browser and ffmpeg,
   so CI doesn't build or check them. Re-run the script after changing a master and commit the
   exports with it.

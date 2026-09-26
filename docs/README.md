@@ -4,7 +4,7 @@
 | --- | --- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How ARGUS runs today: processes, request flow, external services and their fallbacks |
 | [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md) | The next version: the Explain Mode experiment, the three Microsoft IQs, and the platform stance |
-| [`../roadmap/`](../roadmap/) | Longer-term ideas that are not yet scheduled |
+| [`roadmap/`](roadmap/) | Longer-term ideas that are not yet scheduled |
 | [`../archive/hackathon-2026/`](../archive/hackathon-2026/) | The frozen Microsoft Agents League 2026 submission material |
 
 Brand and architecture images, and how they are generated, are indexed in

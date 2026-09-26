@@ -1,0 +1,22 @@
+name: Idea or improvement
+description: Suggest a change or a new capability.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Who is affected and what gets in their way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Links to docs/ARGUS-V2-PLAN.md or docs/roadmap/ if it relates to planned work.

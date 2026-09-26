@@ -15,10 +15,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **The standard GitHub community files:** `CONTRIBUTING.md`, `SECURITY.md` (private
+  vulnerability reporting, which is enabled on the repository), `CODE_OF_CONDUCT.md`
+  (Contributor Covenant 2.1), issue forms, a pull request template with the CI checklist,
+  `CODEOWNERS` and `.editorconfig`.
 - **One set of instructions for every coding agent.** `AGENTS.md` holds the rules, the commands,
   the definition of done, the post-release dependency refresh and a repository map; `CLAUDE.md`
   imports it and `.github/copilot-instructions.md` points to it, so Claude Code, Codex and
-  GitHub Copilot follow the same file. `scripts/check_docs.py` now fails if the repository map
+  GitHub Copilot follow the same file. `scripts/ci/check_docs.py` now fails if the repository map
   and the tracked top-level directories disagree (checked by renaming one row).
 - **The Copilot coding agent starts with a working environment**
   (`.github/workflows/copilot-setup-steps.yml` installs the locked dependencies). Shared editor
@@ -32,7 +36,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   end with the scoring weights and thresholds as coded, showing which steps are deterministic
   and which use a language model; and the planned v2 runtime, labelled as not built. They
   replace the Mermaid chart and the ASCII flow in the README.
-- **`scripts/render_assets.py`** writes each master's light and dark variants and its PNG/GIF
+- **`scripts/ci/render_assets.py`** writes each master's light and dark variants and its PNG/GIF
   exports. `--check` runs in CI: it fails if a variant is out of date or if any declared
   text/background pair is below WCAG AA in either theme. Checked: it caught a 4.49:1 gold on
   the review band before merge, which was darkened to 5.25:1.
@@ -43,7 +47,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **A CI quality gate** (`.github/workflows/ci.yml`) that fails a pull request on: ruff lint or
   format drift, mypy errors, a failing test or line/branch coverage below 100%, a known
   vulnerability in the locked dependency graph (pip-audit), a committed secret (gitleaks), or
-  documentation drift (markdownlint plus `scripts/check_docs.py`: broken links, unfinished
+  documentation drift (markdownlint plus `scripts/ci/check_docs.py`: broken links, unfinished
   markers, Python version disagreement, unlisted docs, tracked local files).
 - **100% line and branch coverage**, enforced (`fail_under = 100`) and mirrored by Codecov
   (`codecov.yml`: project and patch targets 100%). 75 new tests cover every agent's decision
@@ -56,6 +60,18 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **ARGUS is an installable package in the standard src layout.** The application
+  (`agents/`, `api/`, `ui/`, `utils/`, `accessibility/`, `community/`, `config.py`) moved to
+  `src/argus/` and installs in editable mode with `uv sync`; imports are `argus.*`. Services
+  start as `uv run uvicorn argus.api.main:app` and `uv run python -m argus.ui.gradio_app`.
+  Checked: `uv build` produces a wheel, all 50 moves are recorded as git renames, and the suite
+  passes unchanged at 100% coverage.
+- **The repository root went from 16 directories to 8.** Scripts are sorted by role
+  (`scripts/dev/`, `scripts/ci/`), the Foundry IQ setup moved to `infra/foundry_iq/`, and the
+  roadmap to `docs/roadmap/`.
+- **Tests are organised by subject.** The catch-all `test_coverage_boost.py`, `test_tools.py`
+  and `test_agents.py` were split into the per-area files; three tests that mixed several
+  modules became eight single-subject tests.
 - **The Gradio UI shows the new logo** (`assets/brand/logo-light.svg`).
 - **Python 3.14 and the latest dependency releases.** This crosses majors (openai 3.x,
   azure-search-documents 12.x, azure-ai-projects 2.x). Checked: the suite passes unchanged on
@@ -82,6 +98,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **Every `sys.path` hack** (9 files): scripts now import the installed `argus` package.
+- **`observability/`**, which held only a "planned" note (OpenTelemetry is in the v2 plan), and
+  **`scripts/create_test_doc.py`**, which nothing used. The Community Edition compose file left
+  the Python package and is kept as a labelled sketch in `docs/roadmap/`.
 - **Hackathon-era images and the scripts that made them** (the pentagon logo, the Mermaid
   architecture sources, the 1300×500 banner and GIFs, `build_animated_diagram.py`,
   `capture_gif_frames.js`) moved to `archive/hackathon-2026/` with `git mv`.

@@ -10,7 +10,7 @@
   EntityStore, ReportStore and OCR, each with an Azure implementation and a local one; Foundry IQ
   is the Azure retriever. Telemetry uses OpenTelemetry.</desc>
 
-  <!-- Hand-placed master; scripts/render_assets.py writes the -light and -dark variants.
+  <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        This is the plan in docs/ARGUS-V2-PLAN.md, drawn. It must say "planned" wherever it could
        be mistaken for the current runtime (see system-overview.svg for that). Static on purpose:
        nothing here moves, because nothing here runs yet. -->
