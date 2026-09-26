@@ -99,8 +99,8 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - name: Bootstrap from the existing lock
-        run: uv sync --locked
+      # `uv run --locked` installs the locked environment itself, so a broken lock fails inside
+      # this continue-on-error step and still ends in a labelled review PR.
       - name: Refresh and run the Python gates
         id: refresh
         continue-on-error: true
@@ -129,7 +129,10 @@ jobs:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
         run: |
           mkdir -p .tmp
-          test -f docs/DEPENDENCY-REFRESH.md || printf '# Dependency refresh\n\nRefresh after %s failed before reporting.\n' "$RELEASE_TAG" > docs/DEPENDENCY-REFRESH.md
+          # A refresh that stopped before writing its report (for example when the lock cannot be
+          # installed) must not leave the previous report in place.
+          grep -qF "Refresh after \`$RELEASE_TAG\`." docs/DEPENDENCY-REFRESH.md 2>/dev/null ||
+            printf '# Dependency refresh\n\nRefresh after `%s` failed before it could write its report. See the run log.\n' "$RELEASE_TAG" > docs/DEPENDENCY-REFRESH.md
           printf '\nWorkflow checks: refresh=%s, markdown=%s, secrets=%s.\n' "$REFRESH" "$MARKDOWN" "$SECRETS" >> docs/DEPENDENCY-REFRESH.md
           printf '\nRun: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> docs/DEPENDENCY-REFRESH.md
           cp docs/DEPENDENCY-REFRESH.md .tmp/dependency-pr.md
