@@ -3,6 +3,9 @@ risk_scorer — Weighted risk scoring across all dimensions.
 Weights: Screening 30% | Regulatory 25% | Identity 20% | Corporate 15% | Transaction 10%
 """
 
+# Lower bound of each tier's score band, highest first.
+TIER_BANDS = (("CRITICAL", 75), ("HIGH", 55), ("MEDIUM", 35), ("LOW", 0))
+
 WEIGHTS = {
     "identity": 0.20,
     "screening": 0.30,
@@ -10,6 +13,11 @@ WEIGHTS = {
     "regulatory": 0.25,
     "transaction": 0.10,
 }
+
+
+def score_tier(score: float) -> str:
+    """The tier whose score band holds `score`."""
+    return next((name for name, floor in TIER_BANDS if score >= floor), "LOW")
 
 
 def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: dict) -> dict:
@@ -39,46 +47,36 @@ def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: d
     ):
         overall += 12.0
 
-    def tier(score):
-        if score >= 75:
-            return "CRITICAL"
-        if score >= 55:
-            return "HIGH"
-        if score >= 35:
-            return "MEDIUM"
-        return "LOW"
-
     # Format weight strings from WEIGHTS constant for display
     def w(key):
         return f"{int(WEIGHTS[key] * 100)}%"
 
     return {
         "overall": round(overall, 1),
-        "confidence": 0.83,
         "dimensions": {
             "identity": {
                 "score": round(identity_risk, 1),
-                "tier": tier(identity_risk),
+                "tier": score_tier(identity_risk),
                 "weight": w("identity"),
             },
             "screening": {
                 "score": round(screening_risk, 1),
-                "tier": tier(screening_risk),
+                "tier": score_tier(screening_risk),
                 "weight": w("screening"),
             },
             "corporate_ubo": {
                 "score": round(corporate_risk, 1),
-                "tier": tier(corporate_risk),
+                "tier": score_tier(corporate_risk),
                 "weight": w("corporate"),
             },
             "regulatory": {
                 "score": round(regulatory_risk, 1),
-                "tier": tier(regulatory_risk),
+                "tier": score_tier(regulatory_risk),
                 "weight": w("regulatory"),
             },
             "transaction": {
                 "score": round(transaction_risk, 1),
-                "tier": tier(transaction_risk),
+                "tier": score_tier(transaction_risk),
                 "weight": w("transaction"),
             },
         },

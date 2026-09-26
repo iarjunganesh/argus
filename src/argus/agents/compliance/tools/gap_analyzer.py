@@ -9,6 +9,9 @@ REGULATION_GAP_MAP = {
         "FATF Rec.6 — Targeted financial sanctions screening mandatory",
         "Transaction freeze obligations may apply — legal review required",
     ],
+    "sanctions_not_screened": [
+        "FATF Rec.6 — Sanctions screening not evidenced; the case cannot be cleared without it",
+    ],
     "adverse_media": [
         "Risk-based approach requires adverse media to be weighed in onboarding decision",
     ],

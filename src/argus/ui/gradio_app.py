@@ -17,6 +17,13 @@ from argus.accessibility.wcag import ARGUS_PALETTE
 
 API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
+TIER_BASIS_LABELS = {"score": "Score band", "sanctions_match": "Sanctions hold"}
+SANCTIONS_LABELS = {
+    "potential_match": "Potential match",
+    "no_match": "No match",
+    "not_run": "Did not run",
+}
+
 
 def _logo_data_uri() -> str:
     logo_path = Path(__file__).resolve().parents[3] / "assets" / "brand" / "logo-light.svg"
@@ -152,8 +159,8 @@ def format_executive_summary(report: dict) -> str:
     risk_summary = report.get("risk_summary", {})
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
     score = risk_summary.get("overall_risk_score", 0)
-    confidence = risk_summary.get("confidence", 0)
-    confidence_pct = f"{int(confidence * 100)}%" if confidence <= 1 else f"{int(confidence)}%"
+    tier_basis = TIER_BASIS_LABELS.get(risk_summary.get("tier_basis", ""), "Not reported")
+    sanctions = SANCTIONS_LABELS.get(risk_summary.get("sanctions_screening", ""), "Not reported")
     recommendation = risk_summary.get("decision_recommendation", "")
 
     drivers = report.get("key_findings", [])[:3]
@@ -183,9 +190,13 @@ def format_executive_summary(report: dict) -> str:
                     <span style="color:var(--body-text-color-subdued,#64748b);">Risk Score</span>
                     <strong>{score}</strong>
                 </div>
+                <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
+                    <span style="color:var(--body-text-color-subdued,#64748b);">Tier Set By</span>
+                    <strong>{tier_basis}</strong>
+                </div>
                 <div style="display:flex;justify-content:space-between;gap:12px;">
-                    <span style="color:var(--body-text-color-subdued,#64748b);">Confidence</span>
-                    <strong>{confidence_pct}</strong>
+                    <span style="color:var(--body-text-color-subdued,#64748b);">Sanctions Screening</span>
+                    <strong>{sanctions}</strong>
                 </div>
             </div>
         </div>
