@@ -108,3 +108,112 @@ async def test_ubo_resolver_stops_at_max_depth():
         "depth": ubo.MAX_DEPTH,
         "note": "Max depth reached",
     }
+
+
+async def test_corporate_agent_invoke(monkeypatch):
+    import argus.agents.corporate.agent as corp
+
+    # Patch dependent functions
+    monkeypatch.setattr(corp, "get_demo_profile", lambda name, etype, j: None)
+
+    async def fake_registry(name, rn):
+        return {"found": True}
+
+    async def fake_ubo(name, rr):
+        return {"ownership_chain": [{"name": "X", "jurisdiction": "GB"}], "depth": 1}
+
+    monkeypatch.setattr(corp, "registry_lookup", fake_registry)
+    monkeypatch.setattr(corp, "ubo_resolver", fake_ubo)
+
+    async def fake_jmap(j):
+        return {"fatf_risk_tier": "high"}
+
+    monkeypatch.setattr(corp, "jurisdiction_mapper", fake_jmap)
+
+    msg = corp.A2AMessage(
+        a2a_version="1.0",
+        source_agent="x",
+        target_agent="y",
+        task_id="t1",
+        payload={"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "GB"},
+    )
+    res = await corp.invoke(msg)
+    assert res["result"]["corporate_score"] <= 100
+
+
+async def test_jurisdiction_high_risk():
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+
+    result = await jurisdiction_mapper("KY")
+    assert result["fatf_risk_tier"] == "high"
+    assert len(result["special_measures"]) > 0
+
+
+async def test_jurisdiction_low_risk():
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+
+    result = await jurisdiction_mapper("SE")
+    assert result["fatf_risk_tier"] == "low"
+
+
+async def test_jurisdiction_medium_risk():
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+
+    result = await jurisdiction_mapper("ng")
+    assert result["country_code"] == "NG"
+    assert result["fatf_risk_tier"] == "medium"
+    assert "monitoring" in result["special_measures"][0].lower()
+
+
+async def test_jurisdiction_unknown_when_missing_code():
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+
+    result = await jurisdiction_mapper("")
+    assert result["country_code"] == ""
+    assert result["fatf_risk_tier"] == "unknown"
+    assert result["special_measures"] == []
+
+
+def test_corporate_agent_skips_individual(a2a_request):
+    from argus.agents.corporate.agent import app
+
+    client = TestClient(app)
+    payload = {**a2a_request, "payload": {**a2a_request["payload"], "entity_type": "individual"}}
+    resp = client.post("/a2a/invoke", json=payload)
+    assert resp.status_code == 200
+    assert resp.json()["result"].get("skipped") is True
+
+
+async def test_registry_and_ubo_read_cosmos_records(monkeypatch):
+    class FakeContainer:
+        def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
+            return [
+                {
+                    "name": "Acme",
+                    "incorporated_date": "2020-01-01",
+                    "ownership_percentage": 60,
+                    "entity_type": "individual",
+                    "jurisdiction": "GB",
+                }
+            ]
+
+    class FakeDB:
+        def get_container_client(self, name):
+            return FakeContainer()
+
+    monkeypatch.setattr(reg, "get_cosmos_database", lambda: FakeDB())
+    monkeypatch.setattr(ubo, "get_cosmos_database", lambda: FakeDB())
+
+    assert (await reg.registry_lookup("Acme", None))["found"] is True
+    assert (await ubo.ubo_resolver("Acme", {}))["ubos"]
+
+
+async def test_registry_and_ubo_fall_back_to_mock_without_cosmos(monkeypatch):
+    def no_db():
+        raise RuntimeError("no db")
+
+    monkeypatch.setattr(reg, "get_cosmos_database", no_db)
+    monkeypatch.setattr(ubo, "get_cosmos_database", no_db)
+
+    assert (await reg.registry_lookup("Acme", None))["source"] == "mock"
+    assert (await ubo.ubo_resolver("Acme", {}))["source"] == "mock"

@@ -82,3 +82,12 @@ def test_aggregated_health_reports_each_outcome(client, monkeypatch):
     assert health["identity"] == {"status": "ok", "info": {"service": "identity"}}
     assert health["screening"] == {"status": "error", "code": 503}
     assert health["corporate"]["status"] == "unreachable"
+
+
+def test_api_root():
+    from argus.api.main import app
+
+    client = TestClient(app)
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.json()["service"] == "ARGUS"
