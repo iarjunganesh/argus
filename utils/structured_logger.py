@@ -4,10 +4,10 @@ Provides get_logger(name) which returns a configured logger that emits
 JSON objects on each log line for easier ingestion by logging systems.
 """
 
-import logging
 import json
+import logging
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 
 class JsonFormatter(logging.Formatter):

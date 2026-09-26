@@ -1,17 +1,18 @@
 """Create and seed the Azure AI Search typology index used by the transaction agent."""
 
 import os
-from dotenv import load_dotenv
+
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import HttpResponseError
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchIndex,
     SearchableField,
-    SimpleField,
     SearchFieldDataType,
+    SearchIndex,
+    SimpleField,
 )
+from dotenv import load_dotenv
 
 load_dotenv()
 

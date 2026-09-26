@@ -6,8 +6,9 @@ https://www.w3.org/TR/WCAG21/#contrast-minimum (Success Criterion 1.4.3).
 """
 
 from __future__ import annotations
-from enum import Enum
+
 import re
+from enum import Enum
 
 
 class WCAGLevel(Enum):

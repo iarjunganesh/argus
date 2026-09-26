@@ -6,8 +6,9 @@ Output: data/synthetic/entities.jsonl
 
 import json
 import random
-from faker import Faker
 from pathlib import Path
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(42)
@@ -65,10 +66,10 @@ def generate_corporate() -> dict:
 def main():
     print("Generating synthetic entity profiles...")
     with open(OUTPUT_FILE, "w") as f:
-        for i in range(7000):  # 70% individuals
+        for _ in range(7000):  # 70% individuals
             entity = generate_individual()
             f.write(json.dumps(entity) + "\n")
-        for i in range(3000):  # 30% corporates
+        for _ in range(3000):  # 30% corporates
             entity = generate_corporate()
             f.write(json.dumps(entity) + "\n")
 

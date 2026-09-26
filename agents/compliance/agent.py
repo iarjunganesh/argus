@@ -5,12 +5,13 @@ regulatory text with citations, produces final weighted risk score.
 """
 
 from fastapi import FastAPI
-from utils.structured_logger import get_logger
 from pydantic import BaseModel
+
 from agents.compliance.tools.explain_decision import explain_decision
+from agents.compliance.tools.gap_analyzer import gap_analyzer
 from agents.compliance.tools.regulations_rag import regulations_rag
 from agents.compliance.tools.risk_scorer import risk_scorer
-from agents.compliance.tools.gap_analyzer import gap_analyzer
+from utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Compliance & Risk Agent")
 logger = get_logger("agent.compliance")

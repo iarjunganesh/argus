@@ -3,10 +3,12 @@ ARGUS API Gateway — FastAPI
 Accepts KYC requests and routes to the Orchestrator.
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from api.schemas import KYCRequest, StatusResponse
 import uuid
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+from api.schemas import KYCRequest, StatusResponse
 from utils.structured_logger import get_logger
 
 logger = get_logger("api.gateway")

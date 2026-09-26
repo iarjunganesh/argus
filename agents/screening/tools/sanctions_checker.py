@@ -5,6 +5,7 @@ Returns cited, grounded results — no hallucination risk.
 """
 
 import json
+
 from config import FOUNDRY_IQ_KB_SANCTIONS, get_foundry_client
 
 
@@ -47,7 +48,7 @@ async def sanctions_checker(
     Query Foundry IQ KB-Sanctions for the entity and its aliases.
     Uses Azure AI Search semantic search with citation metadata.
     """
-    query_terms = [entity_name] + aliases
+    query_terms = [entity_name, *aliases]
     query = " ".join(query_terms) + (f" {nationality}" if nationality else "")
 
     try:

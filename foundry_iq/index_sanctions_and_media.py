@@ -3,9 +3,10 @@ index_sanctions.py + index_adverse_media.py
 Index synthetic and public-source datasets into Foundry IQ knowledge bases.
 """
 
-import os, json
-from pathlib import Path
+import json
+import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -32,7 +33,7 @@ def index_sanctions():
     for r in records:
         aliases = r.get("aliases", [])
         name = r.get("name", "")
-        all_names = " | ".join([name] + aliases)
+        all_names = " | ".join([name, *aliases])
         content = (
             f"{name}. Aliases: {', '.join(aliases)}. "
             f"List: {r.get('list_type', '')}. Program: {r.get('program', '')}. "
@@ -58,8 +59,8 @@ def index_sanctions():
         )
 
     try:
-        from azure.search.documents import SearchClient
         from azure.core.credentials import AzureKeyCredential
+        from azure.search.documents import SearchClient
 
         endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
         key = os.environ["AZURE_SEARCH_API_KEY"]
@@ -196,8 +197,8 @@ def index_adverse_media():
         )
 
     try:
-        from azure.search.documents import SearchClient
         from azure.core.credentials import AzureKeyCredential
+        from azure.search.documents import SearchClient
 
         endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
         key = os.environ["AZURE_SEARCH_API_KEY"]

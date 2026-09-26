@@ -4,10 +4,11 @@ Generates a synthetic corporate ownership graph using NetworkX.
 Output: data/synthetic/corporate_graph.jsonl
 """
 
-import json, random
-import networkx as nx
-from faker import Faker
+import json
+import random
 from pathlib import Path
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(55)
@@ -15,11 +16,10 @@ random.seed(55)
 OUTPUT = Path(__file__).parent / "corporate_graph.jsonl"
 
 HIGH_RISK_JRSDS = ["PA", "KY", "BVI"]
-ALL_JRSDS = ["NL", "DE", "GB", "SE", "CH", "LU"] + HIGH_RISK_JRSDS
+ALL_JRSDS = ["NL", "DE", "GB", "SE", "CH", "LU", *HIGH_RISK_JRSDS]
 
 
 def build_graph(n_companies=500, n_individuals=1500):
-    G = nx.DiGraph()
     companies = [fake.company() for _ in range(n_companies)]
     individuals = [fake.name() for _ in range(n_individuals)]
 
@@ -29,7 +29,7 @@ def build_graph(n_companies=500, n_individuals=1500):
         n_owners = random.randint(1, 4)
         owners = random.sample(individuals + companies, min(n_owners, len(individuals)))
         pcts = _split_ownership(n_owners)
-        for owner, pct in zip(owners, pcts):
+        for owner, pct in zip(owners, pcts, strict=True):
             edges.append(
                 {
                     "parent_entity": company,

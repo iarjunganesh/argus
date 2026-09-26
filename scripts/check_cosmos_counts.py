@@ -3,9 +3,11 @@
 Usage: python scripts/check_cosmos_counts.py
 """
 
-from dotenv import load_dotenv
-from pathlib import Path
 import os
+from pathlib import Path
+
+from azure.cosmos import CosmosClient
+from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(".") / ".env")
 
@@ -16,8 +18,6 @@ database_name = os.environ.get("COSMOS_DATABASE", "argus-db")
 if not endpoint or not key:
     print("Missing COSMOS_ENDPOINT or COSMOS_KEY in .env")
     raise SystemExit(1)
-
-from azure.cosmos import CosmosClient
 
 client = CosmosClient(endpoint, key)
 db = client.get_database_client(database_name)

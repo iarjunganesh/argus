@@ -10,7 +10,6 @@ Usage: python data/public/generate_adverse_media_public.py
 import json
 from pathlib import Path
 
-
 OUTPUT_FILE = Path(__file__).parent / "adverse_media_public.jsonl"
 
 PUBLIC_ARTICLES = [

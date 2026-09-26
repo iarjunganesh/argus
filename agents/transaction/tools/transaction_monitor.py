@@ -7,7 +7,10 @@ async def transaction_monitor(entity_name: str) -> dict:
     try:
         db = get_cosmos_database()
         container = db.get_container_client("transactions")
-        query = "SELECT * FROM c WHERE LOWER(c.entity_name) = LOWER(@name) ORDER BY c.date DESC OFFSET 0 LIMIT 500"
+        query = (
+            "SELECT * FROM c WHERE LOWER(c.entity_name) = LOWER(@name) "
+            "ORDER BY c.date DESC OFFSET 0 LIMIT 500"
+        )
         params = [{"name": "@name", "value": entity_name}]
         items = list(
             container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
@@ -29,6 +32,7 @@ async def transaction_monitor(entity_name: str) -> dict:
 
 def _mock_transaction_history() -> dict:
     import random
+
     from faker import Faker
 
     fake = Faker()

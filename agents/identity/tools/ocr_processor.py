@@ -4,8 +4,8 @@ Extracts structured fields from synthetic identity documents.
 Supports: passport, drivers_license, id_card, tax_invoice
 """
 
-import os, base64
-from config import get_llm_client, MODEL_NAME
+import base64
+import os
 
 DOC_TYPE_FIELDS = {
     "passport": [
@@ -66,9 +66,6 @@ async def ocr_processor(image_base64: str, doc_type: str = "passport") -> dict:
 
 
 def _mock_ocr(doc_type: str) -> dict:
-    from faker import Faker
-
-    fake = Faker()
     field_names = DOC_TYPE_FIELDS.get(doc_type, [])
     mock_fields = {f: {"value": f"MOCK_{f.upper()}", "confidence": 0.9} for f in field_names}
     return {

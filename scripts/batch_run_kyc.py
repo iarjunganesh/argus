@@ -3,11 +3,12 @@
 Usage: python scripts/batch_run_kyc.py --count 10 --out data/reports_batch.jsonl
 """
 
-import requests
-import time
 import argparse
 import json
+import time
 from pathlib import Path
+
+import requests
 
 API = "http://127.0.0.1:8000"
 

@@ -7,11 +7,12 @@ assertions are marked xfail until the palette is updated.
 """
 
 import pytest
+
 from accessibility.wcag import (
+    ARGUS_PALETTE,
+    WCAGLevel,
     audit_palette,
     contrast_ratio,
-    WCAGLevel,
-    ARGUS_PALETTE,
 )
 
 
@@ -28,7 +29,7 @@ def test_contrast_ratio_known_values():
 def test_audit_palette_returns_all_tokens():
     results = audit_palette(ARGUS_PALETTE)
     assert set(results.keys()) == set(ARGUS_PALETTE.keys())
-    for token, result in results.items():
+    for result in results.values():
         assert "ratio" in result
         assert "passes" in result
         assert result["ratio"] > 0
@@ -39,7 +40,7 @@ def test_argus_risk_palette_aa_compliance():
     """Full palette must pass WCAG AA. Marked xfail until v2 colors land."""
     results = audit_palette(ARGUS_PALETTE, level=WCAGLevel.AA)
     failures = {k: v for k, v in results.items() if not v["passes"]}
-    assert not failures, f"WCAG AA failures: " + ", ".join(
+    assert not failures, "WCAG AA failures: " + ", ".join(
         f"{k} ({v['ratio']}:1)" for k, v in failures.items()
     )
 
@@ -63,6 +64,6 @@ def test_high_contrast_palette_passes_aa():
     }
     results = audit_palette(high_contrast, level=WCAGLevel.AA)
     failures = {k: v for k, v in results.items() if not v["passes"]}
-    assert not failures, f"High-contrast palette WCAG AA failures: " + ", ".join(
+    assert not failures, "High-contrast palette WCAG AA failures: " + ", ".join(
         f"{k} ({v['ratio']:.2f}:1)" for k, v in failures.items()
     )

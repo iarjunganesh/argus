@@ -1,6 +1,5 @@
-import asyncio
 import base64
-import types
+
 import pytest
 
 from agents.orchestrator import agent as orchestrator
@@ -93,10 +92,9 @@ def test_regulations_helpers_and_normalize():
 
 @pytest.mark.asyncio
 async def test_regulations_rag_returns_mock(monkeypatch):
-    from agents.compliance.tools import regulations_rag as rr
-
     # Force Foundry client errors by patching get_foundry_client in the module
     import agents.compliance.tools.regulations_rag as mod
+    from agents.compliance.tools import regulations_rag as rr
 
     monkeypatch.setattr(
         mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
@@ -172,8 +170,8 @@ async def test_adverse_and_sanctions_positive(monkeypatch):
 @pytest.mark.asyncio
 async def test_registry_customer_and_ubo_with_db(monkeypatch):
     import agents.corporate.tools.registry_lookup as reg
-    import agents.identity.tools.customer_lookup as cust
     import agents.corporate.tools.ubo_resolver as ubo
+    import agents.identity.tools.customer_lookup as cust
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -311,8 +309,8 @@ async def test_compliance_agent_invoke(monkeypatch):
 @pytest.mark.asyncio
 async def test_registry_and_customer_and_ubo_mock(monkeypatch):
     import agents.corporate.tools.registry_lookup as reg
-    import agents.identity.tools.customer_lookup as cust
     import agents.corporate.tools.ubo_resolver as ubo
+    import agents.identity.tools.customer_lookup as cust
 
     # Patch get_cosmos_database in each module to raise, hitting mock branches
     monkeypatch.setattr(
@@ -357,8 +355,8 @@ async def test_screening_tools_mock_and_metadata(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_typology_and_transaction_monitor_and_ocr():
-    from agents.transaction.tools import typology_matcher, transaction_monitor
     from agents.identity.tools import ocr_processor
+    from agents.transaction.tools import transaction_monitor, typology_matcher
 
     # typology: empty patterns -> []
     assert await typology_matcher.typology_matcher({}) == []
@@ -368,11 +366,11 @@ async def test_typology_and_transaction_monitor_and_ocr():
     assert isinstance(hits, list) and hits
 
     # force DB error path for transaction monitor to get mock
-    import agents.transaction.tools.transaction_monitor as tm
-    import pytest
 
     # monkeypatch the get_cosmos_database used inside module
     from pytest import MonkeyPatch
+
+    import agents.transaction.tools.transaction_monitor as tm
 
     mp = MonkeyPatch()
     mp.setattr(tm, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
@@ -538,7 +536,6 @@ async def test_typology_matcher_regulations_fallback(monkeypatch):
 @pytest.mark.asyncio
 async def test_ocr_processor_mock_all_doc_types(monkeypatch):
     from agents.identity.tools import ocr_processor as ocp
-    import base64
 
     # Force the Azure import to fail so we exercise _mock_ocr for each doc type
     monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "")
@@ -557,6 +554,7 @@ async def test_ocr_processor_mock_all_doc_types(monkeypatch):
 @pytest.mark.asyncio
 async def test_call_agent_http_error(monkeypatch):
     import httpx
+
     from agents.orchestrator import agent as orch
 
     async def raise_http(*args, **kwargs):

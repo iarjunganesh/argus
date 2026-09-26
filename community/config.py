@@ -16,6 +16,7 @@ Key differences from the full Azure-backed edition:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -88,7 +89,7 @@ class CommunityConfig:
     )
 
     @classmethod
-    def for_ngo(cls) -> "CommunityConfig":
+    def for_ngo(cls) -> CommunityConfig:
         """Preset for NGOs — open corpus, relaxed defaults, SQLite + Qdrant."""
         return cls(
             llm_tier=LLMTier.COMMUNITY,
@@ -99,7 +100,7 @@ class CommunityConfig:
         )
 
     @classmethod
-    def for_microfinance(cls) -> "CommunityConfig":
+    def for_microfinance(cls) -> CommunityConfig:
         """Preset for microfinance lenders — higher volume, batch-optimized."""
         return cls(
             llm_tier=LLMTier.COMMUNITY,
@@ -110,7 +111,7 @@ class CommunityConfig:
         )
 
     @classmethod
-    def air_gapped(cls) -> "CommunityConfig":
+    def air_gapped(cls) -> CommunityConfig:
         """Fully local — no outbound API calls. Requires local Ollama instance."""
         return cls(
             llm_tier=LLMTier.LOCAL,

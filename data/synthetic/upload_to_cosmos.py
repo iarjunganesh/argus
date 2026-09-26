@@ -14,10 +14,10 @@ Usage:     python data/synthetic/upload_to_cosmos.py
 
 import json
 import os
+import sys
 import time
 import uuid
 from pathlib import Path
-import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -84,9 +84,8 @@ def _upsert_batch(container, docs: list[dict], id_field: str) -> int:
                 attempt += 1
                 # Handle throttling (429) and transient server errors with backoff
                 status = getattr(e, "status_code", None)
-                if (
-                    status == 429
-                    or isinstance(e, cosmos_exceptions.CosmosHttpResponseError)
+                if status == 429 or (
+                    isinstance(e, cosmos_exceptions.CosmosHttpResponseError)
                     and status in (429, 503)
                 ):
                     wait = 2**attempt

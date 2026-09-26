@@ -20,7 +20,11 @@ async def pep_checker(entity_name: str, dob: str, nationality: str) -> dict:
                 "findings": [
                     {
                         "type": "pep",
-                        "match": f"{pep.get('name')} — {pep.get('role', 'Unknown role')} ({pep.get('country', nationality)}, {pep.get('period', 'Unknown period')})",
+                        "match": (
+                            f"{pep.get('name')} — {pep.get('role', 'Unknown role')} "
+                            f"({pep.get('country', nationality)}, "
+                            f"{pep.get('period', 'Unknown period')})"
+                        ),
                         "confidence": 0.92,
                         "source": "synthetic_pep_db",
                     }

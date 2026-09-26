@@ -6,8 +6,9 @@ Output: data/synthetic/adverse_media.jsonl
 
 import json
 import random
-from faker import Faker
 from pathlib import Path
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(77)

@@ -67,7 +67,9 @@ def _mock_typology_hits(patterns: dict) -> list:
         hits.append(
             {
                 "typology": "Structuring / Smurfing",
-                "description": "Multiple transactions structured below reporting threshold to avoid detection.",
+                "description": (
+                    "Multiple transactions structured below reporting threshold to avoid detection."
+                ),
                 "fatf_ref": "FATF Typologies Report 2023 — Chapter 3.2",
                 "score": 0.91,
             }
@@ -76,7 +78,9 @@ def _mock_typology_hits(patterns: dict) -> list:
         hits.append(
             {
                 "typology": "Layering via multiple counterparties",
-                "description": "Rapid movement of funds through numerous accounts to obscure origin.",
+                "description": (
+                    "Rapid movement of funds through numerous accounts to obscure origin."
+                ),
                 "fatf_ref": "FATF Typologies Report 2023 — Chapter 4.1",
                 "score": 0.78,
             }

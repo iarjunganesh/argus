@@ -1,9 +1,9 @@
 """tests/test_tools.py — Unit tests for ARGUS tools (all use mocks, no Azure needed)."""
 
-import pytest
-import asyncio
 import sys
 import types
+
+import pytest
 
 # ── Identity tools ─────────────────────────────────────────────────────────────
 

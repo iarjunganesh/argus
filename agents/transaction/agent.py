@@ -4,12 +4,13 @@ Analyses synthetic transaction history for AML patterns and typologies.
 """
 
 from fastapi import FastAPI
-from utils.structured_logger import get_logger
 from pydantic import BaseModel
-from agents.transaction.tools.transaction_monitor import transaction_monitor
+
 from agents.transaction.tools.pattern_detector import pattern_detector
+from agents.transaction.tools.transaction_monitor import transaction_monitor
 from agents.transaction.tools.typology_matcher import typology_matcher
 from utils.demo_profiles import get_demo_profile
+from utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Transaction Intelligence Agent")
 logger = get_logger("agent.transaction")

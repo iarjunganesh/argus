@@ -6,6 +6,7 @@ Usage: python infra/create_cosmos_db.py
 """
 
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,7 +43,7 @@ CONTAINERS = [
 
 
 def create_cosmos_db():
-    print(f"Creating Cosmos DB database and containers...")
+    print("Creating Cosmos DB database and containers...")
 
     try:
         from azure.cosmos import CosmosClient, exceptions

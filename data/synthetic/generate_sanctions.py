@@ -6,9 +6,9 @@ Output: data/synthetic/sanctions.jsonl
 
 import json
 import random
-from faker import Faker
 from pathlib import Path
-from datetime import date
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(99)

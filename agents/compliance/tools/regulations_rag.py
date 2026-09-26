@@ -1,6 +1,7 @@
 """
 regulations_rag — Foundry IQ powered tool
-Queries KB-Regulations through the Foundry IQ knowledge base API for applicable FATF/4AMLD/6AMLD/GDPR text.
+Queries KB-Regulations through the Foundry IQ knowledge base API for applicable
+FATF/4AMLD/6AMLD/GDPR text.
 Returns cited, grounded regulatory references — no hallucination.
 """
 
@@ -114,7 +115,10 @@ def _mock_regulations_response() -> dict:
     return {
         "regulations": [
             {
-                "text": "FATF Recommendation 12: Countries should take measures to prevent the misuse of legal persons for money laundering or terrorist financing.",
+                "text": (
+                    "FATF Recommendation 12: Countries should take measures to prevent the "
+                    "misuse of legal persons for money laundering or terrorist financing."
+                ),
                 "relevance": 0.91,
                 "foundry_iq_citation": {
                     "knowledge_base": "mock",

@@ -4,7 +4,9 @@ Supports both GitHub Models (dev) and Azure OpenAI (prod).
 """
 
 import os
+
 from openai import AsyncOpenAI
+
 from utils.env_loader import load_repo_env
 
 load_repo_env(__file__)
@@ -75,8 +77,8 @@ def get_cosmos_database():
 def get_search_client(index_name: str):
     endpoint = _require_env("AZURE_SEARCH_ENDPOINT")
     key = _require_env("AZURE_SEARCH_API_KEY")
-    from azure.search.documents import SearchClient
     from azure.core.credentials import AzureKeyCredential
+    from azure.search.documents import SearchClient
 
     return SearchClient(
         endpoint=endpoint,

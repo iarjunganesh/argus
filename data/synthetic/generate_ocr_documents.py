@@ -31,20 +31,21 @@ Optional env vars:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import random
 import textwrap
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from faker import Faker
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 try:
     from reportlab.lib.colors import HexColor
-    from reportlab.lib.pagesizes import A4, letter, landscape
+    from reportlab.lib.pagesizes import A4, landscape, letter
     from reportlab.pdfgen import canvas as rl_canvas
 
     _REPORTLAB = True
@@ -342,7 +343,7 @@ class DocFactory:
             "amount": f"USD {amount}",
         }
 
-    _DOC_META: dict[str, dict] = {
+    _DOC_META: ClassVar[dict[str, dict]] = {
         "passport": {
             "title": "PASSENGER PASSPORT",
             "accent": "#1d4ed8",
@@ -466,7 +467,7 @@ class DocFactory:
                     except Exception as exc:
                         print(f"  ✗ {fname_pdf}: {exc}")
                 else:
-                    print(f"  [skip PDF] reportlab not installed — run: pip install reportlab")
+                    print("  [skip PDF] reportlab not installed — run: pip install reportlab")
         return records
 
 
@@ -482,10 +483,8 @@ def upload_documents(
 
     svc = BlobServiceClient.from_connection_string(connection_string)
     container = svc.get_container_client(container_name)
-    try:
+    with contextlib.suppress(Exception):
         container.create_container()
-    except Exception:
-        pass
 
     for record in records:
         ct = "application/pdf" if record.format == "pdf" else "image/png"

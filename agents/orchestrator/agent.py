@@ -7,10 +7,11 @@ Fan-in:  Compliance & Risk agent synthesises all upstream results.
 
 import asyncio
 import os
-import httpx
-from datetime import datetime, timezone
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -74,7 +75,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     import uuid
 
     task_id = f"kyc-{uuid.uuid4().hex[:12]}"
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(UTC)
 
     # Structured logging for orchestrator lifecycle
     from utils.structured_logger import get_logger
@@ -93,7 +94,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     )
 
     # ── PHASE 1: Fan-out (parallel) ──────────────────────────────────────────
-    t0 = datetime.now(timezone.utc)
+    t0 = datetime.now(UTC)
 
     if profile:
         # Deterministic demo results — bypass live calls for parallel agents.
@@ -127,7 +128,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
         parallel_results = await asyncio.gather(*parallel_tasks)
         identity_result, screening_result, corporate_result, transaction_result = parallel_results
 
-    t1 = datetime.now(timezone.utc)
+    t1 = datetime.now(UTC)
 
     logger.info("orchestrator.phase1.complete", extra={"task_id": task_id})
 
@@ -143,7 +144,7 @@ async def run_kyc_assessment(kyc_request: dict) -> dict:
     }
     compliance_result = await call_agent("compliance", compliance_payload, task_id)
 
-    t2 = datetime.now(timezone.utc)
+    t2 = datetime.now(UTC)
 
     logger.info("orchestrator.phase2.complete", extra={"task_id": task_id})
 
@@ -183,8 +184,8 @@ async def synthesise_report(
     compliance: dict,
 ) -> dict:
     """Use LLM to synthesise agent results into a final risk report narrative."""
+
     from utils.structured_logger import get_logger
-    import json
 
     logger = get_logger("orchestrator.synthesise")
 
@@ -208,7 +209,7 @@ async def synthesise_report(
 
     report = {
         "report_id": f"argus-rpt-{task_id}",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "explanation": explanation,
         "entity": {
             "name": kyc_request.get("entity_name"),

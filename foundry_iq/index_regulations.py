@@ -4,9 +4,10 @@ Indexes public regulatory text (FATF/4AMLD/6AMLD) into Foundry IQ KB-Regulations
 Source files should be placed in data/public/ before running.
 """
 
-import os, json
-from pathlib import Path
+import json
+import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -189,8 +190,8 @@ def index_regulations():
         doc.setdefault("metadata_json", "{}")
 
     try:
-        from azure.search.documents import SearchClient
         from azure.core.credentials import AzureKeyCredential
+        from azure.search.documents import SearchClient
 
         endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
         key = os.environ["AZURE_SEARCH_API_KEY"]

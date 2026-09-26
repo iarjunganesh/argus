@@ -1,7 +1,5 @@
 """pattern_detector — statistical AML pattern analysis on transaction history."""
 
-from collections import Counter
-
 STRUCTURING_THRESHOLD = 10_000  # EUR — common reporting threshold
 STRUCTURING_WINDOW_DAYS = 30
 STRUCTURING_MIN_COUNT = 5  # ≥5 transactions below threshold in window → flag

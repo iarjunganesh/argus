@@ -5,10 +5,12 @@ Patterns: structuring (below threshold), layering, normal baseline.
 Output: data/synthetic/transactions.jsonl
 """
 
-import json, random
-from faker import Faker
-from pathlib import Path
+import json
+import random
 from datetime import datetime, timedelta
+from pathlib import Path
+
+from faker import Faker
 
 fake = Faker()
 Faker.seed(33)
@@ -59,7 +61,9 @@ def main():
         return
 
     entities = [
-        json.loads(l)["name"] for l in entity_file.read_text().splitlines()[:200] if l.strip()
+        json.loads(line)["name"]
+        for line in entity_file.read_text().splitlines()[:200]
+        if line.strip()
     ]
 
     total = 0

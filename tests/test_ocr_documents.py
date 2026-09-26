@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 def test_generate_ocr_documents_creates_manifest_and_assets(tmp_path, monkeypatch):
     from data.synthetic import generate_ocr_documents as god
 

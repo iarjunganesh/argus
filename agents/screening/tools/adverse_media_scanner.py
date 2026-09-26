@@ -5,6 +5,7 @@ Returns cited, grounded results — no hallucination risk.
 """
 
 import json
+
 from config import FOUNDRY_IQ_KB_ADVERSEMEDIA, get_foundry_client
 
 
@@ -39,7 +40,7 @@ def _load_metadata(item) -> dict:
 
 
 async def adverse_media_scanner(entity_name: str, aliases: list[str]) -> dict:
-    base_query = " ".join([entity_name] + aliases)
+    base_query = " ".join([entity_name, *aliases])
     query = base_query + " fraud corruption scandal investigation bribery money laundering"
 
     try:

@@ -104,18 +104,18 @@ def create_search_indexes():
     endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
     key = os.environ["AZURE_SEARCH_API_KEY"]
     try:
+        from azure.core.credentials import AzureKeyCredential
         from azure.search.documents.indexes import SearchIndexClient
         from azure.search.documents.indexes.models import (
-            SearchIndex,
-            SimpleField,
             SearchableField,
             SearchFieldDataType,
+            SearchIndex,
             SemanticConfiguration,
-            SemanticSearch,
-            SemanticPrioritizedFields,
             SemanticField,
+            SemanticPrioritizedFields,
+            SemanticSearch,
+            SimpleField,
         )
-        from azure.core.credentials import AzureKeyCredential
 
         print("Creating Foundry IQ knowledge base indexes in Azure AI Search...")
 
@@ -178,7 +178,7 @@ def create_search_indexes():
     except ImportError:
         _create_indexes_via_rest(endpoint, key)
 
-    print(f"\nFoundry IQ indexes ready. Run 'make index-knowledge-bases' to populate them.")
+    print("\nFoundry IQ indexes ready. Run 'make index-knowledge-bases' to populate them.")
 
 
 if __name__ == "__main__":

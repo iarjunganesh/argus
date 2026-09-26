@@ -3,14 +3,15 @@ ARGUS Demo UI - Gradio
 Submits KYC requests to the FastAPI backend and displays the risk report.
 """
 
-import gradio as gr
-import httpx
-import time
+import base64
+import html
 import json
 import os
-import html
-import base64
+import time
 from pathlib import Path
+
+import gradio as gr
+import httpx
 
 API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
@@ -263,12 +264,6 @@ def run_kyc_assessment(entity_name: str, entity_type: str, jurisdiction: str) ->
 def format_report(report: dict) -> str:
     risk_summary = report.get("risk_summary", {})
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
-    score = risk_summary.get("overall_risk_score", 0)
-
-    tier_colors = {"LOW": "#2ecc71", "MEDIUM": "#f39c12", "HIGH": "#e74c3c", "CRITICAL": "#8e1a0e"}
-    color = tier_colors.get(tier, "#888")
-    confidence = risk_summary.get("confidence", 0)
-    confidence_pct = f"{int(confidence * 100)}%" if confidence <= 1 else f"{int(confidence)}%"
     findings_html = "".join(f"<li>{finding}</li>" for finding in report.get("key_findings", []))
     actions_html = "".join(f"<li>{action}</li>" for action in report.get("recommended_actions", []))
 

@@ -4,12 +4,13 @@ Resolves UBO structure and maps corporate ownership graph.
 """
 
 from fastapi import FastAPI
-from utils.structured_logger import get_logger
 from pydantic import BaseModel
-from agents.corporate.tools.ubo_resolver import ubo_resolver
-from agents.corporate.tools.registry_lookup import registry_lookup
+
 from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+from agents.corporate.tools.registry_lookup import registry_lookup
+from agents.corporate.tools.ubo_resolver import ubo_resolver
 from utils.demo_profiles import get_demo_profile
+from utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Corporate Intelligence Agent")
 logger = get_logger("agent.corporate")

@@ -27,7 +27,7 @@ async def call_agent_local(agent_name: str, payload: dict, task_id: str) -> dict
 
     mod = __import__(mod_name, fromlist=["app", "invoke"])
     # Build A2A message using the module's A2AMessage model
-    A2A = getattr(mod, "A2AMessage")
+    A2A = mod.A2AMessage
     msg = A2A(
         a2a_version="1.0",
         source_agent="argus-demo",

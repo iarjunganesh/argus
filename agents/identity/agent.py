@@ -4,12 +4,13 @@ Verifies entity identity via registry lookups and document OCR.
 """
 
 from fastapi import FastAPI
-from utils.structured_logger import get_logger
 from pydantic import BaseModel
+
 from agents.identity.tools.customer_lookup import customer_lookup
-from agents.identity.tools.ocr_processor import ocr_processor
 from agents.identity.tools.identity_validator import identity_validator
+from agents.identity.tools.ocr_processor import ocr_processor
 from utils.demo_profiles import get_demo_profile
+from utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Identity Agent")
 logger = get_logger("agent.identity")
