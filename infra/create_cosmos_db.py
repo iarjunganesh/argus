@@ -22,12 +22,13 @@ CONTAINERS = [
     {
         "id": "corporate_graph",
         "description": "Corporate ownership graph nodes and edges",
-        "partition_key": "/entity_id",
+        # Partition keys name a field every uploaded record has (see data/synthetic/).
+        "partition_key": "/parent_entity",
     },
     {
         "id": "transactions",
         "description": "Synthetic financial transaction records",
-        "partition_key": "/entity_id",
+        "partition_key": "/entity_name",
     },
     {
         "id": "pep_list",

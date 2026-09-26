@@ -209,3 +209,24 @@ async def test_ocr_sends_the_image_to_the_id_model(monkeypatch):
 async def test_ocr_without_settings_is_unavailable():
     with pytest.raises(DataPlaneUnavailable, match="Document Intelligence"):
         await az.DocumentIntelligenceOCR().extract(b"img", "passport")
+
+
+def test_every_cosmos_container_is_partitioned_on_a_field_its_records_have():
+    """`infra/create_cosmos_db.py` partition keys match what `upload_to_cosmos.py` uploads."""
+    import ast
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    tree = ast.parse((root / "infra" / "create_cosmos_db.py").read_text(encoding="utf-8"))
+    containers = next(
+        ast.literal_eval(node.value)
+        for node in tree.body
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "CONTAINERS"
+    )
+    keys = {c["id"]: c["partition_key"].lstrip("/") for c in containers}
+    synthetic = root / "tests" / "fixtures" / "data" / "synthetic"
+    for container in ("entities", "corporate_graph", "transactions"):
+        lines = (synthetic / f"{container}.jsonl").read_text(encoding="utf-8").splitlines()
+        records = [json.loads(line) for line in lines if line.strip()]
+        assert records and all(keys[container] in r for r in records), container
