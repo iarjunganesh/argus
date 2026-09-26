@@ -437,4 +437,5 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, theme=gr.themes.Soft())
+    # Listens on this machine only (Gradio's default); set GRADIO_SERVER_NAME=0.0.0.0 to expose it.
+    demo.launch(server_port=7860, share=False, theme=gr.themes.Soft())

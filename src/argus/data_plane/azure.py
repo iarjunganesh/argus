@@ -68,7 +68,7 @@ def _passage(row: dict[str, Any]) -> Passage:
     )
 
 
-def _query(container: str, sql: str, **params: str) -> Callable[[], list[dict]]:
+def _query(container: str, sql: str, **params: str | int) -> Callable[[], list[dict]]:
     def run() -> list[dict]:
         client = get_cosmos_database().get_container_client(container)
         parameters = [{"name": f"@{k}", "value": v} for k, v in params.items()]
@@ -105,9 +105,10 @@ class CosmosEntityStore:
     async def transactions(self, entity_name: str, limit: int = 500) -> list[dict]:
         sql = (
             "SELECT * FROM c WHERE LOWER(c.entity_name) = LOWER(@name) "
-            f"ORDER BY c.date DESC OFFSET 0 LIMIT {int(limit)}"
+            "ORDER BY c.date DESC OFFSET 0 LIMIT @limit"
         )
-        return await _call("Cosmos transactions", _query("transactions", sql, name=entity_name))
+        query = _query("transactions", sql, name=entity_name, limit=int(limit))
+        return await _call("Cosmos transactions", query)
 
 
 class CosmosReportStore:

@@ -155,19 +155,20 @@ def sanctions_screening(screening_response: dict) -> str:
 
 def _extract_findings(identity, screening, corporate, transaction, sanctions: str) -> list:
     _ = identity
-    findings = []
+    findings: list[str] = []
     if screening.get("pep_hit"):
-        for f in screening.get("findings", []):
-            if f.get("type") == "pep":
-                findings.append(f"PEP identified: {f.get('match', '')[:100]}")
+        findings.extend(
+            f"PEP identified: {f.get('match', '')[:100]}"
+            for f in screening.get("findings", [])
+            if f.get("type") == "pep"
+        )
     if screening.get("adverse_media_hit"):
         findings.append("Adverse media coverage found — review required")
     if sanctions == POTENTIAL_MATCH:
         findings.append("⚠️ Potential sanctions match: a person must confirm or clear it")
     elif sanctions == NOT_RUN:
         findings.append("⚠️ Sanctions screening did not run")
-    for flag in corporate.get("risk_flags") or []:
-        findings.append(flag)
+    findings.extend(corporate.get("risk_flags") or [])
     if transaction.get("structuring_flag"):
         findings.append("Transaction structuring pattern detected")
     if not findings:

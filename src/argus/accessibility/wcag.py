@@ -72,10 +72,12 @@ def assert_contrast_ratio(
     """
     ratio = contrast_ratio(foreground, background)
     tag = f" ({label})" if label else ""
-    assert ratio >= level.value, (
-        f"WCAG {level.name} failure{tag}: {foreground} on {background} "
-        f"gives {ratio:.2f}:1, need {level.value}:1"
-    )
+    # An explicit raise, not `assert`: the check must still run under `python -O`.
+    if ratio < level.value:
+        raise AssertionError(
+            f"WCAG {level.name} failure{tag}: {foreground} on {background} "
+            f"gives {ratio:.2f}:1, need {level.value}:1"
+        )
     return ratio
 
 

@@ -111,7 +111,8 @@ async def test_entity_queries_use_the_right_containers(monkeypatch):
     assert typed[1] == [{"name": "@name", "value": "Acme"}, {"name": "@type", "value": "corporate"}]
     assert "entity_type" not in untyped[0]
     assert "is_pep = true" in pep[0]
-    assert "LIMIT 7" in transactions[0]
+    assert "LIMIT @limit" in transactions[0]  # every value is a parameter, none is formatted in
+    assert {"name": "@limit", "value": 7} in transactions[1]
 
 
 async def test_entity_lookups_without_matches(monkeypatch):
