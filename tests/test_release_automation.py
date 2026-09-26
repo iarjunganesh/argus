@@ -312,6 +312,17 @@ def test_http_token_is_only_sent_to_github(monkeypatch):
     assert calls[1].has_header("Authorization")
 
 
+def test_inventory_urls_stay_on_their_hosts_and_paths(monkeypatch):
+    monkeypatch.setattr(versions, "urlopen", lambda request, timeout: pytest.fail("fetched"))
+    for url in ("http://pypi.org/pypi/x/json", "https://example.com/pypi/x/json"):
+        with pytest.raises(ValueError, match="outside the inventory's hosts"):
+            versions.fetch(url)
+    # A name read from a repository file cannot climb out of its path segment.
+    assert versions.api_url("pypi", "pypi", "../../admin", "json") == (
+        "https://pypi.org/pypi/..%2F..%2Fadmin/json"
+    )
+
+
 def test_refresh_failure_is_reported_and_later_checks_run(repo, monkeypatch):
     calls = []
 
