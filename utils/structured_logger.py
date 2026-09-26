@@ -3,6 +3,7 @@
 Provides get_logger(name) which returns a configured logger that emits
 JSON objects on each log line for easier ingestion by logging systems.
 """
+
 import logging
 import json
 import sys
@@ -18,7 +19,7 @@ class JsonFormatter(logging.Formatter):
             "msg": record.getMessage(),
         }
         # attach any extra fields if provided
-        if hasattr(record, 'extra') and isinstance(record.extra, dict):
+        if hasattr(record, "extra") and isinstance(record.extra, dict):
             payload.update(record.extra)
         return json.dumps(payload, ensure_ascii=False)
 

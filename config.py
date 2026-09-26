@@ -2,6 +2,7 @@
 ARGUS — Shared configuration and Azure client factories.
 Supports both GitHub Models (dev) and Azure OpenAI (prod).
 """
+
 import os
 from openai import AsyncOpenAI
 from utils.env_loader import load_repo_env
@@ -17,7 +18,9 @@ def _require_env(name: str) -> str:
         raise RuntimeError(f"{name} not set — mock fallback will handle")
     return value
 
+
 # ── OpenAI / GitHub Models client ────────────────────────────────────────────
+
 
 def get_llm_client() -> AsyncOpenAI:
     """
@@ -35,45 +38,55 @@ def get_llm_client() -> AsyncOpenAI:
     return AsyncOpenAI(
         base_url=f"{endpoint}/openai/deployments/{deployment}",
         api_key=_require_env("AZURE_OPENAI_API_KEY"),
-        default_headers={"api-version": os.environ.get("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")},
+        default_headers={
+            "api-version": os.environ.get("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
+        },
     )
+
 
 MODEL_NAME = "gpt-4o"
 
 # ── Azure Cosmos DB ───────────────────────────────────────────────────────────
 
+
 def get_cosmos_client():
     endpoint = _require_env("COSMOS_ENDPOINT")
     from azure.cosmos import CosmosClient
+
     key = os.getenv("COSMOS_KEY")
     if key:
         return CosmosClient(url=endpoint, credential=key)
 
     from azure.identity import DefaultAzureCredential
+
     return CosmosClient(
         url=endpoint,
         credential=DefaultAzureCredential(),
     )
 
+
 def get_cosmos_database():
-    return get_cosmos_client().get_database_client(
-        os.environ.get("COSMOS_DATABASE", "argus-db")
-    )
+    return get_cosmos_client().get_database_client(os.environ.get("COSMOS_DATABASE", "argus-db"))
+
 
 # ── Azure AI Search ───────────────────────────────────────────────────────────
+
 
 def get_search_client(index_name: str):
     endpoint = _require_env("AZURE_SEARCH_ENDPOINT")
     key = _require_env("AZURE_SEARCH_API_KEY")
     from azure.search.documents import SearchClient
     from azure.core.credentials import AzureKeyCredential
+
     return SearchClient(
         endpoint=endpoint,
         index_name=index_name,
         credential=AzureKeyCredential(key),
     )
 
+
 # ── Foundry IQ ────────────────────────────────────────────────────────────────
+
 
 def get_foundry_client():
     """Azure AI Projects client for Foundry IQ knowledge base queries."""
@@ -81,6 +94,7 @@ def get_foundry_client():
     try:
         from azure.ai.projects import AIProjectClient
         from azure.identity import DefaultAzureCredential
+
         return AIProjectClient(
             endpoint=endpoint,
             credential=DefaultAzureCredential(),
@@ -88,6 +102,7 @@ def get_foundry_client():
     except ImportError as exc:
         raise RuntimeError("azure-ai-projects not installed — mock fallback will handle") from exc
 
-FOUNDRY_IQ_KB_REGULATIONS  = os.getenv("FOUNDRY_IQ_KB_REGULATIONS",  "argus-kb-regulations")
-FOUNDRY_IQ_KB_SANCTIONS     = os.getenv("FOUNDRY_IQ_KB_SANCTIONS",     "argus-kb-sanctions")
-FOUNDRY_IQ_KB_ADVERSEMEDIA  = os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA",  "argus-kb-adversemedia")
+
+FOUNDRY_IQ_KB_REGULATIONS = os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations")
+FOUNDRY_IQ_KB_SANCTIONS = os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions")
+FOUNDRY_IQ_KB_ADVERSEMEDIA = os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia")

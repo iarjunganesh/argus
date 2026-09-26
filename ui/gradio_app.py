@@ -2,6 +2,7 @@
 ARGUS Demo UI - Gradio
 Submits KYC requests to the FastAPI backend and displays the risk report.
 """
+
 import gradio as gr
 import httpx
 import time
@@ -103,7 +104,12 @@ def format_dimension_scores(report: dict) -> str:
         dimension = dims.get(key, {})
         score = dimension.get("score", 0)
         tier = dimension.get("tier", "-")
-        tier_colors = {"LOW": "#2ecc71", "MEDIUM": "#f39c12", "HIGH": "#e74c3c", "CRITICAL": "#8e1a0e"}
+        tier_colors = {
+            "LOW": "#2ecc71",
+            "MEDIUM": "#f39c12",
+            "HIGH": "#e74c3c",
+            "CRITICAL": "#8e1a0e",
+        }
         color = tier_colors.get(tier, "#888")
         bar = max(0, min(int(score), 100))
         rows += f"""
@@ -274,7 +280,7 @@ def format_report(report: dict) -> str:
         article = citation.get("article", "-")
         regs_html += f"""
         <li style="margin-bottom:10px;">
-            <strong>{trigger.get('rule', '')}</strong>
+            <strong>{trigger.get("rule", "")}</strong>
             <div style="font-size:0.85em;color:var(--body-text-color-subdued,#64748b);margin-top:4px;">
                 Citation: {html.escape(str(kb))} | {html.escape(str(doc))} | {html.escape(str(article))}
             </div>
@@ -286,17 +292,21 @@ def format_report(report: dict) -> str:
     foundry_iq_queries = trace.get("foundry_iq_queries", "-")
     latency = report.get("total_latency_seconds", "-")
     foundry_grounded = isinstance(foundry_iq_queries, int) and foundry_iq_queries > 0
-    foundry_badge_text = "Foundry IQ Grounded" if foundry_grounded else "Foundry IQ: No live queries"
+    foundry_badge_text = (
+        "Foundry IQ Grounded" if foundry_grounded else "Foundry IQ: No live queries"
+    )
     foundry_badge_bg = "#dcfce7" if foundry_grounded else "#f1f5f9"
     foundry_badge_fg = "#166534" if foundry_grounded else "#475569"
     foundry_badge_border = "#86efac" if foundry_grounded else "#cbd5e1"
     audit_trace_text = html.escape(
-        "\n".join([
-            f"task_id: {trace.get('task_id', '-')}",
-            f"agents_invoked: {len(trace.get('agents_invoked', []))}",
-            f"tool_calls: {trace.get('tool_calls', '-')}",
-            f"foundry_iq_queries: {trace.get('foundry_iq_queries', '-')}",
-        ])
+        "\n".join(
+            [
+                f"task_id: {trace.get('task_id', '-')}",
+                f"agents_invoked: {len(trace.get('agents_invoked', []))}",
+                f"tool_calls: {trace.get('tool_calls', '-')}",
+                f"foundry_iq_queries: {trace.get('foundry_iq_queries', '-')}",
+            ]
+        )
     )
     audit_trace_html = f"""
     <div style="margin:16px 0;">
@@ -340,8 +350,8 @@ def format_report(report: dict) -> str:
     <div style="font-family: sans-serif; max-width: 860px; color:var(--body-text-color,#111827);">
         <h2 style="margin-bottom:4px">ARGUS Risk Report</h2>
         <p style="color:var(--body-text-color-subdued,#64748b);margin-top:0">
-            <strong>ID:</strong> {report.get('report_id', '')} &nbsp;|&nbsp;
-            <strong>Entity:</strong> {report.get('entity', {}).get('name', '')} ({report.get('entity', {}).get('type', '')}) - {report.get('entity', {}).get('jurisdiction', '')}
+            <strong>ID:</strong> {report.get("report_id", "")} &nbsp;|&nbsp;
+            <strong>Entity:</strong> {report.get("entity", {}).get("name", "")} ({report.get("entity", {}).get("type", "")}) - {report.get("entity", {}).get("jurisdiction", "")}
         </p>
 
         <span data-risk-line="Risk Tier: {tier}" style="display:none">Risk Tier: {tier}</span>

@@ -2,15 +2,45 @@
 
 # FATF risk classification (simplified, based on public FATF lists)
 FATF_HIGH_RISK = {
-    "KP", "IR",                                          # FATF blacklist (public)
-    "PA", "KY", "BVI", "VG", "AI", "TC", "VU", "WS",   # Common offshore (grey area)
-    "SY", "YE", "SD", "LY", "SO", "MM", "PK", "HT",
+    "KP",
+    "IR",  # FATF blacklist (public)
+    "PA",
+    "KY",
+    "BVI",
+    "VG",
+    "AI",
+    "TC",
+    "VU",
+    "WS",  # Common offshore (grey area)
+    "SY",
+    "YE",
+    "SD",
+    "LY",
+    "SO",
+    "MM",
+    "PK",
+    "HT",
 }
 FATF_MEDIUM_RISK = {
-    "NG", "KE", "ZA", "MA", "TN", "GH", "TZ",
-    "PH", "VN", "ID", "TH", "KH",
-    "UA", "MD", "BY", "AL", "BA",
+    "NG",
+    "KE",
+    "ZA",
+    "MA",
+    "TN",
+    "GH",
+    "TZ",
+    "PH",
+    "VN",
+    "ID",
+    "TH",
+    "KH",
+    "UA",
+    "MD",
+    "BY",
+    "AL",
+    "BA",
 }
+
 
 async def jurisdiction_mapper(country_code: str) -> dict:
     code = (country_code or "").upper().strip()
@@ -28,7 +58,7 @@ async def jurisdiction_mapper(country_code: str) -> dict:
         measures = []
 
     return {
-        "country_code":    code,
-        "fatf_risk_tier":  tier,
-        "special_measures":measures,
+        "country_code": code,
+        "fatf_risk_tier": tier,
+        "special_measures": measures,
     }

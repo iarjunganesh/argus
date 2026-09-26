@@ -4,6 +4,7 @@ Creates the Cosmos DB database and containers for ARGUS.
 Run after Azure resources are provisioned.
 Usage: python infra/create_cosmos_db.py
 """
+
 import os
 from dotenv import load_dotenv
 
@@ -48,8 +49,8 @@ def create_cosmos_db():
         from azure.cosmos.partition_key import PartitionKey
 
         endpoint = os.environ["COSMOS_ENDPOINT"]
-        key      = os.environ["COSMOS_KEY"]
-        client   = CosmosClient(endpoint, key)
+        key = os.environ["COSMOS_KEY"]
+        client = CosmosClient(endpoint, key)
 
         # Create database
         try:

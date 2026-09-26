@@ -1,5 +1,6 @@
 """Augments the ARGUS architecture SVG with traveling pulse dots along
 edges to simulate request/response flow, for GIF capture."""
+
 import re
 
 SVG_PATH = "assets/argus-architecture.svg"

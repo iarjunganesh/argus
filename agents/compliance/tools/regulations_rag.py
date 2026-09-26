@@ -3,6 +3,7 @@ regulations_rag — Foundry IQ powered tool
 Queries KB-Regulations through the Foundry IQ knowledge base API for applicable FATF/4AMLD/6AMLD/GDPR text.
 Returns cited, grounded regulatory references — no hallucination.
 """
+
 from config import FOUNDRY_IQ_KB_REGULATIONS, get_foundry_client
 
 
@@ -37,10 +38,7 @@ async def regulations_rag(
     All returned text includes citations to the source document and article.
     """
     enriched_query = (
-        f"{query} "
-        f"jurisdiction {jurisdiction} "
-        f"{entity_type} "
-        f"{' '.join(risk_indicators)}"
+        f"{query} jurisdiction {jurisdiction} {entity_type} {' '.join(risk_indicators)}"
     )
 
     try:
@@ -57,25 +55,31 @@ async def regulations_rag(
             score = float(_item_field(item, "relevance_score", 0) or 0)
             citation = _item_field(item, "citation")
             if score >= 0.15:
-                regulations.append({
-                    "text":      _item_field(item, "content", ""),
-                    "relevance": _normalize_relevance(score),
-                    "foundry_iq_citation": {
-                        "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
-                        "document":       _citation_field(citation, "document_title", "unknown"),
-                        "article":        _citation_field(citation, "section", _citation_field(citation, "article", "unknown")),
-                        "snippet_id":     _citation_field(citation, "snippet_id", _item_field(item, "id")),
-                    },
-                })
+                regulations.append(
+                    {
+                        "text": _item_field(item, "content", ""),
+                        "relevance": _normalize_relevance(score),
+                        "foundry_iq_citation": {
+                            "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
+                            "document": _citation_field(citation, "document_title", "unknown"),
+                            "article": _citation_field(
+                                citation, "section", _citation_field(citation, "article", "unknown")
+                            ),
+                            "snippet_id": _citation_field(
+                                citation, "snippet_id", _item_field(item, "id")
+                            ),
+                        },
+                    }
+                )
 
         if not regulations:
             # Always return at least the core FATF CDD requirement
             regulations = _fallback_regulations()
 
         return {
-            "regulations":    regulations,
-            "query":          enriched_query,
-            "source":         "foundry_iq",
+            "regulations": regulations,
+            "query": enriched_query,
+            "source": "foundry_iq",
             "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
         }
 
@@ -97,9 +101,9 @@ def _fallback_regulations() -> list:
             "relevance": 0.75,
             "foundry_iq_citation": {
                 "knowledge_base": FOUNDRY_IQ_KB_REGULATIONS,
-                "document":       "fatf-40-recommendations.pdf",
-                "article":        "Recommendation 10 — Customer Due Diligence",
-                "snippet_id":     "fatf-rec-10",
+                "document": "fatf-40-recommendations.pdf",
+                "article": "Recommendation 10 — Customer Due Diligence",
+                "snippet_id": "fatf-rec-10",
             },
         }
     ]

@@ -10,6 +10,7 @@ These indexes are the Foundry IQ intelligence layer for ARGUS.
 Run after Azure AI Search is provisioned.
 Usage: python infra/create_search_indexes.py
 """
+
 import json
 import os
 import sys
@@ -23,9 +24,9 @@ load_repo_env(__file__)
 
 # Index names (mapped from KB env vars)
 INDEXES = {
-    "argus-kb-regulations":  os.getenv("FOUNDRY_IQ_KB_REGULATIONS",  "argus-kb-regulations"),
-    "argus-kb-sanctions":    os.getenv("FOUNDRY_IQ_KB_SANCTIONS",     "argus-kb-sanctions"),
-    "argus-kb-adversemedia": os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA",  "argus-kb-adversemedia"),
+    "argus-kb-regulations": os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations"),
+    "argus-kb-sanctions": os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions"),
+    "argus-kb-adversemedia": os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia"),
 }
 
 
@@ -101,7 +102,7 @@ def _create_indexes_via_rest(endpoint: str, key: str) -> None:
 
 def create_search_indexes():
     endpoint = os.environ["AZURE_SEARCH_ENDPOINT"]
-    key      = os.environ["AZURE_SEARCH_API_KEY"]
+    key = os.environ["AZURE_SEARCH_API_KEY"]
     try:
         from azure.search.documents.indexes import SearchIndexClient
         from azure.search.documents.indexes.models import (
@@ -125,24 +126,48 @@ def create_search_indexes():
                 index = SearchIndex(
                     name=index_name,
                     fields=[
-                        SimpleField(name="id", type=SearchFieldDataType.String, key=True, filterable=True),
-                        SearchableField(name="content", type=SearchFieldDataType.String, analyzer_name="standard.lucene"),
-                        SearchableField(name="title", type=SearchFieldDataType.String, filterable=True),
-                        SearchableField(name="entity_name", type=SearchFieldDataType.String, filterable=True),
-                        SimpleField(name="source_doc", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-                        SimpleField(name="category", type=SearchFieldDataType.String, filterable=True, retrievable=True),
-                        SimpleField(name="metadata_json", type=SearchFieldDataType.String, retrievable=True),
+                        SimpleField(
+                            name="id", type=SearchFieldDataType.String, key=True, filterable=True
+                        ),
+                        SearchableField(
+                            name="content",
+                            type=SearchFieldDataType.String,
+                            analyzer_name="standard.lucene",
+                        ),
+                        SearchableField(
+                            name="title", type=SearchFieldDataType.String, filterable=True
+                        ),
+                        SearchableField(
+                            name="entity_name", type=SearchFieldDataType.String, filterable=True
+                        ),
+                        SimpleField(
+                            name="source_doc",
+                            type=SearchFieldDataType.String,
+                            filterable=True,
+                            retrievable=True,
+                        ),
+                        SimpleField(
+                            name="category",
+                            type=SearchFieldDataType.String,
+                            filterable=True,
+                            retrievable=True,
+                        ),
+                        SimpleField(
+                            name="metadata_json", type=SearchFieldDataType.String, retrievable=True
+                        ),
                     ],
-                    semantic_search=SemanticSearch(configurations=[
-                        SemanticConfiguration(
-                            name="default",
-                            prioritized_fields=SemanticPrioritizedFields(
-                                title_field=SemanticField(field_name="title"),
-                                content_fields=[SemanticField(field_name="content")],
-                                keywords_fields=[SemanticField(field_name="entity_name")],
-                            ),
-                        )
-                    ]),
+                    semantic_search=SemanticSearch(
+                        configurations=[
+                            SemanticConfiguration(
+                                name="default",
+                                prioritized_fields=SemanticPrioritizedFields(
+                                    title_field=SemanticField(field_name="title"),
+                                    content_fields=[SemanticField(field_name="content")],
+                                    keywords_fields=[SemanticField(field_name="entity_name")],
+                                ),
+                            )
+                        ]
+                    ),
                 )
                 client.create_or_update_index(index)
                 print(f"  ✅ {logical_name}  →  index: {index_name}")

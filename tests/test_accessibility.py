@@ -39,9 +39,8 @@ def test_argus_risk_palette_aa_compliance():
     """Full palette must pass WCAG AA. Marked xfail until v2 colors land."""
     results = audit_palette(ARGUS_PALETTE, level=WCAGLevel.AA)
     failures = {k: v for k, v in results.items() if not v["passes"]}
-    assert not failures, (
-        f"WCAG AA failures: "
-        + ", ".join(f"{k} ({v['ratio']}:1)" for k, v in failures.items())
+    assert not failures, f"WCAG AA failures: " + ", ".join(
+        f"{k} ({v['ratio']}:1)" for k, v in failures.items()
     )
 
 
@@ -56,15 +55,14 @@ def test_critical_color_passes_aaa():
 def test_high_contrast_palette_passes_aa():
     """The high-contrast mode palette (dark background) must pass AA."""
     high_contrast = {
-        "hc_risk_high":     ("#ff6666", "#000000"),
-        "hc_risk_medium":   ("#ffcc00", "#000000"),
-        "hc_risk_low":      ("#66ff66", "#000000"),
+        "hc_risk_high": ("#ff6666", "#000000"),
+        "hc_risk_medium": ("#ffcc00", "#000000"),
+        "hc_risk_low": ("#66ff66", "#000000"),
         "hc_risk_critical": ("#ff9999", "#000000"),
-        "hc_foreground":    ("#ffffff", "#000000"),
+        "hc_foreground": ("#ffffff", "#000000"),
     }
     results = audit_palette(high_contrast, level=WCAGLevel.AA)
     failures = {k: v for k, v in results.items() if not v["passes"]}
-    assert not failures, (
-        f"High-contrast palette WCAG AA failures: "
-        + ", ".join(f"{k} ({v['ratio']:.2f}:1)" for k, v in failures.items())
+    assert not failures, f"High-contrast palette WCAG AA failures: " + ", ".join(
+        f"{k} ({v['ratio']:.2f}:1)" for k, v in failures.items()
     )

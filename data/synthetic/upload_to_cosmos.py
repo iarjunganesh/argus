@@ -11,6 +11,7 @@ Loads:
 Run after: make generate-data
 Usage:     python data/synthetic/upload_to_cosmos.py
 """
+
 import json
 import os
 import time
@@ -28,24 +29,24 @@ DATA_DIR = Path(__file__).parent
 
 UPLOADS = [
     {
-        "file":      DATA_DIR / "entities.jsonl",
+        "file": DATA_DIR / "entities.jsonl",
         "container": "entities",
-        "id_field":  "entity_id",
+        "id_field": "entity_id",
     },
     {
-        "file":      DATA_DIR / "corporate_graph.jsonl",
+        "file": DATA_DIR / "corporate_graph.jsonl",
         "container": "corporate_graph",
-        "id_field":  None,          # no natural id — generate one
+        "id_field": None,  # no natural id — generate one
     },
     {
-        "file":      DATA_DIR / "transactions.jsonl",
+        "file": DATA_DIR / "transactions.jsonl",
         "container": "transactions",
-        "id_field":  "tx_id",       # actual field name in transactions.jsonl
+        "id_field": "tx_id",  # actual field name in transactions.jsonl
     },
     {
-        "file":      DATA_DIR / "sanctions.jsonl",
-        "container": "pep_list",    # sanctions list doubles as screening reference
-        "id_field":  "sanctions_id",
+        "file": DATA_DIR / "sanctions.jsonl",
+        "container": "pep_list",  # sanctions list doubles as screening reference
+        "id_field": "sanctions_id",
     },
 ]
 
@@ -82,9 +83,13 @@ def _upsert_batch(container, docs: list[dict], id_field: str) -> int:
             except Exception as e:
                 attempt += 1
                 # Handle throttling (429) and transient server errors with backoff
-                status = getattr(e, 'status_code', None)
-                if status == 429 or isinstance(e, cosmos_exceptions.CosmosHttpResponseError) and status in (429, 503):
-                    wait = 2 ** attempt
+                status = getattr(e, "status_code", None)
+                if (
+                    status == 429
+                    or isinstance(e, cosmos_exceptions.CosmosHttpResponseError)
+                    and status in (429, 503)
+                ):
+                    wait = 2**attempt
                     time.sleep(wait)
                     continue
                 # Non-retriable or exhausted retries
@@ -109,20 +114,20 @@ def upload_to_cosmos():
     try:
         from azure.cosmos import CosmosClient
 
-        endpoint      = os.environ["COSMOS_ENDPOINT"]
-        key           = os.environ["COSMOS_KEY"]
+        endpoint = os.environ["COSMOS_ENDPOINT"]
+        key = os.environ["COSMOS_KEY"]
         database_name = os.environ.get("COSMOS_DATABASE", "argus-db")
 
-        client   = CosmosClient(endpoint, key)
+        client = CosmosClient(endpoint, key)
         database = client.get_database_client(database_name)
 
         for upload_def in UPLOADS:
-            docs         = _load_jsonl(upload_def["file"])
+            docs = _load_jsonl(upload_def["file"])
             if not docs:
                 continue
 
             container_id = upload_def["container"]
-            container    = database.get_container_client(container_id)
+            container = database.get_container_client(container_id)
 
             print(f"  Uploading {len(docs)} docs → {container_id}...")
             ok = _upsert_batch(container, docs, upload_def["id_field"])
@@ -146,13 +151,15 @@ def _upload_peps(database):
     Also uploads adverse_media.jsonl docs into the kyc_reports container for demo use."""
     # --- PEPs ---
     entities_file = DATA_DIR / "entities.jsonl"
-    all_entities  = _load_jsonl(entities_file)
+    all_entities = _load_jsonl(entities_file)
     if all_entities:
         peps = [e for e in all_entities if e.get("is_pep")]
         if peps:
             # pep_list container is already loaded with sanctions; upload additional PEPs
             # Use a sub-container or just skip if already populated
-            print(f"  ℹ️  {len(peps)} PEP entities found in entities.jsonl (already in entities container)")
+            print(
+                f"  ℹ️  {len(peps)} PEP entities found in entities.jsonl (already in entities container)"
+            )
         else:
             print("  ℹ️  No PEPs found in entities (expected ~5%).")
 

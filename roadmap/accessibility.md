@@ -83,6 +83,7 @@ User preference stored in `localStorage`. Swaps to a high-contrast palette:
 # tests/test_accessibility.py
 from accessibility.wcag import audit_palette, WCAGLevel, ARGUS_PALETTE
 
+
 def test_argus_palette_aa_compliance():
     results = audit_palette(ARGUS_PALETTE, level=WCAGLevel.AA)
     failures = [k for k, v in results.items() if not v["passes"]]

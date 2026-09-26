@@ -1,4 +1,5 @@
 """Plain-English explanation generator for compliance risk decisions."""
+
 from config import MODEL_NAME, get_llm_client
 
 
@@ -12,23 +13,28 @@ async def explain_decision(
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
     score = risk_summary.get("overall_risk_score", 0)
 
-    findings_text = "\n".join(f"- {finding}" for finding in key_findings[:5]) or "- No material findings"
-    regs_text = "\n".join(
-        f"- {trigger.get('rule', '')[:100]}" for trigger in regulatory_triggers[:3]
-    ) or "- No regulatory triggers"
+    findings_text = (
+        "\n".join(f"- {finding}" for finding in key_findings[:5]) or "- No material findings"
+    )
+    regs_text = (
+        "\n".join(f"- {trigger.get('rule', '')[:100]}" for trigger in regulatory_triggers[:3])
+        or "- No regulatory triggers"
+    )
 
     dim = dimension_scores or {}
-    dim_text = "\n".join([
-        f"- Identity: {dim.get('identity', {}).get('score', 0)}/100",
-        f"- Screening: {dim.get('screening', {}).get('score', 0)}/100",
-        f"- Corporate/UBO: {dim.get('corporate_ubo', {}).get('score', 0)}/100",
-        f"- Transaction: {dim.get('transaction', {}).get('score', 0)}/100",
-        f"- Regulatory: {dim.get('regulatory', {}).get('score', 0)}/100",
-    ])
+    dim_text = "\n".join(
+        [
+            f"- Identity: {dim.get('identity', {}).get('score', 0)}/100",
+            f"- Screening: {dim.get('screening', {}).get('score', 0)}/100",
+            f"- Corporate/UBO: {dim.get('corporate_ubo', {}).get('score', 0)}/100",
+            f"- Transaction: {dim.get('transaction', {}).get('score', 0)}/100",
+            f"- Regulatory: {dim.get('regulatory', {}).get('score', 0)}/100",
+        ]
+    )
 
     prompt = f"""You are a senior KYC compliance analyst writing a risk assessment note.
 
-Entity: {entity.get('name')} ({entity.get('type')}, jurisdiction: {entity.get('jurisdiction')})
+Entity: {entity.get("name")} ({entity.get("type")}, jurisdiction: {entity.get("jurisdiction")})
 Risk Score: {score}/100
 Risk Tier: {tier}
 
@@ -104,7 +110,7 @@ async def explain_decision_plain_language(
     prompt = f"""You are writing a customer-facing letter explaining a KYC review outcome.
 The tone must be calm, professional, and empathetic. The reader may be anxious.
 
-Entity name: {entity.get('name')}
+Entity name: {entity.get("name")}
 Review outcome: {framing}
 Internal findings (do NOT quote these directly — reframe in plain English): {findings_summary}
 Reference number: {ref}
@@ -155,7 +161,7 @@ def _parse_plain_language_response(raw: str, tier: str, ref: str) -> dict:
         for prefix, section in key_map.items():
             if line.strip().startswith(prefix):
                 current_key = section
-                sections[current_key] = line.strip()[len(prefix):].strip()
+                sections[current_key] = line.strip()[len(prefix) :].strip()
                 matched = True
                 break
         if not matched and current_key:

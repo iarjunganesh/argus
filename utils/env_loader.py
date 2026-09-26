@@ -3,6 +3,7 @@
 It walks upward from the provided start path (or the current working directory)
 until it finds a .env file, then loads simple KEY=VALUE pairs into os.environ.
 """
+
 from __future__ import annotations
 
 import os

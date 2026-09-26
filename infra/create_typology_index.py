@@ -1,4 +1,5 @@
 """Create and seed the Azure AI Search typology index used by the transaction agent."""
+
 import os
 from dotenv import load_dotenv
 from azure.core.credentials import AzureKeyCredential

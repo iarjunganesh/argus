@@ -21,9 +21,9 @@ from enum import Enum
 
 
 class LLMTier(Enum):
-    FULL = "gpt-4o"            # Enterprise: best reasoning, highest cost
+    FULL = "gpt-4o"  # Enterprise: best reasoning, highest cost
     COMMUNITY = "gpt-4o-mini"  # Community: fast, low cost, still capable
-    LOCAL = "ollama/llama3"    # Fully local: no API calls, for air-gapped use
+    LOCAL = "ollama/llama3"  # Fully local: no API calls, for air-gapped use
 
 
 class OCRBackend(Enum):
@@ -47,6 +47,7 @@ class CommunityConfig:
     Runtime configuration for Community Edition.
     Defaults are chosen to require zero cloud credentials.
     """
+
     llm_tier: LLMTier = LLMTier.COMMUNITY
     ocr_backend: OCRBackend = OCRBackend.TESSERACT
     vector_backend: VectorBackend = VectorBackend.QDRANT
@@ -66,10 +67,25 @@ class CommunityConfig:
     open_corpus_path: str = "community/knowledge_base/"
 
     # NGO onboarding — relaxed defaults for known low-risk entity types
-    ngo_jurisdiction_allowlist: list[str] = field(default_factory=lambda: [
-        "DE", "NL", "SE", "NO", "DK", "FI", "CH", "AT", "FR", "GB",
-        "CA", "AU", "NZ", "JP", "SG",
-    ])
+    ngo_jurisdiction_allowlist: list[str] = field(
+        default_factory=lambda: [
+            "DE",
+            "NL",
+            "SE",
+            "NO",
+            "DK",
+            "FI",
+            "CH",
+            "AT",
+            "FR",
+            "GB",
+            "CA",
+            "AU",
+            "NZ",
+            "JP",
+            "SG",
+        ]
+    )
 
     @classmethod
     def for_ngo(cls) -> "CommunityConfig":
