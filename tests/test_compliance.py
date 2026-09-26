@@ -151,6 +151,32 @@ async def test_a_case_whose_sanctions_screening_did_not_run_is_incomplete():
         )
 
 
+async def test_a_pep_match_requires_enhanced_due_diligence_whatever_the_tier():
+    screening = {"pep_hit": True, "screening_risk_score": 25, "findings": [{"type": "pep"}]}
+
+    result = (await comp.invoke(_msg({"screening": screening})))["result"]
+
+    summary = result["risk_summary"]
+    assert summary["overall_risk_tier"] == "LOW"  # a PEP match does not raise the tier
+    assert summary["tier_basis"] == "score"
+    assert summary["edd_required"] is True
+    assert summary["decision_recommendation"].startswith("Enhanced Due Diligence required")
+    assert "Apply enhanced ongoing monitoring to the relationship" in result["recommended_actions"]
+    assert "enhanced due diligence is required before onboarding" in result["explanation"]
+
+
+async def test_a_case_without_a_pep_match_does_not_require_edd_by_rule():
+    result = (await comp.invoke(_msg({"screening": {"sanctions_hit": False}})))["result"]
+
+    assert result["risk_summary"]["edd_required"] is False
+
+
+def test_the_sanctions_hold_and_critical_tier_outrank_the_edd_recommendation():
+    assert comp._recommendation("LOW", comp.POTENTIAL_MATCH, True).startswith("Hold:")
+    assert comp._recommendation("LOW", comp.NOT_RUN, True).startswith("Incomplete:")
+    assert comp._recommendation("CRITICAL", comp.NO_MATCH, True).startswith("Do not onboard")
+
+
 def test_every_score_band_maps_to_its_tier():
     from argus.agents.compliance.tools.risk_scorer import score_tier
 
@@ -213,6 +239,16 @@ async def test_explanation_comes_from_the_model(monkeypatch):
     assert "- Identity: 10/100" in llm.prompts[0]
     assert "Tier set by: the score band" in llm.prompts[0]
     assert "Sanctions screening: not reported" in llm.prompts[0]
+    assert "Enhanced due diligence: not required by a rule" in llm.prompts[0]
+
+
+async def test_the_model_is_told_when_enhanced_due_diligence_is_required(monkeypatch):
+    llm = FakeLLM(content="EDD required.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+
+    await ed.explain_decision({}, {"overall_risk_tier": "LOW", "edd_required": True}, {}, [], [])
+
+    assert "Enhanced due diligence: required (PEP match), whatever the tier" in llm.prompts[0]
 
 
 async def test_the_model_is_told_when_a_sanctions_match_set_the_tier(monkeypatch):

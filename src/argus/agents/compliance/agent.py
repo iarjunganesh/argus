@@ -3,7 +3,7 @@ ARGUS Compliance & Risk Agent
 Fan-in agent — receives all upstream results, searches the regulations knowledge base for
 regulatory text with citations, produces final weighted risk score. A potential sanctions match
 holds the case whatever the score, and a case whose sanctions screening did not run is reported
-as incomplete.
+as incomplete. A PEP match requires enhanced due diligence whatever the tier.
 """
 
 from fastapi import FastAPI
@@ -93,12 +93,17 @@ async def invoke(message: A2AMessage):
     ]
 
     recommended_actions = _build_actions(tier, risk_indicators, gaps)
+    # A PEP match requires enhanced due diligence measures, not a higher risk tier: the EU AMLR
+    # (Art. 42) and UK MLR (reg. 35) apply them to every PEP, FATF R.12 to every foreign PEP.
+    # ARGUS cannot yet tell foreign from domestic PEPs, so it applies the all-PEP rule.
+    edd_required = "pep" in risk_indicators
     risk_summary = {
         "overall_risk_tier": tier,
         "overall_risk_score": overall_score,
         "tier_basis": tier_basis,
         "sanctions_screening": sanctions,
-        "decision_recommendation": _recommendation(tier, sanctions),
+        "edd_required": edd_required,
+        "decision_recommendation": _recommendation(tier, sanctions, edd_required),
     }
     explanation = await explain_decision(
         entity={
@@ -170,7 +175,7 @@ def _extract_findings(identity, screening, corporate, transaction, sanctions: st
     return findings
 
 
-def _recommendation(tier: str, sanctions: str = NO_MATCH) -> str:
+def _recommendation(tier: str, sanctions: str = NO_MATCH, edd_required: bool = False) -> str:
     if sanctions == POTENTIAL_MATCH:
         return (
             "Hold: do not onboard or process transactions until a compliance officer confirms "
@@ -178,6 +183,11 @@ def _recommendation(tier: str, sanctions: str = NO_MATCH) -> str:
         )
     if sanctions == NOT_RUN:
         return "Incomplete: sanctions screening did not run. Do not onboard until it has."
+    if edd_required and tier != "CRITICAL":
+        return (
+            "Enhanced Due Diligence required before onboarding: a PEP match needs senior "
+            "management approval, source of wealth and funds, and enhanced ongoing monitoring."
+        )
     return {
         "LOW": "Standard onboarding — periodic review recommended.",
         "MEDIUM": "Proceed with caution. Enhanced monitoring required.",
@@ -191,6 +201,7 @@ def _build_actions(tier: str, risk_indicators: list, gaps: list) -> list:
     if "pep" in risk_indicators:
         actions.append("Obtain source of wealth and source of funds declaration")
         actions.append("Escalate to Senior Compliance Officer for EDD sign-off")
+        actions.append("Apply enhanced ongoing monitoring to the relationship")
     if "sanctions" in risk_indicators:
         actions.append(
             "Confirm or clear the match: compare the listing's identifiers (date of birth, "

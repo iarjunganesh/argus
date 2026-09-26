@@ -23,6 +23,7 @@ SANCTIONS_LABELS = {
     "no_match": "No match",
     "not_run": "Did not run",
 }
+EDD_LABELS = {True: "Required", False: "Not required by a rule"}
 
 
 def _logo_data_uri() -> str:
@@ -161,6 +162,7 @@ def format_executive_summary(report: dict) -> str:
     score = risk_summary.get("overall_risk_score", 0)
     tier_basis = TIER_BASIS_LABELS.get(risk_summary.get("tier_basis", ""), "Not reported")
     sanctions = SANCTIONS_LABELS.get(risk_summary.get("sanctions_screening", ""), "Not reported")
+    edd = EDD_LABELS.get(risk_summary.get("edd_required"), "Not reported")
     recommendation = risk_summary.get("decision_recommendation", "")
 
     drivers = report.get("key_findings", [])[:3]
@@ -197,6 +199,10 @@ def format_executive_summary(report: dict) -> str:
                 <div style="display:flex;justify-content:space-between;gap:12px;">
                     <span style="color:var(--body-text-color-subdued,#64748b);">Sanctions Screening</span>
                     <strong>{sanctions}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:12px;margin-top:8px;">
+                    <span style="color:var(--body-text-color-subdued,#64748b);">Enhanced Due Diligence</span>
+                    <strong>{edd}</strong>
                 </div>
             </div>
         </div>
