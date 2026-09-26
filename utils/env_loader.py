@@ -11,6 +11,9 @@ from pathlib import Path
 
 
 def load_repo_env(start: str | Path | None = None) -> None:
+    # Tests set ARGUS_DISABLE_DOTENV so a developer's local .env cannot change their results.
+    if os.environ.get("ARGUS_DISABLE_DOTENV") == "1":
+        return
     base = Path(start or Path.cwd()).resolve()
     if base.is_file():
         base = base.parent

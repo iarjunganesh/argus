@@ -20,7 +20,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
   code review rather than from the old README.
 - **A CI quality gate** (`.github/workflows/ci.yml`) that fails a pull request on: ruff lint or
-  format drift, mypy errors, a failing test or coverage below the measured floor (75%), a known
+  format drift, mypy errors, a failing test or coverage below the measured floor (74%), a known
   vulnerability in the locked dependency graph (pip-audit), a committed secret (gitleaks), or
   documentation drift (markdownlint plus `scripts/check_docs.py`: broken links, unfinished
   markers, Python version disagreement, unlisted docs, tracked local files).
