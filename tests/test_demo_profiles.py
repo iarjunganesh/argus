@@ -8,7 +8,7 @@ def test_public_demo_profile_is_available():
     assert profile is not None
     assert profile["screening"]["adverse_media_hit"] is True
     assert (
-        profile["screening"]["findings"][0]["foundry_iq_citation"]["document"]
+        profile["screening"]["findings"][0]["citation"]["document"]
         == "wirecard_public_enforcement_summary.json"
     )
 

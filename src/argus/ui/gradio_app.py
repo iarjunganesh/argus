@@ -274,7 +274,7 @@ def format_report(report: dict) -> str:
 
     regs_html = ""
     for trigger in report.get("regulatory_triggers", []):
-        citation = trigger.get("foundry_iq_citation") or {}
+        citation = trigger.get("citation") or {}
         kb = citation.get("knowledge_base", "-")
         doc = citation.get("document", "-")
         article = citation.get("article", "-")
@@ -288,23 +288,31 @@ def format_report(report: dict) -> str:
 
     trace = report.get("audit_trace", {})
     agents_invoked_count = len(trace.get("agents_invoked", []))
-    tool_calls = trace.get("tool_calls", "-")
-    foundry_iq_queries = trace.get("foundry_iq_queries", "-")
+    data_backend = trace.get("data_backend", "-")
+    retrieval_queries = trace.get("retrieval_queries", "-")
     latency = report.get("total_latency_seconds", "-")
-    foundry_grounded = isinstance(foundry_iq_queries, int) and foundry_iq_queries > 0
-    foundry_badge_text = (
-        "Foundry IQ Grounded" if foundry_grounded else "Foundry IQ: No live queries"
+    fallbacks = trace.get("fallbacks") or {}
+    grounded = isinstance(retrieval_queries, int) and retrieval_queries > 0 and not fallbacks
+    badge_text = (
+        f"Knowledge bases answered {retrieval_queries} searches ({data_backend} data)"
+        if grounded
+        else "Fallback used: " + ", ".join(f"{a} ({', '.join(t)})" for a, t in fallbacks.items())
+        if fallbacks
+        else "No knowledge-base search answered"
     )
-    foundry_badge_bg = "#dcfce7" if foundry_grounded else "#f1f5f9"
-    foundry_badge_fg = "#166534" if foundry_grounded else "#475569"
-    foundry_badge_border = "#86efac" if foundry_grounded else "#cbd5e1"
+    badge_bg = "#dcfce7" if grounded else "#f1f5f9"
+    badge_fg = "#166534" if grounded else "#475569"
+    badge_border = "#86efac" if grounded else "#cbd5e1"
+    sources = trace.get("agent_sources") or {}
     audit_trace_text = html.escape(
         "\n".join(
             [
                 f"task_id: {trace.get('task_id', '-')}",
                 f"agents_invoked: {len(trace.get('agents_invoked', []))}",
-                f"tool_calls: {trace.get('tool_calls', '-')}",
-                f"foundry_iq_queries: {trace.get('foundry_iq_queries', '-')}",
+                f"data_backend: {data_backend}",
+                f"retrieval_queries: {retrieval_queries}",
+                "agent_sources: " + ", ".join(f"{a}={src}" for a, src in sources.items()),
+                f"explanation_source: {report.get('explanation_source', '-')}",
             ]
         )
     )
@@ -328,19 +336,19 @@ def format_report(report: dict) -> str:
             <div style="font-weight:800;font-size:1.05em;">{agents_invoked_count}</div>
         </div>
         <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
-            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Tool Calls</div>
-            <div style="font-weight:800;">{tool_calls}</div>
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Data Backend</div>
+            <div style="font-weight:800;">{data_backend}</div>
         </div>
         <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
-            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Foundry IQ Queries</div>
-            <div style="font-weight:800;">{foundry_iq_queries}</div>
+            <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Knowledge-Base Searches</div>
+            <div style="font-weight:800;">{retrieval_queries}</div>
         </div>
         <div style="padding:10px 12px;border:1px solid var(--border-color-primary,#e5e7eb);border-radius:10px;background:var(--block-background-fill,#fff);">
             <div style="font-size:0.72em;color:var(--body-text-color-subdued,#64748b);text-transform:uppercase;letter-spacing:0.08em;">Runtime</div>
             <div style="font-weight:800;">{latency}s</div>
         </div>
-        <div style="padding:10px 12px;border:1px solid {foundry_badge_border};border-radius:10px;background:{foundry_badge_bg};grid-column:span 4;">
-            <div style="font-size:0.78em;color:{foundry_badge_fg};font-weight:700;letter-spacing:0.03em;">✓ {foundry_badge_text}</div>
+        <div style="padding:10px 12px;border:1px solid {badge_border};border-radius:10px;background:{badge_bg};grid-column:span 4;">
+            <div style="font-size:0.78em;color:{badge_fg};font-weight:700;letter-spacing:0.03em;">{"✓ " if grounded else ""}{html.escape(badge_text)}</div>
         </div>
     </div>"""
 
@@ -365,7 +373,7 @@ def format_report(report: dict) -> str:
         <h3>Key Findings</h3>
         <ul>{findings_html}</ul>
 
-        <h3>Regulatory Triggers (Foundry IQ cited)</h3>
+        <h3>Regulatory Triggers (cited)</h3>
         <ul>{regs_html}</ul>
 
         <h3>Recommended Actions</h3>

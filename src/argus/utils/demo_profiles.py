@@ -52,7 +52,6 @@ DEMO_PROFILES = {
             "pep_hit": False,
             "findings": [],
             "screening_risk_score": 5,
-            "foundry_iq_queries": 2,
         },
         "transaction": {
             "transaction_count": 8,
@@ -94,8 +93,8 @@ DEMO_PROFILES = {
                     "type": "adverse_media",
                     "match": "Negative press references governance concerns and beneficial ownership opacity",
                     "confidence": 0.79,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-adversemedia",
+                    "citation": {
+                        "knowledge_base": "adverse_media",
                         "document": "synthetic_holdings_governance_watch.json",
                         "snippet_id": "demo-medium-001",
                         "published_at": "2026-04-18",
@@ -104,7 +103,6 @@ DEMO_PROFILES = {
                 },
             ],
             "screening_risk_score": 40,
-            "foundry_iq_queries": 2,
         },
         "corporate": {
             "registry": {
@@ -160,8 +158,8 @@ DEMO_PROFILES = {
                     "type": "sanctions",
                     "match": "Strong sanctions-adjacent match tied to narcotics proceeds facilitation watchlist entry",
                     "confidence": 0.93,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-sanctions",
+                    "citation": {
+                        "knowledge_base": "sanctions",
                         "document": "synthetic_sanctions_watchlist.json",
                         "snippet_id": "demo-high-001",
                         "program": "Narcotics Trafficking",
@@ -178,8 +176,8 @@ DEMO_PROFILES = {
                     "type": "adverse_media",
                     "match": "Adverse media links the entity to procurement bribery and opaque offshore fund flows",
                     "confidence": 0.89,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-adversemedia",
+                    "citation": {
+                        "knowledge_base": "adverse_media",
                         "document": "cayman_synth_capital_investigation.json",
                         "snippet_id": "demo-high-002",
                         "published_at": "2026-05-07",
@@ -188,7 +186,6 @@ DEMO_PROFILES = {
                 },
             ],
             "screening_risk_score": 85,
-            "foundry_iq_queries": 2,
         },
         "corporate": {
             "registry": {
@@ -247,8 +244,8 @@ DEMO_PROFILES = {
                     "type": "adverse_media",
                     "match": "Public coverage highlights accounting irregularities and insolvency proceedings.",
                     "confidence": 0.91,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-adversemedia",
+                    "citation": {
+                        "knowledge_base": "adverse_media",
                         "document": "wirecard_public_enforcement_summary.json",
                         "snippet_id": "demo-public-001",
                         "published_at": "2020-06-25",
@@ -257,7 +254,6 @@ DEMO_PROFILES = {
                 }
             ],
             "screening_risk_score": 72,
-            "foundry_iq_queries": 1,
         },
         "corporate": {
             "registry": {"found": True, "record": {"name": "Wirecard AG", "jurisdiction": "DE"}},
@@ -296,8 +292,8 @@ DEMO_PROFILES = {
                     "type": "adverse_media",
                     "match": "Public coverage references historical AML control weaknesses and supervisory scrutiny.",
                     "confidence": 0.88,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-adversemedia",
+                    "citation": {
+                        "knowledge_base": "adverse_media",
                         "document": "danske_bank_public_enforcement_summary.json",
                         "snippet_id": "demo-public-002",
                         "published_at": "2018-09-19",
@@ -306,7 +302,6 @@ DEMO_PROFILES = {
                 }
             ],
             "screening_risk_score": 68,
-            "foundry_iq_queries": 1,
         },
         "corporate": {
             "registry": {
@@ -348,8 +343,8 @@ DEMO_PROFILES = {
                     "type": "adverse_media",
                     "match": "Public coverage references AML and sanctions-screening control failings.",
                     "confidence": 0.87,
-                    "foundry_iq_citation": {
-                        "knowledge_base": "argus-kb-adversemedia",
+                    "citation": {
+                        "knowledge_base": "adverse_media",
                         "document": "westpac_public_enforcement_summary.json",
                         "snippet_id": "demo-public-003",
                         "published_at": "2020-11-24",
@@ -358,7 +353,6 @@ DEMO_PROFILES = {
                 }
             ],
             "screening_risk_score": 66,
-            "foundry_iq_queries": 1,
         },
         "corporate": {
             "registry": {

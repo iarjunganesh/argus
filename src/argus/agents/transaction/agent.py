@@ -6,6 +6,7 @@ Analyses synthetic transaction history for AML patterns and typologies.
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from argus.agents.provenance import demo_provenance, provenance
 from argus.agents.transaction.tools.pattern_detector import pattern_detector
 from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
 from argus.agents.transaction.tools.typology_matcher import typology_matcher
@@ -36,6 +37,7 @@ async def invoke(message: A2AMessage):
             "agent": "transaction",
             "task_id": message.task_id,
             "status": "completed",
+            **provenance(),
             "result": {"skipped": True, "reason": "Transaction analysis disabled for this request"},
         }
 
@@ -46,6 +48,7 @@ async def invoke(message: A2AMessage):
             "agent": "transaction",
             "task_id": message.task_id,
             "status": "completed",
+            **demo_provenance(),
             "result": demo_profile["transaction"],
         }
 
@@ -72,6 +75,7 @@ async def invoke(message: A2AMessage):
         "agent": "transaction",
         "task_id": message.task_id,
         "status": "completed",
+        **provenance(transaction_monitor=tx_history),
         "result": {
             "transaction_count": tx_history.get("count", 0),
             "date_range": tx_history.get("date_range", {}),

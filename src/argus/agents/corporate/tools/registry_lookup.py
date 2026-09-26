@@ -1,29 +1,16 @@
-"""registry_lookup — corporate registry query."""
+"""registry_lookup — finds the company in the corporate registry held by the data plane."""
 
-from argus.config import get_cosmos_database
+from argus.data_plane import DataPlaneUnavailable, get_data_plane
+from argus.utils.structured_logger import get_logger
+
+logger = get_logger("tool.registry_lookup")
 
 
 async def registry_lookup(entity_name: str, reg_number: str | None) -> dict:
+    plane = get_data_plane()
     try:
-        db = get_cosmos_database()
-        container = db.get_container_client("corporate_registry")
-        query = "SELECT * FROM c WHERE LOWER(c.name) = LOWER(@name)"
-        params = [{"name": "@name", "value": entity_name}]
-        items = list(
-            container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-        )
-        if items:
-            return {"found": True, "record": items[0]}
-        return {"found": False, "record": None}
-    except Exception as e:
-        print(f"[registry_lookup] Cosmos DB unavailable: {e}. Using mock.")
-        return {
-            "found": True,
-            "record": {
-                "name": entity_name,
-                "incorporated_date": "2018-03-15",
-                "sector": "financial_services",
-                "directors": ["Mock Director A", "Mock Director B"],
-            },
-            "source": "mock",
-        }
+        record = await plane.entities.find_entity(entity_name, "corporate")
+    except DataPlaneUnavailable as exc:
+        logger.warning("tool.fallback", extra={"tool": "registry_lookup", "reason": str(exc)})
+        return {"found": False, "record": None, "source": "fallback"}
+    return {"found": record is not None, "record": record, "source": plane.backend}

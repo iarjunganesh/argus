@@ -118,11 +118,11 @@ AZURE_RESOURCE_GROUP=$ResourceGroup
 AZURE_OPENAI_ENDPOINT=$openaiEndpoint
 AZURE_OPENAI_API_KEY=$openaiKey
 AZURE_OPENAI_DEPLOYMENT=gpt-4o
-AZURE_OPENAI_API_VERSION=2025-01-01-preview
 
-# ── GitHub Models (dev fallback — set true to skip Azure OpenAI) ──
-GITHUB_TOKEN=<your-github-pat>
-USE_GITHUB_MODELS=false
+# ── Runtime choices: read data and write explanations through Azure ──
+ARGUS_DATA_BACKEND=azure
+ARGUS_MODEL_PROVIDER=azure-openai
+ARGUS_CORS_ORIGINS=
 
 # ── Azure AI Search (Foundry IQ backing store) ──
 AZURE_SEARCH_ENDPOINT=$searchEndpoint

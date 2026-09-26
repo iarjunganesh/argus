@@ -1,6 +1,14 @@
-"""Plain-English explanation generator for compliance risk decisions."""
+"""Plain-English explanation generator for compliance risk decisions.
 
-from argus.config import MODEL_NAME, get_llm_client
+Both functions ask the configured language model (`argus.models`) and fall back to fixed text
+when no model is configured or the call fails. `explain_decision` reports which one wrote the
+explanation, so a report never passes the fallback text off as model output.
+"""
+
+from argus.models import get_chat_model
+from argus.utils.structured_logger import get_logger
+
+logger = get_logger("tool.explain_decision")
 
 
 async def explain_decision(
@@ -9,7 +17,8 @@ async def explain_decision(
     dimension_scores: dict,
     key_findings: list,
     regulatory_triggers: list,
-) -> str:
+) -> dict:
+    """Return `{"text": ..., "source": "model" | "fallback"}`."""
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
     score = risk_summary.get("overall_risk_score", 0)
 
@@ -57,16 +66,20 @@ Rules:
 - Be direct and professional."""
 
     try:
-        client = get_llm_client()
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
+        chat = get_chat_model()
+        response = await chat.client.chat.completions.create(
+            model=chat.model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=250,
             temperature=0.2,
         )
-        return (response.choices[0].message.content or "").strip()
-    except Exception:
-        return _fallback_explanation(tier, key_findings)
+        text = (response.choices[0].message.content or "").strip()
+    except Exception as exc:  # no model configured, or the call failed: say so and fall back
+        logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": str(exc)})
+        return {"text": _fallback_explanation(tier, key_findings), "source": "fallback"}
+    if not text:
+        return {"text": _fallback_explanation(tier, key_findings), "source": "fallback"}
+    return {"text": text, "source": "model"}
 
 
 def _fallback_explanation(tier: str, findings: list) -> str:
@@ -129,9 +142,9 @@ Rules:
 - Do not apologize excessively."""
 
     try:
-        client = get_llm_client()
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
+        chat = get_chat_model()
+        response = await chat.client.chat.completions.create(
+            model=chat.model,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=400,
             temperature=0.3,

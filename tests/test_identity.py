@@ -1,8 +1,6 @@
 """Identity agent flow and the registry/document cross-check."""
 
 import base64
-import sys
-import types
 
 from fastapi.testclient import TestClient
 
@@ -57,20 +55,11 @@ def test_health():
     assert TestClient(ident.app).get("/health").json()["service"] == "identity"
 
 
-async def test_customer_lookup_reports_missing_entity(monkeypatch):
-    class DB:
-        def get_container_client(self, name):
-            class Container:
-                def query_items(self, **kwargs):
-                    return []
-
-            return Container()
-
-    monkeypatch.setattr(cust, "get_cosmos_database", DB)
-
+async def test_customer_lookup_reports_missing_entity():
     assert await cust.customer_lookup("Nobody", "individual", None) == {
         "found": False,
         "record": None,
+        "source": "local",
     }
 
 
@@ -124,20 +113,33 @@ async def test_identity_agent_invoke(monkeypatch):
     assert res["result"]["identity_score"] >= 0
 
 
-async def test_ocr_processor_mock_all_doc_types(monkeypatch):
+async def test_ocr_without_an_engine_reads_nothing_and_says_so():
     from argus.agents.identity.tools import ocr_processor as ocp
 
-    # Force the Azure import to fail so we exercise _mock_ocr for each doc type
-    monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "")
-    monkeypatch.setenv("DOC_INTELLIGENCE_KEY", "")
-
     fake_b64 = base64.b64encode(b"fake-image-bytes").decode()
+    result = await ocp.ocr_processor(fake_b64, "passport")
 
-    for doc_type in ("passport", "drivers_license", "id_card", "tax_invoice"):
-        result = await ocp.ocr_processor(fake_b64, doc_type)
-        assert result["doc_type"] == doc_type
-        assert result["fields"]
-        assert result["confidence"] > 0
+    assert result == {"doc_type": "passport", "fields": {}, "confidence": 0.0, "source": "fallback"}
+
+
+async def test_ocr_reports_the_lowest_field_confidence(use_plane):
+    from argus.agents.identity.tools.ocr_processor import ocr_processor
+
+    class OCR:
+        async def extract(self, image, doc_type):
+            assert image == b"Hello"
+            return {"full_name": {"value": "Jane", "confidence": 0.9}, "x": {"confidence": 0.7}}
+
+    use_plane(ocr=OCR())
+    result = await ocr_processor("SGVsbG8=", "passport")
+
+    assert result["confidence"] == 0.7 and result["source"] == "local"
+
+
+async def test_ocr_rejects_text_that_is_not_base64():
+    from argus.agents.identity.tools.ocr_processor import ocr_processor
+
+    assert (await ocr_processor("not base64!", "passport"))["error"] == "Not base64"
 
 
 async def test_identity_validator_name_match():
@@ -163,64 +165,6 @@ async def test_identity_validator_name_mismatch():
     assert result["confidence_score"] < 100
 
 
-async def test_ocr_processor_azure_doc_intelligence_success(monkeypatch):
-    from argus.agents.identity.tools.ocr_processor import ocr_processor
-
-    class FakeField:
-        def __init__(self, value, confidence):
-            self.value = value
-            self.confidence = confidence
-
-    class FakeDoc:
-        def __init__(self):
-            self.fields = {
-                "full_name": FakeField("Jane Doe", 0.99),
-                "passport_number": FakeField("P123", 0.98),
-            }
-
-    class FakeResult:
-        def __init__(self):
-            self.documents = [FakeDoc()]
-
-    class FakePoller:
-        def result(self):
-            return FakeResult()
-
-    class FakeDocumentAnalysisClient:
-        def __init__(self, endpoint=None, credential=None):
-            self.endpoint = endpoint
-            self.credential = credential
-
-        def begin_analyze_document(self, model_id, document=None):
-            return FakePoller()
-
-    class FakeAzureKeyCredential:
-        def __init__(self, key):
-            self.key = key
-
-    # Inject minimal Azure SDK module tree expected by ocr_processor.
-    azure_mod = types.ModuleType("azure")
-    ai_mod = types.ModuleType("azure.ai")
-    form_mod = types.ModuleType("azure.ai.formrecognizer")
-    core_mod = types.ModuleType("azure.core")
-    cred_mod = types.ModuleType("azure.core.credentials")
-    form_mod.DocumentAnalysisClient = FakeDocumentAnalysisClient
-    cred_mod.AzureKeyCredential = FakeAzureKeyCredential
-
-    monkeypatch.setitem(sys.modules, "azure", azure_mod)
-    monkeypatch.setitem(sys.modules, "azure.ai", ai_mod)
-    monkeypatch.setitem(sys.modules, "azure.ai.formrecognizer", form_mod)
-    monkeypatch.setitem(sys.modules, "azure.core", core_mod)
-    monkeypatch.setitem(sys.modules, "azure.core.credentials", cred_mod)
-
-    monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "https://example.cognitiveservices.azure.com")
-    monkeypatch.setenv("DOC_INTELLIGENCE_KEY", "fake-key")
-
-    result = await ocr_processor("SGVsbG8=", "passport")
-    assert result["source"] == "azure_doc_intelligence"
-    assert result["fields"]["full_name"]["value"] == "Jane Doe"
-
-
 def test_openapi_docs_are_served():
     from argus.agents.identity.agent import app
 
@@ -229,29 +173,37 @@ def test_openapi_docs_are_served():
     assert resp.status_code == 200
 
 
-async def test_customer_lookup_reads_cosmos_record(monkeypatch):
-    class Container:
-        def query_items(self, **kwargs):
-            return [{"name": "Acme"}]
+async def test_customer_lookup_reads_the_local_registry():
+    result = await cust.customer_lookup("Ada Synthetic", "individual", None)
 
-    class DB:
-        def get_container_client(self, name):
-            return Container()
-
-    monkeypatch.setattr(cust, "get_cosmos_database", DB)
-
-    assert (await cust.customer_lookup("Acme", "corporate", None))["found"] is True
+    assert result["found"] is True and result["record"]["entity_id"] == "IND-T0001"
 
 
-async def test_customer_lookup_falls_back_to_mock_without_cosmos(monkeypatch):
-    def no_db():
-        raise RuntimeError("no db")
-
-    monkeypatch.setattr(cust, "get_cosmos_database", no_db)
+async def test_customer_lookup_falls_back_when_the_store_is_down(use_plane, unavailable):
+    use_plane(entities=unavailable)
 
     result = await cust.customer_lookup("Acme", "corporate", None)
-    assert result["found"] is True
-    assert result["record"]["entity_id"] == "MOCK-001"
+
+    assert result == {"found": False, "record": None, "source": "fallback"}
+
+
+async def test_agent_names_the_tools_that_fell_back():
+    payload = {
+        "entity_name": "Ada Synthetic",
+        "entity_type": "individual",
+        "documents": [{"image_base64": base64.b64encode(b"x").decode()}],
+    }
+    response = await ident.invoke(_msg(payload))
+
+    assert response["source"] == "fallback"
+    assert response["fallbacks"] == ["ocr_processor[0]"]
+    assert response["result"]["registry_match"] is True
+
+
+async def test_demo_profile_is_labelled():
+    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
+
+    assert (await ident.invoke(_msg(payload)))["source"] == "demo_profile"
 
 
 async def test_ocr_processor_rejects_an_empty_image():

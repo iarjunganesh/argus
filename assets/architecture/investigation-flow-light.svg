@@ -10,8 +10,9 @@
   high from 55, critical from 75) and maps each risk indicator to FATF recommendations. Steps 2
   and 3 are deterministic code. 4, explain: a language model writes three to five plain-English
   sentences; it cannot change the score or the tier, and without a model a fixed template is used.
-  5, report: decision, findings, actions, citations, dimension scores and an audit trace. A
-  compliance reviewer confirms the findings before any onboarding decision.</desc>
+  5, report: decision, findings, actions, citations, dimension scores and an audit trace that
+  records where each result came from and names any tool that fell back. A compliance reviewer
+  confirms the findings before any onboarding decision.</desc>
 
   <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        Every number is copied from the code (src/argus/agents/*/agent.py and .../tools/). If a rule
@@ -209,9 +210,8 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="body" x="864" y="722">recommendation (6, 12, 19, 20)</text>
 
   <text class="strong" x="864" y="776">Cited regulations</text>
-  <text class="body" x="864" y="804">retrieved from Foundry IQ</text>
-  <rect class="chip-no" x="1080" y="786" width="116" height="26" rx="13"/>
-  <text class="chiptxt-no" x="1138" y="804">MOCK TODAY</text>
+  <text class="body" x="864" y="804">retrieved with citations</text>
+  <text class="body" x="864" y="830">from the regulations base</text>
 
   <!-- ============ 4 · EXPLAIN ============ -->
   <text class="tag" x="1264" y="266" style="fill:var(--gold)">4 · EXPLAIN</text>
@@ -225,8 +225,8 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="body" x="1264" y="562">No model configured:</text>
   <text class="body" x="1264" y="588">a fixed template instead.</text>
   <rect class="card2" x="1260" y="770" width="260" height="70" rx="10"/>
-  <text class="small" x="1278" y="799">Azure OpenAI GPT-4o</text>
-  <text class="small" x="1278" y="823">or GitHub Models</text>
+  <text class="small" x="1278" y="799">ARGUS_MODEL_PROVIDER</text>
+  <text class="small" x="1278" y="823">Azure OpenAI, OpenAI, GitHub</text>
 
   <!-- ============ 5 · REPORT ============ -->
   <text class="tag" x="1584" y="266">5 · REPORT</text>
@@ -238,8 +238,8 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="body" x="1584" y="462">• five dimension scores</text>
   <text class="body" x="1584" y="490">• audit trace and timeline</text>
   <rect class="card2" x="1580" y="770" width="260" height="70" rx="10"/>
-  <text class="mono" x="1596" y="799">source: "mock"</text>
-  <text class="small" x="1596" y="823">marks every fallback</text>
+  <text class="mono" x="1596" y="799">source: "fallback"</text>
+  <text class="small" x="1596" y="823">names each tool that fell back</text>
 
   <!-- ============ Human review ============ -->
   <path class="edge" d="M1710 870 V894" marker-end="url(#arrow)"/>

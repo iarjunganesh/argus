@@ -12,9 +12,11 @@ score and tier; a language model only writes the explanation. It won a Hack for 
 Microsoft Agents League 2026 and is now being cleaned up before the v2 work in
 [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
 
-State as of 2026-09-26: Foundry IQ queries and OCR return mock data on every run (see the
-"Known issues" in [`CHANGELOG.md`](CHANGELOG.md)). [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-describes the runtime as it is, not as planned.
+State as of 2026-09-27: every tool reads through a data plane with a local implementation
+(synthetic data, the default, no cloud account) and an Azure one that is not yet verified against
+live services, and every result records where it came from (see "Known issues" in
+[`CHANGELOG.md`](CHANGELOG.md)). [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) describes the
+runtime as it is, not as planned.
 
 ## Rules that must not be broken
 
@@ -62,8 +64,8 @@ uv run python scripts/ci/render_assets.py --check        # image variants curren
 `uv run python scripts/ci/render_assets.py` regenerates the image variants and PNG/GIF exports after
 you edit an SVG master (see [`assets/README.md`](assets/README.md)).
 
-Tests need no cloud credentials: `tests/conftest.py` ignores `.env` and removes Azure credentials,
-so every external client falls back to mock data. On Windows, if pytest fails with a
+Tests need no cloud credentials: `tests/conftest.py` ignores `.env`, removes cloud and ARGUS
+settings, and points the local data plane at `tests/fixtures/data/`. On Windows, if pytest fails with a
 `PermissionError` on its temporary directory, add `--basetemp` pointing at any writable folder.
 
 ## Definition of done
@@ -115,10 +117,12 @@ Inside `src/argus/`:
 | `agents/` | The orchestrator and the five agent services, each with its `tools/` |
 | `api/` | The FastAPI gateway and its request/response schemas |
 | `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
+| `data_plane/` | The four data interfaces (retriever, entity store, report store, OCR), each with a local and an Azure implementation |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
 | `accessibility/` | WCAG contrast utilities, also used to check the images |
 | `community/` | Community Edition configuration presets (a design, not yet runnable) |
-| `config.py` | Settings and the Azure client factories |
+| `models.py` | The one language-model client factory (`ARGUS_MODEL_PROVIDER`) |
+| `config.py` | The Azure client factories behind the Azure data plane |
 
 `scripts/ci/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.

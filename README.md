@@ -74,15 +74,14 @@ ARGUS is being rebuilt after the hackathon. This table is the honest state of th
 | --- | --- |
 | Orchestrator fan-out and fan-in across five agents | ✅ Works. Each agent is its own FastAPI service; they exchange a custom JSON envelope over HTTP. |
 | Deterministic risk scoring, tiering and gap analysis | ✅ Works |
-| Plain-English decision explanation | ✅ Works with Azure OpenAI GPT-4o or GitHub Models; falls back to a fixed template when no model is configured |
-| Cosmos DB entity, ownership and transaction lookups | ✅ Works when configured; falls back to mock records otherwise |
-| Azure AI Search typology matching | ✅ Works when configured |
-| Azure Document Intelligence OCR | ⚠️ **Not working.** `ocr_processor` imports `azure.ai.formrecognizer`, which isn't a project dependency, so it always returns mock fields. |
-| **Foundry IQ knowledge-base queries** (regulations, sanctions, adverse media) | ⚠️ **Not working.** The tools call `AIProjectClient.knowledge_bases.query`, which doesn't exist in `azure-ai-projects` (checked 1.0.0 and 2.6.1), so every query falls back to mock results. Fixing this is part of the rebuild. |
+| Plain-English decision explanation | ✅ Works with the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models); without one, a fixed template, labelled as such |
+| **Local data plane** (default): knowledge-base search, entities, ownership, transactions, reports | ✅ Works with no cloud account, on the synthetic data in `data/`. A clone without generated data finds nothing, and says so. |
+| **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): AI Search, Cosmos DB, Document Intelligence | ⚠️ Built and tested against stand-ins for the Azure SDKs; **not yet run against live services**. That happens with the deployment work. |
+| OCR without Azure | ⚠️ No local OCR engine yet: documents are reported as unread, labelled `fallback` |
 | The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
 | Gradio UI | ✅ Works |
 
-Every tool result carries a `source` field (`mock` when a fallback was used), so a report can be checked for which parts were live.
+Every agent result says where it came from: `computed`, `fallback` (a service was unavailable and a result that asserts nothing was used instead), or `demo_profile`. The report's audit trace lists them, names any tool that fell back, and says whether a model or the template wrote the explanation.
 
 ---
 
@@ -98,18 +97,20 @@ ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents L
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/system-overview-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/architecture/system-overview-light.svg">
-    <img width="100%" src="assets/architecture/system-overview-light.svg" alt="The current runtime: Gradio UI, FastAPI gateway, orchestrator and five agent services over HTTP, and the Azure data plane. Azure OpenAI, Cosmos DB and AI Search are live when configured; Foundry IQ and Document Intelligence return mock data today."/>
+    <img width="100%" src="assets/architecture/system-overview-light.svg" alt="The current runtime: Gradio UI, FastAPI gateway, orchestrator and five agent services over HTTP, reading data through one data plane: local synthetic data by default, or Azure AI Search, Cosmos DB and Document Intelligence."/>
   </picture>
 </p>
 
 | Agent | Tools | Knowledge source |
 | --- | --- | --- |
 | 🎯 Orchestrator | fan-out / fan-in coordination | — |
-| 🪪 Identity | customer_lookup, ocr_processor, identity_validator | Cosmos DB, Document Intelligence |
-| 🔍 Screening | sanctions_checker, adverse_media_scanner, pep_checker | Foundry IQ (intended), Cosmos DB |
-| 🏢 Corporate Intelligence | ubo_resolver, registry_lookup, jurisdiction_mapper | Cosmos DB |
-| ⚖️ Compliance & Risk | regulations_rag, risk_scorer, gap_analyzer, explain_decision | Foundry IQ (intended), Azure OpenAI |
-| 💳 Transaction Intelligence | transaction_monitor, pattern_detector, typology_matcher | Cosmos DB, Azure AI Search |
+| 🪪 Identity | customer_lookup, ocr_processor, identity_validator | Entity store, OCR |
+| 🔍 Screening | sanctions_checker, adverse_media_scanner, pep_checker | Sanctions and adverse media knowledge bases, entity store |
+| 🏢 Corporate Intelligence | ubo_resolver, registry_lookup, jurisdiction_mapper | Entity store (ownership graph) |
+| ⚖️ Compliance & Risk | regulations_rag, risk_scorer, gap_analyzer, explain_decision | Regulations knowledge base, language model (explanation only) |
+| 💳 Transaction Intelligence | transaction_monitor, pattern_detector, typology_matcher | Entity store (transactions), regulations knowledge base |
+
+Each source is one of four data-plane interfaces with a local and an Azure implementation; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#data-plane).
 
 ---
 
@@ -160,13 +161,13 @@ These use recorded demo profiles for the parallel agents (see the status table a
 - **Investigation timeline** — completion time for each agent and total latency
 - **Citations** — the knowledge base, source document and article behind each regulatory trigger
 - **Recommended actions** — driven by risk indicators and compliance gaps
-- **Audit trace** — task ID, agents invoked, tool calls, knowledge-base query count
+- **Audit trace** — task ID, agents invoked, the data backend, knowledge-base searches that answered, and where each agent's result came from
 
 ---
 
 ## Quick start
 
-Runs locally without any Azure credentials: every tool falls back to mock data, and the demo scenarios use their recorded profiles.
+Runs locally without any cloud account, on the local data plane: synthetic data, searched in memory. The six demo scenarios use their recorded profiles.
 
 Requires [uv](https://docs.astral.sh/uv/). It installs the Python version pinned in `.python-version` (3.14) and the locked dependencies.
 
@@ -174,8 +175,10 @@ Requires [uv](https://docs.astral.sh/uv/). It installs the Python version pinned
 git clone https://github.com/iarjunganesh/argus.git
 cd argus
 uv sync
-cp .env.example .env    # optional: add Azure credentials for live calls
+cp .env.example .env    # optional: choose a model provider or the Azure backend
 ```
+
+For a populated local data set, generate the synthetic data once: `uv run python data/synthetic/generate_entities.py`, and the other `generate_*.py` scripts in that folder.
 
 Start the stack. On Windows, `scripts/dev/start_demo.ps1` starts everything and `scripts/dev/end_demo.ps1` stops it. Elsewhere, start each process in its own terminal:
 
@@ -200,7 +203,7 @@ uv run python scripts/ci/check_versions.py --check
 uv run python scripts/ci/render_assets.py --check
 ```
 
-To use live Azure services, provision them (`infra/`), generate the synthetic data (`data/synthetic/generate_*.py`, then `data/synthetic/upload_to_cosmos.py`) and index the knowledge bases (`infra/foundry_iq/`).
+To use Azure instead, provision the services (`infra/`), upload the synthetic data (`data/synthetic/upload_to_cosmos.py`), index the knowledge bases (`infra/foundry_iq/`) and set `ARGUS_DATA_BACKEND=azure`.
 
 ---
 
