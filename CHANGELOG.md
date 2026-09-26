@@ -174,6 +174,19 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   transaction history with a structuring pattern for any name, OCR fields that then failed the
   name check, and typology citations to report chapters that weren't retrieved. They now return
   results that assert nothing, labelled `fallback`. Checked: a fallback test per tool.
+- **An outage is no longer presented as regulatory evidence.** When the regulations search was
+  unavailable, or found nothing relevant, the report cited a fixed FATF Recommendation 10 text as
+  if it had been retrieved. It now lists no regulatory triggers, and the fallback is named in the
+  audit trace. Checked: a test for each path.
+- **A typology search that falls back is reported.** The transaction agent said `computed` even
+  when `typology_matcher`'s search was unavailable; it now says `fallback` and names the tool.
+- **Settings in `.env` take effect in every service.** The gateway (CORS origins), the data plane
+  (backend) and the model factory now load the repository's `.env` themselves; before, a service
+  that didn't happen to import another loader ignored them. Checked: a test that each module
+  loads it on import.
+- **The Azure Cosmos containers are partitioned on fields the uploaded records have:**
+  `corporate_graph` on `/parent_entity` and `transactions` on `/entity_name` (was `/entity_id`,
+  which neither record type carries). Checked: a test against the synthetic record shapes.
 - **The audit trace no longer reports fixed counts.** `tool_calls` was always 15 and the
   knowledge-base query count always 3; the count is now of searches that answered.
 - **OCR can reach Document Intelligence.** It uses `azure-ai-documentintelligence` and the
