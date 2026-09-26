@@ -15,6 +15,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Ruff now also checks security, complexity and error handling.** Added rule sets: security
+  (`S`, the bandit rules), complexity (`C90`, at most 10 branches per function), async misuse
+  (`ASYNC`), broad exception handlers (`BLE`), performance (`PERF`) and pathlib use (`PTH`). Each
+  finding was fixed, or kept with a `noqa` comment giving the reason; the only per-directory
+  exceptions are `assert` in tests, `random` in the synthetic-data generators and https REST calls
+  in the infra scripts. Checked: `ruff check .` passes with the new rules; the dependency
+  inventory was run against PyPI and GitHub after its functions were split up.
 - **Every tool reads data through one data plane, with a local and an Azure implementation.**
   Four interfaces in `src/argus/data_plane/` (retriever, entity store, report store, OCR);
   `ARGUS_DATA_BACKEND` picks `local` (the default: synthetic data in `data/`, no cloud account)
@@ -92,6 +99,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The Gradio UI listens on this machine only by default** (it listened on all interfaces). Set
+  `GRADIO_SERVER_NAME=0.0.0.0` to expose it.
 - **A potential sanctions match holds the case at CRITICAL, whatever the weighted score.**
   Sanctions are not a weighted risk: FATF Recommendation 6 requires funds of listed persons to be
   frozen without delay, and the Wolfsberg Group's sanctions-screening guidance has a person confirm
@@ -168,6 +177,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **The Cosmos transactions query passes its row limit as a query parameter** instead of
+  formatting it into the SQL text. The value was already an integer, so this was not exploitable.
+  Not yet run against a live Cosmos account.
+- **The WCAG contrast check raises instead of using `assert`,** so it still runs under
+  `python -O`.
 - **The report no longer shows a confidence it never computed.** Every report said 83%
   (`risk_summary.confidence`), and every PEP finding said 0.92; both were fixed numbers. The
   Gradio decision card shows what set the tier and the sanctions screening status instead.
