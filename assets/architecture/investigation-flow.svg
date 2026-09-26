@@ -6,12 +6,13 @@
   agents run in parallel and each computes a score with fixed rules. 3, fan-in: the Compliance and
   Risk agent weights the five dimensions (screening 30 percent, regulatory 25, identity 20,
   corporate 15, transaction 10), maps the overall score to a tier (low below 35, medium from 35,
-  high from 55, critical from 75) and maps each risk indicator to FATF recommendations. Steps 2
+  high from 55, critical from 75), except that a potential sanctions match holds the case at
+  critical whatever the score, and maps each risk indicator to FATF recommendations. Steps 2
   and 3 are deterministic code. 4, explain: a language model writes three to five plain-English
   sentences; it cannot change the score or the tier, and without a model a fixed template is used.
-  5, report: decision, findings, actions, citations, dimension scores and an audit trace that
-  records where each result came from and names any tool that fell back. A compliance reviewer
-  confirms the findings before any onboarding decision.</desc>
+  5, report: decision, sanctions screening status, findings, actions, citations, dimension
+  scores and an audit trace that records where each result came from and names any tool that
+  fell back. A compliance reviewer confirms the findings before any onboarding decision.</desc>
 
   <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        Every number is copied from the code (src/argus/agents/*/agent.py and .../tools/). If a rule
@@ -214,13 +215,14 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="smallc" x="1086" y="630">55–74</text>
   <text class="smallc" x="1158" y="630">75+</text>
 
-  <text class="strong" x="864" y="670">Compliance gaps</text>
-  <text class="body" x="864" y="698">each indicator maps to a FATF</text>
-  <text class="body" x="864" y="722">recommendation (6, 12, 19, 20)</text>
+  <text class="strong" x="864" y="668">Except: a sanctions match</text>
+  <text class="body" x="864" y="694">holds the case at CRITICAL,</text>
+  <text class="body" x="864" y="718">whatever the score (FATF R.6)</text>
 
-  <text class="strong" x="864" y="776">Cited regulations</text>
-  <text class="body" x="864" y="804">retrieved with citations</text>
-  <text class="body" x="864" y="830">from the regulations base</text>
+  <text class="strong" x="864" y="764">Gaps and cited regulations</text>
+  <text class="body" x="864" y="790">indicators map to FATF R.6, 12,</text>
+  <text class="body" x="864" y="814">19, 20; rules retrieved with</text>
+  <text class="body" x="864" y="838">citations from the regulations base</text>
 
   <!-- ============ 4 · EXPLAIN ============ -->
   <text class="tag" x="1264" y="266" style="fill:var(--gold)">4 · EXPLAIN</text>
@@ -246,6 +248,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="body" x="1584" y="434">• cited regulatory triggers</text>
   <text class="body" x="1584" y="462">• five dimension scores</text>
   <text class="body" x="1584" y="490">• audit trace and timeline</text>
+  <text class="body" x="1584" y="518">• sanctions screening status</text>
   <rect class="card2" x="1580" y="770" width="260" height="70" rx="10"/>
   <text class="mono" x="1596" y="799">source: "fallback"</text>
   <text class="small" x="1596" y="823">names each tool that fell back</text>

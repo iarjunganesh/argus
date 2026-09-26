@@ -53,6 +53,44 @@ profile. The compliance fan-in still runs live.
 
 An agent that is unreachable is recorded as `status: error` and the assessment continues without it.
 
+## Risk scoring
+
+All in [`src/argus/agents/compliance/`](../src/argus/agents/compliance/); no model is involved.
+Each agent's own rules are drawn in
+[`investigation-flow.svg`](../assets/architecture/investigation-flow.svg).
+
+**Weighted score (0–100).** Screening 30%, Regulatory 25%, Identity 20%, Corporate 15%,
+Transaction 10%. The Regulatory dimension is an estimate from other agents' flags, not from
+retrieved regulations: PEP 45, adverse media 35, 15 per ownership risk flag, capped at 100. When
+adverse media is the only screening hit and the screening score is at least 70, 12 points are
+added; today only recorded demo profiles reach that screening score, because live screening
+scores adverse media alone at 15.
+
+**Tier.** LOW 0–34, MEDIUM 35–54, HIGH 55–74, CRITICAL 75 and above, with one exception:
+
+- **A potential sanctions match holds the case at CRITICAL, whatever the score**
+  (`risk_summary.tier_basis: sanctions_match`). Sanctions are not a risk to be weighed: FATF
+  Recommendation 6 requires funds of listed persons to be frozen without delay, and the Wolfsberg
+  Group's sanctions-screening guidance treats each match as an alert that a person confirms or
+  clears. ARGUS finds a match when the entity's full name, or one alias, appears in a retrieved
+  listing, so it is always *potential*. The report recommends a hold until a compliance officer
+  confirms or clears it, and says what to do if it is confirmed.
+- Otherwise `tier_basis` is `score`.
+
+**Sanctions screening status** (`risk_summary.sanctions_screening`): `potential_match`,
+`no_match`, or `not_run` when the screening agent failed or its sanctions search fell back. A
+`not_run` case is reported as incomplete whatever its tier, because no match found is not the same
+as no screening done.
+
+**What the report does not claim.** It carries no confidence figure: nothing in ARGUS computes
+one. A PEP match raises the score and adds the enhanced due diligence actions and the FATF
+Recommendation 12 gap, but does not set a minimum tier: Recommendation 12 makes enhanced measures
+mandatory for foreign PEPs and risk-based for domestic ones, and ARGUS does not yet tell them apart.
+
+Sources: [FATF Recommendations](https://www.fatf-gafi.org/en/publications/Fatfrecommendations/Fatf-recommendations.html)
+(R.6, R.12 and the glossary's "without delay");
+[Wolfsberg Guidance on Sanctions Screening](https://wolfsberg-group.org/resources/168/53).
+
 ## Provenance: where each result came from
 
 Every agent response carries a `source`, and the report's `audit_trace` collects them in
