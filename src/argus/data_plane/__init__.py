@@ -24,6 +24,11 @@ from argus.data_plane.base import (
     ReportStore,
     Retriever,
 )
+from argus.utils.env_loader import load_repo_env
+
+# Every service reads its backend choice through this module, so the repository's .env is loaded
+# here, whichever process imports it first.
+load_repo_env(__file__)
 
 Backend = Literal["local", "azure"]
 BACKENDS: tuple[Backend, ...] = ("local", "azure")

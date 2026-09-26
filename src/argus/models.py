@@ -18,6 +18,10 @@ from dataclasses import dataclass
 
 from openai import AsyncOpenAI
 
+from argus.utils.env_loader import load_repo_env
+
+load_repo_env(__file__)  # the provider settings usually live in the repository's .env
+
 PROVIDERS = ("none", "azure-openai", "openai", "github-models")
 GITHUB_MODELS_ENDPOINT = "https://models.github.ai/inference"
 
