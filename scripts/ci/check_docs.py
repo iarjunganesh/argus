@@ -7,7 +7,7 @@ Run from the repository root:
 Each check guards against a kind of drift that has already happened in this project:
 links left pointing at moved files, a README advertising a Python version CI doesn't use,
 unfinished markers shipped in public docs, a repository map that no longer matches the tree,
-and local working notes committed by accident.
+retired wording coming back, and local working notes committed by accident.
 Exits non-zero and prints every problem found.
 """
 
@@ -31,6 +31,12 @@ UNFINISHED = re.compile(r"\b(TBD|FIXME|XXX)\b|lorem ipsum|\[to fill\]", re.IGNOR
 # Local working files that must never be tracked.
 NEVER_TRACKED_FILES = ("HANDOFF.md", ".env", ".claude/settings.local.json")
 NEVER_TRACKED_DIRS = (".tmp/", ".local/")
+
+# Wording the code no longer supports. "mock" blurred two things the reports now keep apart: how
+# a result was produced (`source`: computed, fallback, demo_profile) and where data comes from
+# (the local or Azure data plane). The changelog keeps its history and is not checked.
+RETIRED_TERMS = {re.compile(r"\bmock", re.IGNORECASE): "say fallback, local or synthetic instead"}
+RETIRED_TERM_FILES = ("README.md", "AGENTS.md", "CONTRIBUTING.md", "docs/", "assets/")
 
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 MAP_ROW = re.compile(r"^\| `([^`/]+)/` \|", re.MULTILINE)
@@ -65,6 +71,18 @@ def check_unfinished(markdown: list[str]) -> list[str]:
         for number, line in enumerate((ROOT / rel).read_text(encoding="utf-8").splitlines(), 1):
             if UNFINISHED.search(line):
                 problems.append(f"{rel}:{number}: unfinished marker: {line.strip()[:80]}")
+    return problems
+
+
+def check_retired_terms(files: list[str]) -> list[str]:
+    problems = []
+    for rel in files:
+        if not rel.startswith(RETIRED_TERM_FILES) or not rel.endswith((".md", ".svg")):
+            continue
+        for number, line in enumerate((ROOT / rel).read_text(encoding="utf-8").splitlines(), 1):
+            for term, advice in RETIRED_TERMS.items():
+                if term.search(line):
+                    problems.append(f"{rel}:{number}: retired term '{term.pattern}': {advice}")
     return problems
 
 
@@ -124,6 +142,7 @@ def main() -> int:
     problems = [
         *check_links(markdown),
         *check_unfinished(markdown),
+        *check_retired_terms(files),
         *check_python_version(),
         *check_docs_index(),
         *check_changelog(),

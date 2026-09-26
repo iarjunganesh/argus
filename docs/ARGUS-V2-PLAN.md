@@ -30,7 +30,8 @@ Checked against the code on 2026-09-26:
   text, so a baseline must record whether each output came from the model or a fallback.
 - **Foundry IQ queries don't reach Foundry IQ.** The tools call
   `AIProjectClient.knowledge_bases.query`, which doesn't exist in `azure-ai-projects` 1.0.0 or
-  2.6.1, so every call falls back to mock results.
+  2.6.1, so every call fell back to fixed results. (Replaced in cleanup by the data plane's
+  retriever, which uses the AI Search query API; see `docs/ARCHITECTURE.md`.)
 - **The demo scenarios use recorded demo profiles** for the parallel agents, not live calls.
 
 Still unverified:

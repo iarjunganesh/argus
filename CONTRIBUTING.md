@@ -19,7 +19,7 @@ cd argus
 uv sync
 ```
 
-No cloud account is needed: without credentials every external call falls back to mock data.
+No cloud account is needed: by default ARGUS reads synthetic data through its local data plane.
 
 ## Before you open a pull request
 

@@ -28,7 +28,7 @@ The GitHub social preview can't be set from the repository: upload
 
 | Master | Shows | Exports |
 | --- | --- | --- |
-| [`architecture/system-overview.svg`](architecture/system-overview.svg) | The **current** runtime: processes, ports, the agent services and the Azure data plane, with each service marked "live or mock" or "mock today" | light/dark SVG, PNG |
+| [`architecture/system-overview.svg`](architecture/system-overview.svg) | The **current** runtime: processes, ports, the agent services and the data plane with its local and Azure implementations | light/dark SVG, PNG |
 | [`architecture/investigation-flow.svg`](architecture/investigation-flow.svg) | One KYC request end to end, with the scoring rules and weights as coded, and which steps are deterministic and which use a language model | light/dark SVG, PNG, GIF |
 | [`architecture/v2-target.svg`](architecture/v2-target.svg) | The **planned** v2 runtime from [`docs/ARGUS-V2-PLAN.md`](../docs/ARGUS-V2-PLAN.md), labelled as not built | light/dark SVG, PNG |
 

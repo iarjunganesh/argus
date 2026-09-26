@@ -26,9 +26,9 @@ body:
     id: mode
     attributes:
       label: Services
-      description: Were Azure services configured, or did everything fall back to mock data?
+      description: Which data plane was in use (ARGUS_DATA_BACKEND), and was a model configured?
       options:
-        - No credentials (mock fallbacks)
+        - Local data plane (the default)
         - Some Azure services configured
         - All Azure services configured
     validations:
