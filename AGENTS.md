@@ -1,7 +1,8 @@
 # AGENTS.md
 
 Instructions for coding agents (Claude Code, Codex, GitHub Copilot) and for humans working on
-ARGUS. This file is canonical: `CLAUDE.md` and `.github/copilot-instructions.md` only point here.
+ARGUS. This file is canonical: `CLAUDE.md` and `.github/copilot-instructions.md` only point here,
+and [`CONTRIBUTING.md`](CONTRIBUTING.md) is its short version for first-time contributors.
 
 ## What ARGUS is
 

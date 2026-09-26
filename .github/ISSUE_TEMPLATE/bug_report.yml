@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in ARGUS doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use synthetic data only. Never paste real personal data, keys or `.env` contents.
+        Security problems go through the private form in SECURITY.md, not here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Commands, the entity you submitted, and any relevant log lines.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Services
+      description: Were Azure services configured, or did everything fall back to mock data?
+      options:
+        - No credentials (mock fallbacks)
+        - Some Azure services configured
+        - All Azure services configured
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or a commit SHA
