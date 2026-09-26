@@ -2,7 +2,7 @@
 
 Run from the repository root:
 
-    uv run python scripts/check_docs.py
+    uv run python scripts/ci/check_docs.py
 
 Each check guards against a kind of drift that has already happened in this project:
 links left pointing at moved files, a README advertising a Python version CI doesn't use,
@@ -19,7 +19,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 
 # Frozen hackathon material is kept as submitted, so its links and wording are not checked.
 SKIP_PREFIXES = ("archive/",)

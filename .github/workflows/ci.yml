@@ -110,8 +110,8 @@ jobs:
           globs: "**/*.md"
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Docs agree with the repository
-        run: uv run python scripts/check_docs.py
+        run: uv run python scripts/ci/check_docs.py
       # Theme variants must match their SVG masters, and every declared text colour pair must
       # pass WCAG AA in both themes. Rasters (PNG/GIF) need a browser and are not checked here.
       - name: Brand and architecture assets are current
-        run: uv run python scripts/render_assets.py --check
+        run: uv run python scripts/ci/render_assets.py --check

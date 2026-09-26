@@ -8,15 +8,11 @@ Creates the three Azure AI Search indexes that back the Foundry IQ knowledge bas
 
 These indexes are the Foundry IQ intelligence layer for ARGUS.
 Run after Azure AI Search is provisioned.
-Usage: python infra/create_search_indexes.py
+Usage: uv run python infra/foundry_iq/create_search_indexes.py
 """
 
 import json
 import os
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from argus.utils.env_loader import load_repo_env
 

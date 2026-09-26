@@ -12,7 +12,7 @@
   5, report: decision, findings, actions, citations, dimension scores and an audit trace. A
   compliance reviewer confirms the findings before any onboarding decision.</desc>
 
-  <!-- Hand-placed master; scripts/render_assets.py writes the -light and -dark variants.
+  <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        Every number is copied from the code (src/argus/agents/*/agent.py and .../tools/). If a rule
        changes there, change it here. The highlight walks the five steps; frame 0 shows step 1
        highlighted and the whole flow readable. Durations divide 6s. -->

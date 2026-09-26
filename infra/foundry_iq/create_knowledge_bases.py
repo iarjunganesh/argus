@@ -2,14 +2,10 @@
 create_knowledge_bases.py
 Creates the three Foundry IQ knowledge bases for ARGUS.
 Run once after Azure resources are provisioned.
-Usage: python foundry_iq/create_knowledge_bases.py
+Usage: python infra/foundry_iq/create_knowledge_bases.py
 """
 
 import os
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from argus.utils.env_loader import load_repo_env
 
@@ -42,16 +38,13 @@ def create_knowledge_bases():
     """
     print("Creating Foundry IQ knowledge bases (Azure AI Search indexes)...")
     try:
-        import sys
-        from pathlib import Path
-
-        sys.path.insert(0, str(Path(__file__).parent.parent))
-        from infra.create_search_indexes import create_search_indexes
+        # Sibling script: the running script's folder is on the import path.
+        from create_search_indexes import create_search_indexes
 
         create_search_indexes()
         print("\nAll Foundry IQ knowledge bases ready. Run index scripts next:")
-        print("  python foundry_iq/index_regulations.py")
-        print("  python foundry_iq/index_sanctions_and_media.py")
+        print("  uv run python infra/foundry_iq/index_regulations.py")
+        print("  uv run python infra/foundry_iq/index_sanctions_and_media.py")
     except (KeyError, ImportError) as e:
         print(f"Foundry IQ index creation skipped in this environment: {e}")
         print("Assuming the Azure AI Search indexes already exist and continuing.")

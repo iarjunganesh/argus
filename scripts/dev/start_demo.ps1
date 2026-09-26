@@ -1,9 +1,8 @@
 # Start full ARGUS demo stack (agents + API + Gradio) in one command.
-# Usage: Open PowerShell in repo root and run: .\scripts\start_demo.ps1
+# Usage: Open PowerShell in repo root and run: .\scripts\dev\start_demo.ps1
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$repoRoot = Resolve-Path (Join-Path $scriptDir "..")
-$env:PYTHONPATH = $repoRoot.Path
+$repoRoot = Resolve-Path (Join-Path $scriptDir "../..")
 Set-Location $repoRoot.Path
 
 # Use the uv-managed environment created by `uv sync`.

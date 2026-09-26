@@ -71,7 +71,6 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 "data/**" = ["E501"]
 "src/argus/ui/gradio_app.py" = ["E501"]
 "infra/**" = ["E501"]
-"foundry_iq/**" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

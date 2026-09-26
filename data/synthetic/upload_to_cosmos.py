@@ -14,12 +14,9 @@ Usage:     python data/synthetic/upload_to_cosmos.py
 
 import json
 import os
-import sys
 import time
 import uuid
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from argus.utils.env_loader import load_repo_env
 

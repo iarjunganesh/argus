@@ -169,7 +169,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # ── Step 7: Create Foundry IQ Search Indexes ───────────────────────────────
 Write-Host "[7/7] Creating Foundry IQ (AI Search) knowledge base indexes..." -ForegroundColor Yellow
-python "$PSScriptRoot\create_search_indexes.py"
+python "$PSScriptRoot\foundry_iq\create_search_indexes.py"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  ⚠️  Search index setup had warnings — check output above." -ForegroundColor Yellow
 } else {

@@ -3,11 +3,6 @@ This avoids network A2A calls and allows a quick end-to-end smoke test.
 """
 
 import asyncio
-import sys
-from pathlib import Path
-
-# Ensure repo root is on sys.path for package imports when running the script directly
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from argus.agents.orchestrator import agent as orchestrator
 

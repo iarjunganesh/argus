@@ -6,16 +6,13 @@ Source files should be placed in data/public/ before running.
 
 import json
 import os
-import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from argus.utils.env_loader import load_repo_env
 
 load_repo_env(__file__)
 
-DATA_DIR = Path(__file__).parent.parent / "data" / "public"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "public"
 KB_NAME = os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations")
 
 REGULATION_DOCUMENTS = [

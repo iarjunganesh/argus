@@ -1,6 +1,6 @@
 """Batch-run KYC requests against local ARGUS API and save reports.
 
-Usage: python scripts/batch_run_kyc.py --count 10 --out data/reports_batch.jsonl
+Usage: python scripts/dev/batch_run_kyc.py --count 10 --out data/reports_batch.jsonl
 """
 
 import argparse

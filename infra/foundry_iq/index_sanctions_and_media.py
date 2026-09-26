@@ -8,15 +8,15 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 from argus.utils.env_loader import load_repo_env
+
+ROOT = Path(__file__).resolve().parents[2]
 
 load_repo_env(__file__)
 
 # ── Sanctions ─────────────────────────────────────────────────────────────────
 
-SANCTIONS_FILE = Path(__file__).parent.parent / "data" / "synthetic" / "sanctions.jsonl"
+SANCTIONS_FILE = ROOT / "data" / "synthetic" / "sanctions.jsonl"
 SANCTIONS_KB = os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions")
 
 
@@ -85,12 +85,10 @@ def index_sanctions():
 
 # ── Adverse Media ─────────────────────────────────────────────────────────────
 
-MEDIA_FILE = Path(__file__).parent.parent / "data" / "synthetic" / "adverse_media.jsonl"
-PUBLIC_MEDIA_FILE = Path(__file__).parent.parent / "data" / "public" / "adverse_media_public.jsonl"
+MEDIA_FILE = ROOT / "data" / "synthetic" / "adverse_media.jsonl"
+PUBLIC_MEDIA_FILE = ROOT / "data" / "public" / "adverse_media_public.jsonl"
 MEDIA_KB = os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia")
-ADVERSE_MEDIA_EXPORT = (
-    Path(__file__).parent.parent / "data" / "public" / "adverse_media_index_payload.jsonl"
-)
+ADVERSE_MEDIA_EXPORT = ROOT / "data" / "public" / "adverse_media_index_payload.jsonl"
 
 
 def _load_jsonl_records(path: Path) -> list[dict]:

@@ -1,6 +1,6 @@
 """Check Cosmos DB container document counts.
 
-Usage: python scripts/check_cosmos_counts.py
+Usage: python scripts/dev/check_cosmos_counts.py
 """
 
 import os

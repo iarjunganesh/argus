@@ -53,11 +53,11 @@ uv run ruff check .                                   # lint
 uv run ruff format --check .                          # formatting
 uv run mypy
 uv run pytest --cov                                   # tests, 100% line + branch coverage required
-uv run python scripts/check_docs.py                   # docs agree with the repository
-uv run python scripts/render_assets.py --check        # image variants current, WCAG AA contrast
+uv run python scripts/ci/check_docs.py                   # docs agree with the repository
+uv run python scripts/ci/render_assets.py --check        # image variants current, WCAG AA contrast
 ```
 
-`uv run python scripts/render_assets.py` regenerates the image variants and PNG/GIF exports after
+`uv run python scripts/ci/render_assets.py` regenerates the image variants and PNG/GIF exports after
 you edit an SVG master (see [`assets/README.md`](assets/README.md)).
 
 Tests need no cloud credentials: `tests/conftest.py` ignores `.env` and removes Azure credentials,
@@ -98,11 +98,10 @@ then run every command above.
 | --- | --- |
 | `src/` | The application: the installable package `argus` (see below) |
 | `data/` | Synthetic data generators and public-source demo data |
-| `foundry_iq/` | Scripts that create and fill the Foundry IQ knowledge bases |
-| `infra/` | Bicep template and Azure setup scripts |
+| `infra/` | Bicep template, Azure setup scripts, and `foundry_iq/` (create and fill the knowledge bases) |
 | `observability/` | Placeholder for monitoring configuration |
 | `tests/` | The test suite (hermetic; no cloud access) |
-| `scripts/` | Demo launchers, the docs check and the image renderer |
+| `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs check and the image renderer |
 | `assets/` | Brand and architecture images, each drawn from an SVG master |
 | `docs/` | Architecture as it runs today, and the v2 plan |
 | `roadmap/` | Longer-term ideas that are not scheduled |
@@ -120,7 +119,7 @@ Inside `src/argus/`:
 | `community/` | Community Edition configuration presets (a design, not yet runnable) |
 | `config.py` | Settings and the Azure client factories |
 
-`scripts/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
+`scripts/ci/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.
 
 ## Handoff between tools

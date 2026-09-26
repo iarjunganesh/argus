@@ -1,5 +1,5 @@
 # Stop ARGUS demo services (PowerShell)
-# Usage: Open PowerShell in repo root and run: .\scripts\end_demo.ps1
+# Usage: Open PowerShell in repo root and run: .\scripts\dev\end_demo.ps1
 
 $ports = @(8000, 8001, 8002, 8003, 8004, 8005, 7860)
 $procIds = @()

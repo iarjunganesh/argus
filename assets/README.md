@@ -38,9 +38,9 @@ a fallback, a weight or a threshold, update the diagram in the same pull request
 ## How the files are made
 
 ```sh
-uv run python scripts/render_assets.py            # variants, then PNG/GIF exports
-uv run python scripts/render_assets.py --check    # what CI runs
-uv run python scripts/render_assets.py --no-raster
+uv run python scripts/ci/render_assets.py            # variants, then PNG/GIF exports
+uv run python scripts/ci/render_assets.py --check    # what CI runs
+uv run python scripts/ci/render_assets.py --no-raster
 ```
 
 - **Why two variants.** Each master holds a light palette and a dark palette (between

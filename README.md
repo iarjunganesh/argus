@@ -177,7 +177,7 @@ uv sync
 cp .env.example .env    # optional: add Azure credentials for live calls
 ```
 
-Start the stack. On Windows, `scripts/start_demo.ps1` starts everything and `scripts/end_demo.ps1` stops it. Elsewhere, start each process in its own terminal:
+Start the stack. On Windows, `scripts/dev/start_demo.ps1` starts everything and `scripts/dev/end_demo.ps1` stops it. Elsewhere, start each process in its own terminal:
 
 ```bash
 uv run uvicorn argus.agents.identity.agent:app --port 8001
@@ -195,11 +195,11 @@ Run the same checks as CI:
 uv run ruff check . && uv run ruff format --check .
 uv run mypy
 uv run pytest --cov
-uv run python scripts/check_docs.py
-uv run python scripts/render_assets.py --check
+uv run python scripts/ci/check_docs.py
+uv run python scripts/ci/render_assets.py --check
 ```
 
-To use live Azure services, provision them (`infra/`), generate the synthetic data (`data/synthetic/generate_*.py`, then `data/synthetic/upload_to_cosmos.py`) and index the knowledge bases (`foundry_iq/`).
+To use live Azure services, provision them (`infra/`), generate the synthetic data (`data/synthetic/generate_*.py`, then `data/synthetic/upload_to_cosmos.py`) and index the knowledge bases (`infra/foundry_iq/`).
 
 ---
 

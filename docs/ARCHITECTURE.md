@@ -31,7 +31,7 @@ A local run is seven processes:
 | Compliance agent | `src/argus/agents/compliance/agent.py` | 8005 | Regulations lookup, risk scoring, gap analysis, explanation |
 | UI | `src/argus/ui/gradio_app.py` | 7860 | Gradio front end that calls the API gateway |
 
-`scripts/start_demo.ps1` starts all seven on Windows and `scripts/end_demo.ps1` stops them.
+`scripts/dev/start_demo.ps1` starts all seven on Windows and `scripts/dev/end_demo.ps1` stops them.
 
 ## Request flow
 
@@ -73,7 +73,7 @@ Configuration comes from environment variables loaded from `.env` (see `.env.exa
 `infra/main.bicep` provisions a storage account, Key Vault, Azure OpenAI with a `gpt-4o`
 deployment, an Azure Machine Learning hub and project, Azure AI Search (**Basic** tier), Cosmos DB
 and Document Intelligence (F0). The Search Basic tier is billed while it exists, whether or not ARGUS
-is running. `data/synthetic/` generates and uploads the synthetic data; `foundry_iq/` creates and
+is running. `data/synthetic/` generates and uploads the synthetic data; `infra/foundry_iq/` creates and
 populates the search indexes.
 
 ## Tests
