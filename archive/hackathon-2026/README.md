@@ -34,5 +34,6 @@ listed here so that any of them can be re-created with `git tag <name> <commit>`
 | `docs/ARGUS_IQ_Prereq_CrossRef.md` | Cross-reference to the IQ Series prerequisite work |
 | `CHANGELOG-v1.md` | The changelog from `v0.1.0-hackathon` to `v1.5.0` (`v1.6.0` never got an entry) |
 | `RELEASE_CHECKLIST.md` | The `v0.1.0-hackathon` release checklist |
-| `assets/` | Slide deck, opening and closing slides, and the Wirecard AG demo screenshots |
+| `assets/` | Slide deck, opening and closing slides, the Wirecard AG demo screenshots, and the hackathon-era brand: the pentagon logo (`argus.svg`, `argus.png`), the 1300×500 banner, the Mermaid architecture sources and the animated architecture GIFs |
 | `scripts/record_demo.ps1` | The demo recording helper |
+| `scripts/build_animated_diagram.py`, `scripts/capture_gif_frames.js` | How the hackathon architecture GIFs were made (superseded by `scripts/render_assets.py`) |
