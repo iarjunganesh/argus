@@ -30,3 +30,13 @@ def test_disabled_during_tests(tmp_path, monkeypatch):
     env_loader.load_repo_env(tmp_path)
 
     assert "ARGUS_TEST_KEY" not in env_loader.os.environ
+
+
+def test_no_env_file_anywhere_changes_nothing(tmp_path, monkeypatch):
+    monkeypatch.delenv("ARGUS_DISABLE_DOTENV")
+    monkeypatch.setattr(env_loader.Path, "exists", lambda self: False)
+    before = dict(env_loader.os.environ)
+
+    env_loader.load_repo_env(tmp_path)
+
+    assert dict(env_loader.os.environ) == before

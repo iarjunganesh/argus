@@ -11,6 +11,7 @@ import pytest
 from accessibility.wcag import (
     ARGUS_PALETTE,
     WCAGLevel,
+    assert_contrast_ratio,
     audit_palette,
     contrast_ratio,
 )
@@ -67,3 +68,15 @@ def test_high_contrast_palette_passes_aa():
     assert not failures, "High-contrast palette WCAG AA failures: " + ", ".join(
         f"{k} ({v['ratio']:.2f}:1)" for k, v in failures.items()
     )
+
+
+def test_invalid_hex_is_rejected():
+    with pytest.raises(ValueError, match="Invalid hex color"):
+        contrast_ratio("#12345", "#ffffff")
+
+
+def test_assert_contrast_ratio_returns_ratio_or_explains_failure():
+    assert assert_contrast_ratio("#000000", "#ffffff") == pytest.approx(21.0)
+
+    with pytest.raises(AssertionError, match=r"WCAG AAA failure \(muted\): #777777"):
+        assert_contrast_ratio("#777777", "#ffffff", WCAGLevel.AAA, label="muted")
