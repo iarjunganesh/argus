@@ -15,6 +15,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **SonarQube Cloud analyses every pull request** (automatic analysis, quality gate on new code).
 - **Ruff now also checks security, complexity and error handling.** Added rule sets: security
   (`S`, the bandit rules), complexity (`C90`, at most 10 branches per function), async misuse
   (`ASYNC`), broad exception handlers (`BLE`), performance (`PERF`) and pathlib use (`PTH`). Each
@@ -180,6 +181,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **The Cosmos transactions query passes its row limit as a query parameter** instead of
   formatting it into the SQL text. The value was already an integer, so this was not exploitable.
   Not yet run against a live Cosmos account.
+- **The dependency inventory can only fetch from PyPI and the GitHub API,** and percent-encodes
+  every path segment it reads from repository files (package names, action repositories, tags),
+  so none can change the request path. Found by SonarQube Cloud (path traversal in
+  `check_versions.fetch`). Checked: a test for the host allow-list and the encoding; the live
+  inventory report is unchanged.
 - **The WCAG contrast check raises instead of using `assert`,** so it still runs under
   `python -O`.
 - **The report no longer shows a confidence it never computed.** Every report said 83%

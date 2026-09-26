@@ -14,6 +14,7 @@ import sys
 import tomllib
 from functools import cache
 from pathlib import Path
+from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
 from packaging.requirements import Requirement
@@ -122,10 +123,20 @@ def _workflow_problems(root: Path, pinned: str) -> list[str]:
     return problems
 
 
+# The only hosts the inventory reads from. Every path segment taken from repository files (package
+# names, action repositories, tags) is percent-encoded by `api_url`, so none can change the path.
+API_HOSTS = {"pypi": "pypi.org", "github": "api.github.com"}
+
+
+def api_url(host: str, *segments: str) -> str:
+    return f"https://{API_HOSTS[host]}/" + "/".join(quote(part, safe="") for part in segments)
+
+
 @cache
 def fetch(url: str):
-    if not url.startswith("https://"):
-        raise ValueError(f"Refusing a non-https URL: {url}")
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.netloc not in API_HOSTS.values():
+        raise ValueError(f"Refusing a URL outside the inventory's hosts: {url}")
     headers = {"User-Agent": "ARGUS-dependency-inventory"}
     if url.startswith("https://api.github.com/") and os.environ.get("GH_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["GH_TOKEN"]
@@ -151,11 +162,12 @@ def latest_package(data: dict, allow_pre: bool) -> str:
 
 
 def action_release(repo: str) -> tuple[str, str]:
-    release = fetch(f"https://api.github.com/repos/{repo}/releases/latest")
+    owner, name = repo.split("/", 1)
+    release = fetch(api_url("github", "repos", owner, name, "releases", "latest"))
     tag = release["tag_name"]
     if not re.fullmatch(r"v\d+(?:\.\d+){0,2}", tag):
         raise ValueError(f"{repo}: unsupported release tag")
-    obj = fetch(f"https://api.github.com/repos/{repo}/git/ref/tags/{tag}")["object"]
+    obj = fetch(api_url("github", "repos", owner, name, "git", "ref", "tags", tag))["object"]
     for _ in range(5):
         if obj["type"] == "commit":
             if not re.fullmatch(r"[0-9a-f]{40}", obj["sha"]):
@@ -163,7 +175,7 @@ def action_release(repo: str) -> tuple[str, str]:
             return tag, obj["sha"]
         if obj["type"] != "tag":
             break
-        obj = fetch(f"https://api.github.com/repos/{repo}/git/tags/{obj['sha']}")["object"]
+        obj = fetch(api_url("github", "repos", owner, name, "git", "tags", obj["sha"]))["object"]
     raise ValueError(f"{repo}: could not resolve release to a commit")
 
 
@@ -199,7 +211,7 @@ def wheel_ready(files: list[dict], minor: str) -> bool:
 def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | None]:
     inventory = packages(root)
     rows = ["| Surface | Locked | Latest | Status |", "| --- | --- | --- | --- |"]
-    metadata = {name: fetch(f"https://pypi.org/pypi/{name}/json") for name in sorted(inventory)}
+    metadata = {name: fetch(api_url("pypi", "pypi", name, "json")) for name in sorted(inventory)}
     rows += _package_rows(inventory, metadata)
     rows += _build_rows(root)
     action_rows, actions = _action_rows(root)
@@ -228,7 +240,7 @@ def _build_rows(root: Path) -> list[str]:
     rows = []
     for raw in read_toml(root / "pyproject.toml").get("build-system", {}).get("requires", []):
         req = Requirement(raw)
-        latest = latest_package(fetch(f"https://pypi.org/pypi/{req.name}/json"), False)
+        latest = latest_package(fetch(api_url("pypi", "pypi", req.name, "json")), False)
         status = "within range" if req.specifier.contains(latest) else "update build range"
         rows.append(f"| Build: {req.name} | {req.specifier} | {latest} | {status} |")
     return rows
@@ -255,7 +267,9 @@ def _python_row(
     root: Path, inventory: dict[str, list[str]], metadata: dict
 ) -> tuple[str, str | None]:
     """The CPython row, and the next minor version if every locked package is ready for it."""
-    refs = fetch("https://api.github.com/repos/python/cpython/git/matching-refs/tags/v3.")
+    refs = fetch(
+        api_url("github", "repos", "python", "cpython", "git", "matching-refs", "tags", "v3.")
+    )
     stable = [
         Version(ref["ref"].rsplit("/", 1)[1][1:])
         for ref in refs
@@ -328,7 +342,7 @@ def write_backend(root: Path) -> None:
         req = Requirement(raw)
         if canonicalize_name(req.name) != "uv-build":
             raise ValueError("Extend backend refresh support before changing the build system")
-        latest = latest_package(fetch("https://pypi.org/pypi/uv_build/json"), False)
+        latest = latest_package(fetch(api_url("pypi", "pypi", "uv_build", "json")), False)
         parsed = Version(latest)
         replacement = f"uv_build>={latest},<{parsed.major}.{parsed.minor + 1}"
         text = text.replace(f'"{raw}"', f'"{replacement}"')
@@ -365,7 +379,7 @@ def check_python_wheels(root: Path, minor: str) -> list[str]:
     blocked = []
     for name, resolutions in packages(root).items():
         for version in resolutions:
-            files = fetch(f"https://pypi.org/pypi/{name}/{version}/json")["urls"]
+            files = fetch(api_url("pypi", "pypi", name, version, "json"))["urls"]
             if not wheel_ready(files, minor):
                 blocked.append(f"{name}=={version} has no compatible wheels for Python {minor}")
     return blocked
