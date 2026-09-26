@@ -30,7 +30,7 @@ UNFINISHED = re.compile(r"\b(TBD|FIXME|XXX)\b|lorem ipsum|\[to fill\]", re.IGNOR
 
 # Local working files that must never be tracked.
 NEVER_TRACKED_FILES = ("HANDOFF.md", ".env", ".claude/settings.local.json")
-NEVER_TRACKED_DIRS = (".tmp/",)
+NEVER_TRACKED_DIRS = (".tmp/", ".local/")
 
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 MAP_ROW = re.compile(r"^\| `([^`/]+)/` \|", re.MULTILINE)

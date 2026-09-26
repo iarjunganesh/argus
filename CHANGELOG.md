@@ -60,6 +60,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **Local working files have a durable home, separate from scratch.** The cross-tool handoff and
+  the working plans live in the ignored `.local/`, which must never be cleared; `.tmp/` is
+  disposable scratch. `AGENTS.md` and the Copilot instructions point to `.local/HANDOFF.md`.
+  Checked: `check_docs.py` fails when a file under `.local/` is tracked (tested with a probe file).
 - **ARGUS is an installable package in the standard src layout.** The application
   (`agents/`, `api/`, `ui/`, `utils/`, `accessibility/`, `community/`, `config.py`) moved to
   `src/argus/` and installs in editable mode with `uv sync`; imports are `argus.*`. Services
