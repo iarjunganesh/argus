@@ -1,0 +1,29 @@
+name: Copilot setup steps
+
+# Prepares the environment the GitHub Copilot coding agent works in, so it starts with the locked
+# dependencies installed and can run the commands in AGENTS.md straight away. The job name must be
+# exactly `copilot-setup-steps`. The push and pull_request triggers validate this file when it
+# changes.
+on:
+  workflow_dispatch:
+  push:
+    paths: [.github/workflows/copilot-setup-steps.yml]
+  pull_request:
+    paths: [.github/workflows/copilot-setup-steps.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Install the locked environment
+        run: uv sync --locked
+      - name: Confirm the checks can run
+        run: uv run pytest --collect-only -q

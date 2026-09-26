@@ -196,6 +196,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy agents api utils accessibility community ui config.py
 uv run pytest --cov
 uv run python scripts/check_docs.py
+uv run python scripts/render_assets.py --check
 ```
 
 To use live Azure services, provision them (`infra/`), generate the synthetic data (`data/synthetic/generate_*.py`, then `data/synthetic/upload_to_cosmos.py`) and index the knowledge bases (`foundry_iq/`).
@@ -204,7 +205,7 @@ To use live Azure services, provision them (`infra/`), generate the synthetic da
 
 ## Contributing
 
-ARGUS is going through a cleanup before the v2 work starts, so the structure is still moving. Issues are welcome. The most useful contributions right now:
+ARGUS is going through a cleanup before the v2 work starts, so the structure is still moving. Issues are welcome. [`AGENTS.md`](AGENTS.md) holds the rules, commands and definition of done for humans and coding agents alike. The most useful contributions right now:
 
 1. An accessible risk palette that passes WCAG AA (see the expected failure in `tests/test_accessibility.py`)
 2. Translations of explanation output — the people who need plain language most often aren't reading in English
