@@ -59,7 +59,8 @@ async def invoke(message: A2AMessage):
     patterns = pattern_detector(tx_history)
 
     # Match against FATF typologies
-    typology_hits = await typology_matcher(patterns)
+    typology = await typology_matcher(patterns)
+    typology_hits = typology["hits"]
 
     # Compute transaction risk score
     base_score = 0
@@ -75,7 +76,7 @@ async def invoke(message: A2AMessage):
         "agent": "transaction",
         "task_id": message.task_id,
         "status": "completed",
-        **provenance(transaction_monitor=tx_history),
+        **provenance(transaction_monitor=tx_history, typology_matcher=typology),
         "result": {
             "transaction_count": tx_history.get("count", 0),
             "date_range": tx_history.get("date_range", {}),

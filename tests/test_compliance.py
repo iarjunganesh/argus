@@ -336,20 +336,32 @@ async def test_regulations_search_the_local_corpus():
     assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-12"
 
 
-async def test_regulations_without_strong_match_return_fatf_baseline():
+async def test_regulations_without_a_relevant_match_cite_nothing():
     res = await rr.regulations_rag("zzz", "", "", [])
 
     assert res["source"] == "local"
-    assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-10"
+    assert res["regulations"] == []
 
 
-async def test_regulations_fall_back_to_the_baseline_when_search_is_down(use_plane, unavailable):
+async def test_an_unavailable_search_cites_nothing_and_says_so(use_plane, unavailable):
     use_plane(retriever=unavailable)
 
     res = await rr.regulations_rag("Q", "NL", "company", ["fraud"])
 
     assert res["source"] == "fallback"
-    assert res["regulations"][0]["citation"]["snippet_id"] == "fatf-rec-10"
+    assert res["regulations"] == []  # an outage is not presented as regulatory evidence
+
+
+async def test_a_compliance_report_without_retrieval_has_no_regulatory_triggers(
+    use_plane, unavailable
+):
+    use_plane(retriever=unavailable)
+
+    response = await comp.invoke(_msg({"screening": {"sanctions_hit": False}}))
+
+    assert response["fallbacks"] == ["regulations_rag"]
+    assert response["result"]["regulatory_triggers"] == []
+    assert response["result"]["retrieval_queries"] == 0
 
 
 async def test_compliance_agent_invoke(monkeypatch):
