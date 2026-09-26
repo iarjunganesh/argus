@@ -24,6 +24,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   vulnerability in the locked dependency graph (pip-audit), a committed secret (gitleaks), or
   documentation drift (markdownlint plus `scripts/check_docs.py`: broken links, unfinished
   markers, Python version disagreement, unlisted docs, tracked local files).
+- **Codecov configuration** (`codecov.yml`): the project status fails on a coverage drop of more
+  than 0.5 points; the patch status is informational until coverage reaches 100%.
 - **Reproducible environments:** `pyproject.toml` with dependency groups, `uv.lock` and
   `.python-version` (3.14). CI, local runs and the Windows demo script use the same lock.
 
