@@ -7,4 +7,5 @@
 | [`../roadmap/`](../roadmap/) | Longer-term ideas that are not yet scheduled |
 | [`../archive/hackathon-2026/`](../archive/hackathon-2026/) | The frozen Microsoft Agents League 2026 submission material |
 
-The brand asset is [`../assets/argus.svg`](../assets/argus.svg).
+Brand and architecture images, and how they are generated, are indexed in
+[`../assets/README.md`](../assets/README.md).

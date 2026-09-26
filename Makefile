@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test docs check generate-data generate-ocr-docs upload-data index-knowledge-bases run-api run-ui
+.PHONY: install lint format typecheck test docs assets check generate-data generate-ocr-docs upload-data index-knowledge-bases run-api run-ui
 
 # Thin wrappers around uv for macOS/Linux. On Windows, run the same `uv run ...` commands directly.
 
@@ -21,6 +21,12 @@ test:
 
 docs:
 	uv run python scripts/check_docs.py
+	uv run python scripts/render_assets.py --check
+
+# Rewrite the light/dark variants from the SVG masters, plus PNG/GIF exports if a Chromium
+# browser and ffmpeg are installed.
+assets:
+	uv run python scripts/render_assets.py
 
 # Everything CI runs, except the dependency audit and secret scan.
 check: lint typecheck test docs
