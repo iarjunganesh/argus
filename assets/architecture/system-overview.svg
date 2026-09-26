@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080"
+     role="img" aria-labelledby="title desc">
+  <title id="title">ARGUS system overview: the current runtime</title>
+  <desc id="desc">An analyst uses the Gradio UI, which posts to the FastAPI gateway. The gateway runs
+  the orchestrator as a background task. The orchestrator fans out to the Identity, Screening,
+  Corporate and Transaction agent services in parallel over HTTP with a custom JSON envelope, and
+  fans their results in to the Compliance and Risk agent, which computes a deterministic score,
+  tier and gaps and asks a language model for the explanation. Six recorded demo profiles can
+  replace the four parallel calls. The Azure data plane: Azure OpenAI, Cosmos DB and Azure AI
+  Search are used when configured and fall back to mock data otherwise; Foundry IQ and Document
+  Intelligence return mock data on every run today.</desc>
+
+  <!-- Hand-placed master. scripts/render_assets.py writes the -light and -dark variants.
+       Every status here is checked against the code, not the plan: see docs/ARCHITECTURE.md.
+       Animation is decoration only; frame 0 carries the whole diagram. Durations divide 6s. -->
+  <style>
+/* PALETTE:LIGHT */
+svg {
+  --bg:#FFFFFF; --card:#F1F5FB; --card2:#E3EBF7; --edge:#64748B; --grid:#E2E8F0;
+  --ink:#0B1633; --muted:#475569; --brand:#1C3F8C; --flow:#2563EB;
+  --accent:#1D4ED8; --decision:#13306E; --on:#FFFFFF; --onsub:#DBEAFE;
+  --green:#15803D; --red:#B91C1C;
+}
+/* /PALETTE:LIGHT */
+/* PALETTE:DARK */
+@media (prefers-color-scheme: dark) {
+svg {
+  --bg:#0B1220; --card:#131E36; --card2:#1B2946; --edge:#8394B8; --grid:#1E2A44;
+  --ink:#E8EEFA; --muted:#A3B3D1; --brand:#5AB0FF; --flow:#7DD4FF;
+  --accent:#1D4ED8; --decision:#1E3A8A; --on:#FFFFFF; --onsub:#DBEAFE;
+  --green:#4ADE80; --red:#F87171;
+}
+}
+/* /PALETTE:DARK */
+/* CONTRAST ink:bg muted:bg ink:card muted:card ink:card2 muted:card2 brand:bg brand:card
+   brand:card2 green:card red:card on:accent onsub:accent on:decision onsub:decision edge:bg */
+
+text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif; }
+.bg      { fill: var(--bg); }
+.grid    { stroke: var(--grid); stroke-width: 2; }
+.h1      { fill: var(--ink); font-size: 44px; font-weight: 700; }
+.h2      { fill: var(--muted); font-size: 22px; }
+.box     { fill: var(--card); stroke: var(--edge); stroke-width: 2; }
+.box2    { fill: var(--card2); stroke: var(--edge); stroke-width: 2; }
+.accent  { fill: var(--accent); }
+.decision{ fill: var(--decision); }
+.frame   { fill: none; stroke: var(--edge); stroke-width: 2; stroke-dasharray: 8 8; }
+.dashbox { fill: var(--card); stroke: var(--edge); stroke-width: 2; stroke-dasharray: 8 6; }
+.label   { fill: var(--ink); font-size: 28px; font-weight: 600; text-anchor: middle; }
+.name    { fill: var(--ink); font-size: 25px; font-weight: 600; }
+.sub     { fill: var(--muted); font-size: 19px; text-anchor: middle; }
+.note    { fill: var(--muted); font-size: 17px; }
+.tool    { fill: var(--muted); font: 15px 'Cascadia Mono', Consolas, 'SF Mono', Menlo, monospace; text-anchor: middle; }
+.on      { fill: var(--on); font-size: 28px; font-weight: 600; text-anchor: middle; }
+.onsub   { fill: var(--onsub); font-size: 19px; text-anchor: middle; }
+.step    { fill: var(--brand); font-size: 15px; font-weight: 700; letter-spacing: 3px; text-anchor: middle; }
+.stepl   { fill: var(--brand); font-size: 15px; font-weight: 700; letter-spacing: 3px; }
+.edge    { stroke: var(--edge); stroke-width: 2.5; fill: none; }
+.dashed  { stroke: var(--edge); stroke-width: 2.5; fill: none; stroke-dasharray: 7 6; }
+.flow    { stroke: var(--flow); stroke-width: 3; fill: none; }
+.edgetxt { fill: var(--muted); font-size: 17px; text-anchor: middle; }
+.pulse   { fill: var(--flow); }
+.chip-ok { fill: none; stroke: var(--green); stroke-width: 2; }
+.chip-no { fill: none; stroke: var(--red); stroke-width: 2; }
+.ok      { fill: var(--green); }
+.no      { fill: var(--red); }
+.chiptxt-ok { fill: var(--green); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-anchor: middle; }
+.chiptxt-no { fill: var(--red); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-anchor: middle; }
+.legend  { fill: var(--muted); font-size: 20px; }
+.foot    { fill: var(--muted); font-size: 18px; text-anchor: end; }
+.arrowhead { fill: var(--edge); }
+.flowhead  { fill: var(--flow); }
+  </style>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse"><path class="arrowhead" d="M0 0 L10 5 L0 10 z"/></marker>
+    <marker id="flowarrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+            orient="auto-start-reverse"><path class="flowhead" d="M0 0 L10 5 L0 10 z"/></marker>
+  </defs>
+
+  <rect class="bg" width="1920" height="1080"/>
+  <text class="h1" x="60" y="86">ARGUS — System overview</text>
+  <text class="h2" x="60" y="126">How ARGUS runs today: seven processes, five agent services over HTTP, and an Azure data plane with mock fallbacks.</text>
+  <line class="grid" x1="60" y1="152" x2="1860" y2="152"/>
+
+  <!-- ============ Column A: the analyst's path ============ -->
+  <rect class="box2" x="150" y="176" width="160" height="40" rx="20"/>
+  <text class="step" x="230" y="202">ANALYST</text>
+  <path class="edge" d="M230 216 V259" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="60" y="265" width="340" height="130" rx="14"/>
+  <text class="label" x="230" y="316">Gradio UI</text>
+  <text class="sub" x="230" y="348">port 7860</text>
+  <text class="sub" x="230" y="376">to be replaced by a web UI</text>
+
+  <path class="edge" d="M230 395 V454" marker-end="url(#arrow)"/>
+  <text class="note" x="244" y="431">submit · poll status</text>
+
+  <rect class="box" x="60" y="460" width="340" height="150" rx="14"/>
+  <text class="label" x="230" y="514">API gateway</text>
+  <text class="sub" x="230" y="547">FastAPI · port 8000</text>
+  <text class="sub" x="230" y="577">in-memory report store</text>
+
+  <path class="edge" d="M230 610 V689" marker-end="url(#arrow)"/>
+  <text class="note" x="244" y="656">fetch report</text>
+
+  <rect class="box2" x="60" y="695" width="340" height="215" rx="14"/>
+  <text class="step" x="230" y="731">OUTPUT</text>
+  <text class="label" x="230" y="772">Risk report</text>
+  <text class="sub" x="230" y="808">tier · score · findings</text>
+  <text class="sub" x="230" y="838">citations · audit trace</text>
+  <text class="sub" x="230" y="868">each fallback marked mock</text>
+
+  <!-- gateway ⇄ orchestrator -->
+  <path class="edge" d="M406 535 H440 V262 H704" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="edgetxt" x="590" y="250">background task · report</text>
+
+  <!-- ============ Column B: the five agent services ============ -->
+  <rect class="frame" x="470" y="180" width="880" height="740" rx="18"/>
+  <text class="edgetxt" x="910" y="904">Five agent services · a custom JSON envelope over HTTP (not the A2A protocol)</text>
+
+  <rect class="accent" x="710" y="210" width="400" height="130" rx="14"/>
+  <text class="on" x="910" y="262">Orchestrator</text>
+  <text class="onsub" x="910" y="296">fan-out × 4 in parallel · fan-in</text>
+  <text class="onsub" x="910" y="324">synthesises the report</text>
+
+  <!-- fan-out -->
+  <path id="out1" class="flow" d="M910 340 V380 H587 V414" marker-end="url(#flowarrow)"/>
+  <path id="out2" class="flow" d="M910 340 V380 H802 V414" marker-end="url(#flowarrow)"/>
+  <path id="out3" class="flow" d="M910 340 V380 H1017 V414" marker-end="url(#flowarrow)"/>
+  <path id="out4" class="flow" d="M910 340 V380 H1232 V414" marker-end="url(#flowarrow)"/>
+  <circle class="pulse" r="6"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#out1"/></animateMotion></circle>
+  <circle class="pulse" r="6"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#out2"/></animateMotion></circle>
+  <circle class="pulse" r="6"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#out3"/></animateMotion></circle>
+  <circle class="pulse" r="6"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#out4"/></animateMotion></circle>
+
+  <g>
+    <rect class="box" x="490" y="420" width="195" height="180" rx="14"/>
+    <text class="step" x="587" y="452">PORT 8001</text>
+    <text class="label" x="587" y="492" style="font-size:25px">Identity</text>
+    <text class="tool" x="587" y="528">customer_lookup</text>
+    <text class="tool" x="587" y="554">ocr_processor</text>
+    <text class="tool" x="587" y="580">identity_validator</text>
+  </g>
+  <g>
+    <rect class="box" x="705" y="420" width="195" height="180" rx="14"/>
+    <text class="step" x="802" y="452">PORT 8002</text>
+    <text class="label" x="802" y="492" style="font-size:25px">Screening</text>
+    <text class="tool" x="802" y="528">sanctions_checker</text>
+    <text class="tool" x="802" y="554">adverse_media_scanner</text>
+    <text class="tool" x="802" y="580">pep_checker</text>
+  </g>
+  <g>
+    <rect class="box" x="920" y="420" width="195" height="180" rx="14"/>
+    <text class="step" x="1017" y="452">PORT 8003</text>
+    <text class="label" x="1017" y="492" style="font-size:25px">Corporate</text>
+    <text class="tool" x="1017" y="528">ubo_resolver</text>
+    <text class="tool" x="1017" y="554">registry_lookup</text>
+    <text class="tool" x="1017" y="580">jurisdiction_mapper</text>
+  </g>
+  <g>
+    <rect class="box" x="1135" y="420" width="195" height="180" rx="14"/>
+    <text class="step" x="1232" y="452">PORT 8004</text>
+    <text class="label" x="1232" y="492" style="font-size:25px">Transaction</text>
+    <text class="tool" x="1232" y="528">transaction_monitor</text>
+    <text class="tool" x="1232" y="554">pattern_detector</text>
+    <text class="tool" x="1232" y="580">typology_matcher</text>
+  </g>
+
+  <!-- fan-in -->
+  <path class="flow" d="M587 600 V645 H1055"/>
+  <path class="flow" d="M802 600 V645"/>
+  <path class="flow" d="M1017 600 V645"/>
+  <path class="flow" d="M1232 600 V645 H1055"/>
+  <path id="in" class="flow" d="M1055 645 V684" marker-end="url(#flowarrow)"/>
+  <text class="edgetxt" x="1190" y="672">all four results</text>
+
+  <rect class="decision" x="780" y="690" width="550" height="160" rx="14"/>
+  <text class="onsub" x="1055" y="722" style="font-size:15px;font-weight:700;letter-spacing:3px">PORT 8005</text>
+  <text class="on" x="1055" y="760">Compliance &amp; Risk</text>
+  <text class="onsub" x="1055" y="794">deterministic score · tier · compliance gaps</text>
+  <text class="onsub" x="1055" y="824">a language model writes the explanation</text>
+
+  <!-- demo shortcut -->
+  <rect class="dashbox" x="490" y="690" width="260" height="160" rx="14"/>
+  <text class="step" x="620" y="722">SHORTCUT</text>
+  <text class="label" x="620" y="760" style="font-size:25px">Demo profiles</text>
+  <text class="sub" x="620" y="794">6 recorded scenarios</text>
+  <text class="sub" x="620" y="822">skip the 4 parallel calls</text>
+  <path class="dashed" d="M706 322 H480 V770 H484" marker-end="url(#arrow)"/>
+
+  <!-- ============ Column C: the data plane ============ -->
+  <text class="stepl" x="1400" y="200">DATA PLANE · AZURE</text>
+  <path class="edge" d="M1350 562 H1374"/>
+  <path class="edge" d="M1374 282 V842"/>
+  <path class="edge" d="M1374 282 H1394" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1374 422 H1394" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1374 562 H1394" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1374 702 H1394" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1374 842 H1394" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect class="box" x="1400" y="220" width="460" height="124" rx="14"/>
+    <text class="name" x="1424" y="262">Azure OpenAI</text>
+    <text class="note" x="1424" y="292">GPT-4o, or GitHub Models · the explanation</text>
+    <text class="note" x="1424" y="320">without it: fixed template text</text>
+    <rect class="chip-ok" x="1716" y="238" width="126" height="30" rx="15"/>
+    <text class="chiptxt-ok" x="1779" y="258">LIVE OR MOCK</text>
+  </g>
+  <g>
+    <rect class="box" x="1400" y="360" width="460" height="124" rx="14"/>
+    <text class="name" x="1424" y="402">Cosmos DB</text>
+    <text class="note" x="1424" y="432">entities · ownership · PEPs · transactions</text>
+    <text class="note" x="1424" y="460">without it: mock records</text>
+    <rect class="chip-ok" x="1716" y="378" width="126" height="30" rx="15"/>
+    <text class="chiptxt-ok" x="1779" y="398">LIVE OR MOCK</text>
+  </g>
+  <g>
+    <rect class="box" x="1400" y="500" width="460" height="124" rx="14"/>
+    <text class="name" x="1424" y="542">Azure AI Search</text>
+    <text class="note" x="1424" y="572">transaction typology matching</text>
+    <text class="note" x="1424" y="600">without it: mock typologies</text>
+    <rect class="chip-ok" x="1716" y="518" width="126" height="30" rx="15"/>
+    <text class="chiptxt-ok" x="1779" y="538">LIVE OR MOCK</text>
+  </g>
+  <g>
+    <rect class="box" x="1400" y="640" width="460" height="124" rx="14"/>
+    <text class="name" x="1424" y="682">Foundry IQ</text>
+    <text class="note" x="1424" y="712">regulations · sanctions · adverse media</text>
+    <text class="note" x="1424" y="740">calls an SDK method that does not exist</text>
+    <rect class="chip-no" x="1716" y="658" width="126" height="30" rx="15"/>
+    <text class="chiptxt-no" x="1779" y="678">MOCK TODAY</text>
+  </g>
+  <g>
+    <rect class="box" x="1400" y="780" width="460" height="124" rx="14"/>
+    <text class="name" x="1424" y="822">Document Intelligence</text>
+    <text class="note" x="1424" y="852">identity document OCR</text>
+    <text class="note" x="1424" y="880">its SDK package is not installed</text>
+    <rect class="chip-no" x="1716" y="798" width="126" height="30" rx="15"/>
+    <text class="chiptxt-no" x="1779" y="818">MOCK TODAY</text>
+  </g>
+
+  <!-- ============ Legend and footer ============ -->
+  <line class="grid" x1="60" y1="990" x2="1860" y2="990"/>
+  <rect class="chip-ok" x="60" y="1016" width="44" height="22" rx="11"/>
+  <text class="legend" x="116" y="1034">live when configured, mock fallback otherwise</text>
+  <rect class="chip-no" x="600" y="1016" width="44" height="22" rx="11"/>
+  <text class="legend" x="656" y="1034">mock on every run today</text>
+  <rect class="dashbox" x="930" y="1014" width="44" height="26" rx="6"/>
+  <text class="legend" x="986" y="1034">demo shortcut</text>
+  <rect class="accent" x="1170" y="1014" width="44" height="26" rx="6"/>
+  <text class="legend" x="1226" y="1034">orchestration and decision</text>
+  <text class="foot" x="1860" y="1066">Current runtime · details in docs/ARCHITECTURE.md</text>
+</svg>

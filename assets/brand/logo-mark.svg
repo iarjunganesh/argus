@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-240 -228 480 480" width="240" height="240"
+     role="img" aria-labelledby="title">
+  <title id="title">ARGUS mark: an open eye inside a diamond, on a vertical axis</title>
+
+  <!-- The mark on its own: favicon, avatar, small placements. Argus Panoptes was the watchman
+       of Greek myth; the eye is the brand. The emblem geometry (the <g id="emblem"> paths) is
+       shared by logo.svg, banner.svg, banner-16x9.svg and social-preview.svg; change it in all
+       of them together. Coordinates are emblem-local: the eye's centre is (0, 12). -->
+  <style>
+/* PALETTE:LIGHT */
+svg {
+  --metal-a:#3B82F6; --metal-b:#1C3F8C; --metal-c:#0B2A6B; --metal-d:#60A5FA;
+  --metal-edge:#1C3F8C; --eye-fill:#EAF2FF; --eye:#0284C7; --iris-ring:#0284C7;
+  --axis:#2563EB; --ring:#1C3F8C; --dot:#2563EB;
+  --ink:#0B1633; --bg:#FFFFFF;
+}
+/* /PALETTE:LIGHT */
+/* PALETTE:DARK */
+@media (prefers-color-scheme: dark) {
+svg {
+  --metal-a:#F5FBFF; --metal-b:#2C7098; --metal-c:#9ED7F0; --metal-d:#5CA8D7;
+  --metal-edge:#B7EBFF; --eye-fill:#061521; --eye:#67D5FF; --iris-ring:#4BD7FF;
+  --axis:#45D7FF; --ring:#3FB9ED; --dot:#6FD7FF;
+  --ink:#E8EEFA; --bg:#0B1220;
+}
+}
+/* /PALETTE:DARK */
+/* CONTRAST ink:bg */
+
+.m-a   { stop-color: var(--metal-a); }
+.m-b   { stop-color: var(--metal-b); }
+.m-c   { stop-color: var(--metal-c); }
+.m-d   { stop-color: var(--metal-d); }
+.metal { fill: url(#metal); stroke: var(--metal-edge); stroke-width: 2; }
+.metal2{ fill: url(#metal2); opacity: .92; }
+.eye   { fill: var(--eye-fill); stroke: var(--eye); stroke-width: 3; }
+.iring { fill: none; stroke: var(--iris-ring); stroke-width: 4; }
+.axis  { stroke: var(--axis); stroke-width: 2.5; }
+.axisd { fill: var(--axis); }
+.ring  { fill: none; stroke: var(--ring); opacity: .3; }
+.dot   { fill: var(--dot); }
+  </style>
+
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop class="m-a" offset="0"/><stop class="m-c" offset=".22"/><stop class="m-b" offset=".48"/>
+      <stop class="m-a" offset=".72"/><stop class="m-d" offset="1"/>
+    </linearGradient>
+    <linearGradient id="metal2" x1="0" y1="1" x2="1" y2="0">
+      <stop class="m-b" offset="0"/><stop class="m-a" offset=".35"/><stop class="m-d" offset=".68"/>
+      <stop class="m-a" offset="1"/>
+    </linearGradient>
+    <radialGradient id="iris" cx=".35" cy=".28" r=".75">
+      <stop offset="0" stop-color="#D7FBFF"/><stop offset=".18" stop-color="#75DAF3"/>
+      <stop offset=".52" stop-color="#1D6C9C"/><stop offset="1" stop-color="#071E35"/>
+    </radialGradient>
+  </defs>
+
+  <g class="ring">
+    <circle cx="0" cy="12" r="200" stroke-width="2" stroke-dasharray="4 10"/>
+  </g>
+  <circle class="dot" cx="0" cy="-188" r="6"/>
+  <circle class="dot" cx="190.2" cy="-49.8" r="5"/>
+  <circle class="dot" cx="117.6" cy="173.8" r="5"/>
+  <circle class="dot" cx="-117.6" cy="173.8" r="5"/>
+  <circle class="dot" cx="-190.2" cy="-49.8" r="5"/>
+
+  <g id="emblem">
+    <line class="axis" x1="0" y1="-222" x2="0" y2="222"/>
+    <path class="metal" d="M -198,6 Q -98,-126 0,-170 Q 98,-126 198,6 Q 104,-53 0,-53 Q -104,-53 -198,6 Z"/>
+    <path class="metal2" d="M -167,8 Q -80,-84 0,-84 Q 80,-84 167,8 Q 80,-24 0,-24 Q -80,-24 -167,8 Z"/>
+    <path class="metal" d="M -168,18 Q -76,87 0,145 Q 76,87 168,18 Q 72,59 0,59 Q -72,59 -168,18 Z"/>
+    <path class="eye" d="M -175,12 Q -89,-70 0,-70 Q 89,-70 175,12 Q 89,94 0,94 Q -89,94 -175,12 Z"/>
+    <circle class="iring" cx="0" cy="12" r="70"/>
+    <circle cx="0" cy="12" r="43" fill="url(#iris)" stroke="#90E8FF" stroke-width="1.5"/>
+    <circle cx="13" cy="-4" r="8" fill="#DFFAFF" opacity=".9"/>
+  </g>
+</svg>
