@@ -13,6 +13,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ## [Unreleased]
 
+### Added
+
+- **An architecture page that matches the running code** (`docs/ARCHITECTURE.md`): processes,
+  request flow, the demo-profile shortcut and every service fallback, checked against the code.
+- **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
+  code review rather than from the old README.
+
 ### Changed
 
 - **Hackathon material is archived, not deleted.** Submission runbooks, narration, slides, the
