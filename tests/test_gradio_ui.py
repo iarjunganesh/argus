@@ -43,7 +43,8 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
         "risk_summary": {
             "overall_risk_tier": "HIGH",
             "overall_risk_score": 82,
-            "confidence": 0.91,
+            "tier_basis": "sanctions_match",
+            "sanctions_screening": "potential_match",
             "decision_recommendation": "Enhanced Due Diligence",
         },
         "key_findings": ["Adverse Media", "Regulatory Triggers", "Ownership Risk"],
@@ -60,7 +61,9 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
     assert "ARGUS Decision" in html
     assert "Risk Tier: HIGH" in html
     assert "Risk Score" in html
-    assert "Confidence" in html and "91%" in html
+    assert "Confidence" not in html  # ARGUS reports no confidence it cannot compute
+    assert "Tier Set By" in html and "Sanctions hold" in html
+    assert "Sanctions Screening" in html and "Potential match" in html
     assert "Enhanced Due Diligence" in html
     assert "Why This Risk Rating?" in html
     assert "Adverse Media" in html
@@ -73,7 +76,7 @@ def test_format_report_includes_executive_summary_and_ocr_visibility():
 
 def test_report_renders_dimensions_timeline_and_citations():
     report = {
-        "risk_summary": {"overall_risk_tier": "HIGH", "confidence": 83},
+        "risk_summary": {"overall_risk_tier": "HIGH"},
         "dimension_scores": {"identity": {"score": 120, "tier": "CRITICAL"}},
         "timeline": [
             {"step": "Identity Agent", "time": "10:00:01"},
@@ -97,7 +100,7 @@ def test_report_renders_dimensions_timeline_and_citations():
     assert "10:00:05" in page
     assert ">done<" in page and ">error<" in page
     assert "fatf&lt;.pdf" in page  # citation text is escaped
-    assert "83%" in page  # confidence above 1 is already a percentage
+    assert "Not reported" in page  # a report without tier basis or sanctions status says so
     assert "<li>Escalate</li>" in page  # actions stand in for missing findings
 
 

@@ -26,7 +26,6 @@ async def pep_checker(entity_name: str, dob: str, nationality: str) -> dict:
                     f"{pep.get('name')} — {pep.get('role', 'Unknown role')} "
                     f"({country}, {pep.get('period', 'Unknown period')})"
                 ),
-                "confidence": 0.92,
                 "source": f"{plane.backend}_entities",
             }
         ],

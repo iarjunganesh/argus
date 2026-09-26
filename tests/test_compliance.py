@@ -69,16 +69,16 @@ async def test_every_risk_indicator_reaches_findings_and_actions():
     result = (await comp.invoke(_msg(upstream)))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "CRITICAL"
-    assert result["risk_summary"]["decision_recommendation"].startswith("Do not onboard")
+    assert result["risk_summary"]["decision_recommendation"].startswith("Hold:")
     assert result["key_findings"] == [
         "PEP identified: Minister X",
         "Adverse media coverage found — review required",
-        "⚠️ Sanctions match detected",
+        "⚠️ Potential sanctions match: a person must confirm or clear it",
         "Offshore node: KY",
         "Transaction structuring pattern detected",
     ]
     actions = result["recommended_actions"]
-    assert "Immediately escalate — do not proceed with onboarding" in actions
+    assert any(a.startswith("If confirmed: freeze funds without delay") for a in actions)
     assert "Obtain beneficial owner register for all offshore entities" in actions
     assert "Consider filing Suspicious Activity Report (SAR)" in actions
     assert "Conduct in-person verification or enhanced video KYC" in actions
@@ -103,13 +103,66 @@ async def test_medium_tier_and_non_pep_findings_are_skipped():
 
 
 async def test_clean_entity_is_low_risk_with_default_action():
-    result = (await comp.invoke(_msg({})))["result"]
+    result = (await comp.invoke(_msg({"screening": {"sanctions_hit": False}})))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "LOW"
+    assert result["risk_summary"]["sanctions_screening"] == "no_match"
+    assert result["risk_summary"]["decision_recommendation"].startswith("Standard onboarding")
     assert result["key_findings"] == [
         "No high-risk indicators found across all screening dimensions"
     ]
     assert result["recommended_actions"] == ["Continue standard periodic review cycle"]
+
+
+async def test_a_sanctions_match_alone_holds_the_case_whatever_the_score():
+    screening = {"sanctions_hit": True, "screening_risk_score": 60, "findings": []}
+
+    result = (await comp.invoke(_msg({"screening": screening})))["result"]
+
+    summary = result["risk_summary"]
+    assert summary["overall_risk_score"] < 35  # the weighted score alone would be LOW
+    assert summary["overall_risk_tier"] == "CRITICAL"
+    assert summary["tier_basis"] == "sanctions_match"
+    assert summary["sanctions_screening"] == "potential_match"
+    assert summary["decision_recommendation"].startswith("Hold:")
+    assert result["explanation"].startswith("This case is held at CRITICAL")
+    assert (
+        "FATF Rec.6 — Targeted financial sanctions screening mandatory"
+        in (result["compliance_gaps"])
+    )
+
+
+async def test_a_case_whose_sanctions_screening_did_not_run_is_incomplete():
+    fell_back = {"result": {"sanctions_hit": False}, "fallbacks": ["sanctions_checker"]}
+    for screening in ({}, {"status": "error", "result": None}, fell_back):
+        message = _msg({})
+        message.payload["upstream_results"]["screening"] = screening
+
+        result = (await comp.invoke(message))["result"]
+
+        summary = result["risk_summary"]
+        assert summary["sanctions_screening"] == "not_run"
+        assert summary["tier_basis"] == "score"
+        assert summary["decision_recommendation"].startswith("Incomplete:")
+        assert "⚠️ Sanctions screening did not run" in result["key_findings"]
+        assert (
+            "Run sanctions screening before any onboarding decision"
+            in (result["recommended_actions"])
+        )
+
+
+def test_every_score_band_maps_to_its_tier():
+    from argus.agents.compliance.tools.risk_scorer import score_tier
+
+    assert [score_tier(s) for s in (-1, 0, 34.9, 35, 55, 75, 100)] == [
+        "LOW",
+        "LOW",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL",
+        "CRITICAL",
+    ]
 
 
 def test_unknown_tier_recommendation():
@@ -158,6 +211,24 @@ async def test_explanation_comes_from_the_model(monkeypatch):
     assert explanation == {"text": "Rated HIGH because of PEP exposure.", "source": "model"}
     assert "FATF Rec.12" in llm.prompts[0]
     assert "- Identity: 10/100" in llm.prompts[0]
+    assert "Tier set by: the score band" in llm.prompts[0]
+    assert "Sanctions screening: not reported" in llm.prompts[0]
+
+
+async def test_the_model_is_told_when_a_sanctions_match_set_the_tier(monkeypatch):
+    llm = FakeLLM(content="Held for a sanctions match.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+
+    summary = {
+        "overall_risk_tier": "CRITICAL",
+        "overall_risk_score": 18,
+        "tier_basis": "sanctions_match",
+        "sanctions_screening": "potential_match",
+    }
+    await ed.explain_decision({}, summary, {}, [], [])
+
+    assert "Tier set by: a potential sanctions match" in llm.prompts[0]
+    assert "Sanctions screening: potential match, not yet confirmed" in llm.prompts[0]
 
 
 async def test_explanation_falls_back_without_findings(monkeypatch):
@@ -292,7 +363,7 @@ async def test_compliance_agent_invoke(monkeypatch):
     monkeypatch.setattr(
         comp,
         "risk_scorer",
-        lambda i, s, c, t: {"overall": 60, "dimensions": {}, "confidence": 0.85},
+        lambda i, s, c, t: {"overall": 60, "dimensions": {}},
     )
     monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"])
 

@@ -1,7 +1,9 @@
 """
 ARGUS Compliance & Risk Agent
 Fan-in agent — receives all upstream results, searches the regulations knowledge base for
-regulatory text with citations, produces final weighted risk score.
+regulatory text with citations, produces final weighted risk score. A potential sanctions match
+holds the case whatever the score, and a case whose sanctions screening did not run is reported
+as incomplete.
 """
 
 from fastapi import FastAPI
@@ -10,12 +12,17 @@ from pydantic import BaseModel
 from argus.agents.compliance.tools.explain_decision import explain_decision
 from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.regulations_rag import regulations_rag
-from argus.agents.compliance.tools.risk_scorer import risk_scorer
+from argus.agents.compliance.tools.risk_scorer import risk_scorer, score_tier
 from argus.agents.provenance import provenance
 from argus.utils.structured_logger import get_logger
 
 app = FastAPI(title="ARGUS Compliance & Risk Agent")
 logger = get_logger("agent.compliance")
+
+# What sanctions screening established for the case (`risk_summary.sanctions_screening`).
+POTENTIAL_MATCH = "potential_match"
+NO_MATCH = "no_match"
+NOT_RUN = "not_run"
 
 
 class A2AMessage(BaseModel):
@@ -39,12 +46,16 @@ async def invoke(message: A2AMessage):
     transaction = upstream.get("transaction", {}).get("result") or {}
 
     logger.info("invoke", extra={"task_id": message.task_id, "jurisdiction": jurisdiction})
+    sanctions = sanctions_screening(upstream.get("screening", {}))
+
     # Build risk indicator list from upstream findings
     risk_indicators = []
     if screening.get("pep_hit"):
         risk_indicators.append("pep")
-    if screening.get("sanctions_hit"):
+    if sanctions == POTENTIAL_MATCH:
         risk_indicators.append("sanctions")
+    elif sanctions == NOT_RUN:
+        risk_indicators.append("sanctions_not_screened")
     if screening.get("adverse_media_hit"):
         risk_indicators.append("adverse_media")
     if corporate.get("risk_flags"):
@@ -64,18 +75,14 @@ async def invoke(message: A2AMessage):
     # Identify compliance gaps
     gaps = gap_analyzer(risk_indicators, regulations, scores)
 
-    # Build risk summary
+    # The tier comes from the score band, except that a potential sanctions match holds the case
+    # at CRITICAL whatever the score: sanctions are not weighed against other risk (FATF R.6).
     overall_score = scores["overall"]
-    if overall_score >= 75:
-        tier = "CRITICAL"
-    elif overall_score >= 55:
-        tier = "HIGH"
-    elif overall_score >= 35:
-        tier = "MEDIUM"
-    else:
-        tier = "LOW"
+    tier, tier_basis = score_tier(overall_score), "score"
+    if sanctions == POTENTIAL_MATCH:
+        tier, tier_basis = "CRITICAL", "sanctions_match"
 
-    key_findings = _extract_findings(identity, screening, corporate, transaction)
+    key_findings = _extract_findings(identity, screening, corporate, transaction, sanctions)
 
     regulatory_triggers = [
         {
@@ -86,16 +93,20 @@ async def invoke(message: A2AMessage):
     ]
 
     recommended_actions = _build_actions(tier, risk_indicators, gaps)
+    risk_summary = {
+        "overall_risk_tier": tier,
+        "overall_risk_score": overall_score,
+        "tier_basis": tier_basis,
+        "sanctions_screening": sanctions,
+        "decision_recommendation": _recommendation(tier, sanctions),
+    }
     explanation = await explain_decision(
         entity={
             "name": p.get("entity_name", "Unknown"),
             "type": entity_type,
             "jurisdiction": jurisdiction,
         },
-        risk_summary={
-            "overall_risk_tier": tier,
-            "overall_risk_score": overall_score,
-        },
+        risk_summary=risk_summary,
         dimension_scores=scores["dimensions"],
         key_findings=key_findings,
         regulatory_triggers=regulatory_triggers,
@@ -109,12 +120,7 @@ async def invoke(message: A2AMessage):
         "result": {
             "explanation": explanation["text"],
             "explanation_source": explanation["source"],
-            "risk_summary": {
-                "overall_risk_tier": tier,
-                "overall_risk_score": overall_score,
-                "confidence": round(scores.get("confidence", 0.8), 2),
-                "decision_recommendation": _recommendation(tier),
-            },
+            "risk_summary": risk_summary,
             "dimension_scores": scores["dimensions"],
             "key_findings": key_findings,
             "regulatory_triggers": regulatory_triggers,
@@ -130,7 +136,19 @@ def health():
     return {"status": "ok", "service": "compliance", "version": "0.1.0"}
 
 
-def _extract_findings(identity, screening, corporate, transaction) -> list:
+def sanctions_screening(screening_response: dict) -> str:
+    """What sanctions screening established: a potential match, no match, or nothing.
+
+    Screening that did not run (the agent failed, or the sanctions search fell back) is not the
+    same as no match: the case cannot be cleared without it.
+    """
+    result = screening_response.get("result") or {}
+    if not result or "sanctions_checker" in screening_response.get("fallbacks", []):
+        return NOT_RUN
+    return POTENTIAL_MATCH if result.get("sanctions_hit") else NO_MATCH
+
+
+def _extract_findings(identity, screening, corporate, transaction, sanctions: str) -> list:
     _ = identity
     findings = []
     if screening.get("pep_hit"):
@@ -139,8 +157,10 @@ def _extract_findings(identity, screening, corporate, transaction) -> list:
                 findings.append(f"PEP identified: {f.get('match', '')[:100]}")
     if screening.get("adverse_media_hit"):
         findings.append("Adverse media coverage found — review required")
-    if screening.get("sanctions_hit"):
-        findings.append("⚠️ Sanctions match detected")
+    if sanctions == POTENTIAL_MATCH:
+        findings.append("⚠️ Potential sanctions match: a person must confirm or clear it")
+    elif sanctions == NOT_RUN:
+        findings.append("⚠️ Sanctions screening did not run")
     for flag in corporate.get("risk_flags") or []:
         findings.append(flag)
     if transaction.get("structuring_flag"):
@@ -150,7 +170,14 @@ def _extract_findings(identity, screening, corporate, transaction) -> list:
     return findings
 
 
-def _recommendation(tier: str) -> str:
+def _recommendation(tier: str, sanctions: str = NO_MATCH) -> str:
+    if sanctions == POTENTIAL_MATCH:
+        return (
+            "Hold: do not onboard or process transactions until a compliance officer confirms "
+            "or clears the potential sanctions match."
+        )
+    if sanctions == NOT_RUN:
+        return "Incomplete: sanctions screening did not run. Do not onboard until it has."
     return {
         "LOW": "Standard onboarding — periodic review recommended.",
         "MEDIUM": "Proceed with caution. Enhanced monitoring required.",
@@ -165,8 +192,16 @@ def _build_actions(tier: str, risk_indicators: list, gaps: list) -> list:
         actions.append("Obtain source of wealth and source of funds declaration")
         actions.append("Escalate to Senior Compliance Officer for EDD sign-off")
     if "sanctions" in risk_indicators:
-        actions.append("Immediately escalate — do not proceed with onboarding")
-        actions.append("Notify Compliance Officer and legal team")
+        actions.append(
+            "Confirm or clear the match: compare the listing's identifiers (date of birth, "
+            "nationality, registration number) with the customer's"
+        )
+        actions.append(
+            "If confirmed: freeze funds without delay and report the frozen assets to the "
+            "competent authority (FATF R.6)"
+        )
+    if "sanctions_not_screened" in risk_indicators:
+        actions.append("Run sanctions screening before any onboarding decision")
     if "high_risk_jurisdiction" in risk_indicators:
         actions.append("Obtain beneficial owner register for all offshore entities")
     if "structuring" in risk_indicators:
