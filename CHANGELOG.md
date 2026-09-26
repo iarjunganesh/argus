@@ -15,6 +15,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **One set of instructions for every coding agent.** `AGENTS.md` holds the rules, the commands,
+  the definition of done, the post-release dependency refresh and a repository map; `CLAUDE.md`
+  imports it and `.github/copilot-instructions.md` points to it, so Claude Code, Codex and
+  GitHub Copilot follow the same file. `scripts/check_docs.py` now fails if the repository map
+  and the tracked top-level directories disagree (checked by renaming one row).
+- **The Copilot coding agent starts with a working environment**
+  (`.github/workflows/copilot-setup-steps.yml` installs the locked dependencies). Shared editor
+  and agent settings: `.vscode/extensions.json` recommends Ruff, Python and markdownlint;
+  `.claude/settings.json` pre-approves the read-only checks.
 - **A brand built around the ARGUS eye**, in light and dark themes: README banner, 16:9 title
   card, GitHub social preview, stacked logo and the mark on its own (`assets/brand/`). The mark
   is an open eye in a diamond; five orbiting nodes stand for the five agents.

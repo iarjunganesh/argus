@@ -6,7 +6,8 @@ Run from the repository root:
 
 Each check guards against a kind of drift that has already happened in this project:
 links left pointing at moved files, a README advertising a Python version CI doesn't use,
-unfinished markers shipped in public docs, and local working notes committed by accident.
+unfinished markers shipped in public docs, a repository map that no longer matches the tree,
+and local working notes committed by accident.
 Exits non-zero and prints every problem found.
 """
 
@@ -28,10 +29,11 @@ PUBLIC_DOCS = ("README.md", "CHANGELOG.md", "docs/", "roadmap/")
 UNFINISHED = re.compile(r"\b(TBD|FIXME|XXX)\b|lorem ipsum|\[to fill\]", re.IGNORECASE)
 
 # Local working files that must never be tracked.
-NEVER_TRACKED_FILES = ("HANDOFF.md", ".env")
+NEVER_TRACKED_FILES = ("HANDOFF.md", ".env", ".claude/settings.local.json")
 NEVER_TRACKED_DIRS = (".tmp/",)
 
 LINK = re.compile(r"\]\(([^)\s]+)\)")
+MAP_ROW = re.compile(r"^\| `([^`/]+)/` \|", re.MULTILINE)
 
 
 def tracked_files() -> list[str]:
@@ -94,6 +96,16 @@ def check_changelog() -> list[str]:
     return [] if "## [Unreleased]" in text else ["CHANGELOG.md has no '## [Unreleased]' section"]
 
 
+def check_repo_map(files: list[str]) -> list[str]:
+    """AGENTS.md's repository map lists exactly the tracked top-level directories."""
+    listed = set(MAP_ROW.findall((ROOT / "AGENTS.md").read_text(encoding="utf-8")))
+    tracked = {f.split("/", 1)[0] for f in files if "/" in f and not f.startswith(".")}
+    return [f"AGENTS.md repository map is missing {name}/" for name in sorted(tracked - listed)] + [
+        f"AGENTS.md repository map lists {name}/, which is not tracked"
+        for name in sorted(listed - tracked)
+    ]
+
+
 def check_never_tracked(files: list[str]) -> list[str]:
     return [
         f"{name} must not be tracked"
@@ -111,6 +123,7 @@ def main() -> int:
         *check_python_version(),
         *check_docs_index(),
         *check_changelog(),
+        *check_repo_map(files),
         *check_never_tracked(files),
     ]
     for problem in problems:
