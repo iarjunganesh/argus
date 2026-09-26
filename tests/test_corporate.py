@@ -2,9 +2,9 @@
 
 from fastapi.testclient import TestClient
 
-import agents.corporate.agent as corp
-import agents.corporate.tools.registry_lookup as reg
-import agents.corporate.tools.ubo_resolver as ubo
+import argus.agents.corporate.agent as corp
+import argus.agents.corporate.tools.registry_lookup as reg
+import argus.agents.corporate.tools.ubo_resolver as ubo
 
 
 def _msg(payload: dict) -> corp.A2AMessage:

@@ -3,7 +3,7 @@
 import json
 import logging
 
-from utils.structured_logger import JsonFormatter, get_logger
+from argus.utils.structured_logger import JsonFormatter, get_logger
 
 
 def _format(**extra) -> dict:

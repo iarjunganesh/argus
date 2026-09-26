@@ -1,6 +1,6 @@
 # Roadmap: WCAG 2.1 AA Compliance
 
-**Status:** In progress — utilities in `accessibility/`
+**Status:** In progress — utilities in `src/argus/accessibility/`
 **Goal:** Every ARGUS UI surface meets WCAG 2.1 Level AA.
 
 ---
@@ -36,7 +36,7 @@ A compliance tool that is inaccessible is itself a compliance risk.
 
 ### Color contrast
 
-All risk tier colors verified against `accessibility/wcag.py`:
+All risk tier colors verified against `src/argus/accessibility/wcag.py`:
 
 - HIGH (#e74c3c on #ffffff) — currently 3.98:1, fails AA. Fix: darken to #c0392b (4.56:1 ✅)
 - MEDIUM (#f39c12 on #ffffff) — currently 2.82:1, fails AA. Fix: darken to #d68910 — or pair with bold + underline as a non-color cue
@@ -102,6 +102,6 @@ def test_argus_palette_aa_compliance():
 
 ## Tools
 
-- `accessibility/wcag.py` — contrast ratio checker, palette auditor
-- `accessibility/aria.py` — centralized ARIA label strings
+- `src/argus/accessibility/wcag.py` — contrast ratio checker, palette auditor
+- `src/argus/accessibility/aria.py` — centralized ARIA label strings
 - `tests/test_accessibility.py` — CI-enforced contrast checks (to be added)

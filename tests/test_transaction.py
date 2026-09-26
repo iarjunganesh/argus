@@ -2,9 +2,9 @@
 
 from fastapi.testclient import TestClient
 
-import agents.transaction.agent as tx
-from agents.transaction.tools.pattern_detector import pattern_detector
-from agents.transaction.tools.typology_matcher import _mock_typology_hits
+import argus.agents.transaction.agent as tx
+from argus.agents.transaction.tools.pattern_detector import pattern_detector
+from argus.agents.transaction.tools.typology_matcher import _mock_typology_hits
 
 
 def _msg(payload: dict) -> tx.A2AMessage:

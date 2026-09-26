@@ -17,7 +17,7 @@ SAMPLE_A2A = {
 
 
 def test_identity_agent_health():
-    from agents.identity.agent import app
+    from argus.agents.identity.agent import app
 
     client = TestClient(app)
     resp = client.get("/docs")
@@ -25,7 +25,7 @@ def test_identity_agent_health():
 
 
 def test_screening_agent_invoke():
-    from agents.screening.agent import app
+    from argus.agents.screening.agent import app
 
     client = TestClient(app)
     resp = client.post(
@@ -39,7 +39,7 @@ def test_screening_agent_invoke():
 
 
 def test_public_demo_profile_is_available():
-    from utils.demo_profiles import get_demo_profile
+    from argus.utils.demo_profiles import get_demo_profile
 
     profile = get_demo_profile("Wirecard AG", "corporate", "DE")
     assert profile is not None
@@ -51,7 +51,7 @@ def test_public_demo_profile_is_available():
 
 
 def test_demo_profile_aliases_resolve_to_canonical_profiles():
-    from utils.demo_profiles import get_demo_profile
+    from argus.utils.demo_profiles import get_demo_profile
 
     wirecard = get_demo_profile("Wirecard", "corporate", "DE")
     cayman = get_demo_profile("Cayman Holdings", "corporate", "US")
@@ -65,7 +65,7 @@ def test_demo_profile_aliases_resolve_to_canonical_profiles():
 
 
 def test_corporate_agent_skips_individual():
-    from agents.corporate.agent import app
+    from argus.agents.corporate.agent import app
 
     client = TestClient(app)
     payload = {**SAMPLE_A2A, "payload": {**SAMPLE_A2A["payload"], "entity_type": "individual"}}
@@ -75,7 +75,7 @@ def test_corporate_agent_skips_individual():
 
 
 def test_transaction_agent_invoke():
-    from agents.transaction.agent import app
+    from argus.agents.transaction.agent import app
 
     client = TestClient(app)
     resp = client.post(
@@ -88,7 +88,7 @@ def test_transaction_agent_invoke():
 
 
 def test_api_root():
-    from api.main import app
+    from argus.api.main import app
 
     client = TestClient(app)
     resp = client.get("/")
@@ -97,7 +97,7 @@ def test_api_root():
 
 
 def test_compliance_agent_handles_none_upstream_results():
-    from agents.compliance.agent import app
+    from argus.agents.compliance.agent import app
 
     client = TestClient(app)
     payload = {

@@ -4,7 +4,7 @@ import json
 
 import httpx
 
-from agents.orchestrator import agent as orchestrator
+from argus.agents.orchestrator import agent as orchestrator
 
 
 async def test_call_agent_posts_envelope_and_returns_json(monkeypatch):

@@ -4,8 +4,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-import agents.orchestrator.agent as orchestrator
-from api import main
+import argus.agents.orchestrator.agent as orchestrator
+from argus.api import main
 
 REQUEST = {"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "NL"}
 

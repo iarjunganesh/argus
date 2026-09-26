@@ -2,7 +2,7 @@ import base64
 
 import pytest
 
-from agents.orchestrator import agent as orchestrator
+from argus.agents.orchestrator import agent as orchestrator
 
 
 @pytest.mark.asyncio
@@ -54,7 +54,7 @@ async def test_run_kyc_assessment_with_mocked_call_agent(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_kyc_assessment_uses_demo_profile_shortcut(monkeypatch):
-    import utils.demo_profiles as demo_profiles
+    import argus.utils.demo_profiles as demo_profiles
 
     calls = []
 
@@ -84,7 +84,7 @@ async def test_run_kyc_assessment_uses_demo_profile_shortcut(monkeypatch):
 
 
 def test_regulations_helpers_and_normalize():
-    import agents.compliance.tools.regulations_rag as rr
+    import argus.agents.compliance.tools.regulations_rag as rr
 
     assert rr._normalize_relevance(0.5) == 0.5
     assert rr._normalize_relevance(2.0) == 0.5
@@ -93,8 +93,8 @@ def test_regulations_helpers_and_normalize():
 @pytest.mark.asyncio
 async def test_regulations_rag_returns_mock(monkeypatch):
     # Force Foundry client errors by patching get_foundry_client in the module
-    import agents.compliance.tools.regulations_rag as mod
-    from agents.compliance.tools import regulations_rag as rr
+    import argus.agents.compliance.tools.regulations_rag as mod
+    from argus.agents.compliance.tools import regulations_rag as rr
 
     monkeypatch.setattr(
         mod, "get_foundry_client", lambda: (_ for _ in ()).throw(RuntimeError("no client"))
@@ -107,7 +107,7 @@ async def test_regulations_rag_returns_mock(monkeypatch):
 @pytest.mark.asyncio
 async def test_regulations_and_adverse_positive(monkeypatch):
     # positive branch: fake foundry client returns items
-    import agents.compliance.tools.regulations_rag as rrmod
+    import argus.agents.compliance.tools.regulations_rag as rrmod
 
     class FakeKB:
         def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
@@ -137,8 +137,8 @@ async def test_regulations_and_adverse_positive(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_adverse_and_sanctions_positive(monkeypatch):
-    import agents.screening.tools.adverse_media_scanner as am
-    import agents.screening.tools.sanctions_checker as sc
+    import argus.agents.screening.tools.adverse_media_scanner as am
+    import argus.agents.screening.tools.sanctions_checker as sc
 
     class FakeKB:
         def query(self, knowledge_base_name=None, query=None, top=0, include_citations=False):
@@ -169,9 +169,9 @@ async def test_adverse_and_sanctions_positive(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_registry_customer_and_ubo_with_db(monkeypatch):
-    import agents.corporate.tools.registry_lookup as reg
-    import agents.corporate.tools.ubo_resolver as ubo
-    import agents.identity.tools.customer_lookup as cust
+    import argus.agents.corporate.tools.registry_lookup as reg
+    import argus.agents.corporate.tools.ubo_resolver as ubo
+    import argus.agents.identity.tools.customer_lookup as cust
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -205,7 +205,7 @@ async def test_registry_customer_and_ubo_with_db(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_corporate_agent_invoke(monkeypatch):
-    import agents.corporate.agent as corp
+    import argus.agents.corporate.agent as corp
 
     # Patch dependent functions
     monkeypatch.setattr(corp, "get_demo_profile", lambda name, etype, j: None)
@@ -237,7 +237,7 @@ async def test_corporate_agent_invoke(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_identity_agent_invoke(monkeypatch):
-    import agents.identity.agent as ident
+    import argus.agents.identity.agent as ident
 
     monkeypatch.setattr(ident, "get_demo_profile", lambda name, etype, j: None)
 
@@ -267,7 +267,7 @@ async def test_identity_agent_invoke(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_compliance_agent_invoke(monkeypatch):
-    import agents.compliance.agent as comp
+    import argus.agents.compliance.agent as comp
 
     # Patch external tool calls
     async def fake_reg(q, j, t, ri):
@@ -308,9 +308,9 @@ async def test_compliance_agent_invoke(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_registry_and_customer_and_ubo_mock(monkeypatch):
-    import agents.corporate.tools.registry_lookup as reg
-    import agents.corporate.tools.ubo_resolver as ubo
-    import agents.identity.tools.customer_lookup as cust
+    import argus.agents.corporate.tools.registry_lookup as reg
+    import argus.agents.corporate.tools.ubo_resolver as ubo
+    import argus.agents.identity.tools.customer_lookup as cust
 
     # Patch get_cosmos_database in each module to raise, hitting mock branches
     monkeypatch.setattr(
@@ -335,8 +335,8 @@ async def test_registry_and_customer_and_ubo_mock(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_screening_tools_mock_and_metadata(monkeypatch):
-    import agents.screening.tools.adverse_media_scanner as am
-    import agents.screening.tools.sanctions_checker as sc
+    import argus.agents.screening.tools.adverse_media_scanner as am
+    import argus.agents.screening.tools.sanctions_checker as sc
 
     # Patch get_foundry_client to raise
     monkeypatch.setattr(
@@ -355,8 +355,8 @@ async def test_screening_tools_mock_and_metadata(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_typology_and_transaction_monitor_and_ocr():
-    from agents.identity.tools import ocr_processor
-    from agents.transaction.tools import transaction_monitor, typology_matcher
+    from argus.agents.identity.tools import ocr_processor
+    from argus.agents.transaction.tools import transaction_monitor, typology_matcher
 
     # typology: empty patterns -> []
     assert await typology_matcher.typology_matcher({}) == []
@@ -370,7 +370,7 @@ async def test_typology_and_transaction_monitor_and_ocr():
     # monkeypatch the get_cosmos_database used inside module
     from pytest import MonkeyPatch
 
-    import agents.transaction.tools.transaction_monitor as tm
+    import argus.agents.transaction.tools.transaction_monitor as tm
 
     mp = MonkeyPatch()
     mp.setattr(tm, "get_cosmos_database", lambda: (_ for _ in ()).throw(RuntimeError("no db")))
@@ -388,7 +388,7 @@ async def test_typology_and_transaction_monitor_and_ocr():
 # ── pep_checker: DB hit ───────────────────────────────────────────────────────
 @pytest.mark.asyncio
 async def test_pep_checker_db_hit(monkeypatch):
-    import agents.screening.tools.pep_checker as pc
+    import argus.agents.screening.tools.pep_checker as pc
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -409,7 +409,7 @@ async def test_pep_checker_db_hit(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_pep_checker_db_no_hit(monkeypatch):
-    import agents.screening.tools.pep_checker as pc
+    import argus.agents.screening.tools.pep_checker as pc
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -428,7 +428,7 @@ async def test_pep_checker_db_no_hit(monkeypatch):
 # ── transaction_monitor: DB hit + empty ──────────────────────────────────────
 @pytest.mark.asyncio
 async def test_transaction_monitor_db_hit(monkeypatch):
-    import agents.transaction.tools.transaction_monitor as tm
+    import argus.agents.transaction.tools.transaction_monitor as tm
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -450,7 +450,7 @@ async def test_transaction_monitor_db_hit(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_transaction_monitor_db_empty(monkeypatch):
-    import agents.transaction.tools.transaction_monitor as tm
+    import argus.agents.transaction.tools.transaction_monitor as tm
 
     class FakeContainer:
         def query_items(self, query=None, parameters=None, enable_cross_partition_query=False):
@@ -469,7 +469,7 @@ async def test_transaction_monitor_db_empty(monkeypatch):
 # ── typology_matcher: search-client positive hits ────────────────────────────
 @pytest.mark.asyncio
 async def test_typology_matcher_search_hit(monkeypatch):
-    import agents.transaction.tools.typology_matcher as tmt
+    import argus.agents.transaction.tools.typology_matcher as tmt
 
     class FakeResult:
         def __init__(self, hits):
@@ -499,7 +499,7 @@ async def test_typology_matcher_search_hit(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_typology_matcher_regulations_fallback(monkeypatch):
-    import agents.transaction.tools.typology_matcher as tmt
+    import argus.agents.transaction.tools.typology_matcher as tmt
 
     call_count = 0
 
@@ -535,7 +535,7 @@ async def test_typology_matcher_regulations_fallback(monkeypatch):
 # ── ocr_processor: mock fallback for all doc types ───────────────────────────
 @pytest.mark.asyncio
 async def test_ocr_processor_mock_all_doc_types(monkeypatch):
-    from agents.identity.tools import ocr_processor as ocp
+    from argus.agents.identity.tools import ocr_processor as ocp
 
     # Force the Azure import to fail so we exercise _mock_ocr for each doc type
     monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "")
@@ -555,7 +555,7 @@ async def test_ocr_processor_mock_all_doc_types(monkeypatch):
 async def test_call_agent_http_error(monkeypatch):
     import httpx
 
-    from agents.orchestrator import agent as orch
+    from argus.agents.orchestrator import agent as orch
 
     async def raise_http(*args, **kwargs):
         raise httpx.ConnectError("connection refused")

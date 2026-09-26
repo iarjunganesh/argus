@@ -4,11 +4,11 @@ from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
-import agents.compliance.agent as comp
-import agents.compliance.tools.explain_decision as ed
-import agents.compliance.tools.regulations_rag as rr
-from agents.compliance.tools.gap_analyzer import gap_analyzer
-from agents.compliance.tools.risk_scorer import risk_scorer
+import argus.agents.compliance.agent as comp
+import argus.agents.compliance.tools.explain_decision as ed
+import argus.agents.compliance.tools.regulations_rag as rr
+from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
+from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
 
 def _msg(upstream: dict) -> comp.A2AMessage:

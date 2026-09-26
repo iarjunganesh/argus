@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-import config
+import argus.config as config
 
 
 class Recorder:

@@ -5,9 +5,9 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-import agents.screening.agent as screening
-import agents.screening.tools.adverse_media_scanner as am
-import agents.screening.tools.sanctions_checker as sc
+import argus.agents.screening.agent as screening
+import argus.agents.screening.tools.adverse_media_scanner as am
+import argus.agents.screening.tools.sanctions_checker as sc
 
 
 def _msg(payload: dict) -> screening.A2AMessage:

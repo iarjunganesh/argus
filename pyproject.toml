@@ -39,14 +39,20 @@ data = [
     "reportlab>=5.0.1",
 ]
 
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
 [tool.uv]
-package = false
+# The application is the installable package `argus` in src/ (the standard "src layout"):
+# `uv sync` installs it in editable mode, so every entry point imports `argus.*` directly.
 default-groups = ["dev", "ui", "data"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py314"
 extend-exclude = ["archive"]
+src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
@@ -59,11 +65,11 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 #   re-wrapping it would change what the model receives.
 # - demo_profiles.py and the data generators are data tables.
 # - gradio_app.py is HTML/CSS in strings and is due to be replaced by the web UI.
-# - infra/ and foundry_iq/ are operator scripts with long schema and query literals.
-"agents/compliance/tools/explain_decision.py" = ["E501"]
-"utils/demo_profiles.py" = ["E501"]
+# - infra/ holds operator scripts with long schema and query literals.
+"src/argus/agents/compliance/tools/explain_decision.py" = ["E501"]
+"src/argus/utils/demo_profiles.py" = ["E501"]
 "data/**" = ["E501"]
-"ui/gradio_app.py" = ["E501"]
+"src/argus/ui/gradio_app.py" = ["E501"]
 "infra/**" = ["E501"]
 "foundry_iq/**" = ["E501"]
 
@@ -73,7 +79,7 @@ asyncio_mode = "auto"
 addopts = "-ra"
 
 [tool.coverage.run]
-source = ["agents", "api", "utils", "accessibility", "community", "ui", "config"]
+source_pkgs = ["argus"]
 branch = true
 
 [tool.coverage.report]
@@ -89,4 +95,5 @@ exclude_also = ['if __name__ == "__main__":']
 python_version = "3.14"
 ignore_missing_imports = true
 warn_unused_ignores = true
-exclude = ["archive/", "data/", "scripts/", "infra/", "foundry_iq/"]
+mypy_path = "src"
+files = ["src"]

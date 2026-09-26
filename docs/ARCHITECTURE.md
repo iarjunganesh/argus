@@ -23,20 +23,20 @@ A local run is seven processes:
 
 | Process | Entry point | Port | Role |
 | --- | --- | --- | --- |
-| API gateway | `api/main.py` | 8000 | Accepts KYC requests, runs the orchestrator as a background task, serves reports |
-| Identity agent | `agents/identity/agent.py` | 8001 | Customer lookup, OCR, identity validation |
-| Screening agent | `agents/screening/agent.py` | 8002 | Sanctions, adverse media, PEP checks |
-| Corporate agent | `agents/corporate/agent.py` | 8003 | Ownership (UBO), registry lookup, jurisdiction risk |
-| Transaction agent | `agents/transaction/agent.py` | 8004 | Transaction monitoring, patterns, typology matching |
-| Compliance agent | `agents/compliance/agent.py` | 8005 | Regulations lookup, risk scoring, gap analysis, explanation |
-| UI | `ui/gradio_app.py` | 7860 | Gradio front end that calls the API gateway |
+| API gateway | `src/argus/api/main.py` | 8000 | Accepts KYC requests, runs the orchestrator as a background task, serves reports |
+| Identity agent | `src/argus/agents/identity/agent.py` | 8001 | Customer lookup, OCR, identity validation |
+| Screening agent | `src/argus/agents/screening/agent.py` | 8002 | Sanctions, adverse media, PEP checks |
+| Corporate agent | `src/argus/agents/corporate/agent.py` | 8003 | Ownership (UBO), registry lookup, jurisdiction risk |
+| Transaction agent | `src/argus/agents/transaction/agent.py` | 8004 | Transaction monitoring, patterns, typology matching |
+| Compliance agent | `src/argus/agents/compliance/agent.py` | 8005 | Regulations lookup, risk scoring, gap analysis, explanation |
+| UI | `src/argus/ui/gradio_app.py` | 7860 | Gradio front end that calls the API gateway |
 
 `scripts/start_demo.ps1` starts all seven on Windows and `scripts/end_demo.ps1` stops them.
 
 ## Request flow
 
 1. The UI posts to `POST /api/v1/kyc/assess`. The gateway returns a `report_id` immediately and
-   runs `agents/orchestrator/agent.py` as a FastAPI background task.
+   runs `src/argus/agents/orchestrator/agent.py` as a FastAPI background task.
 2. **Fan-out.** The orchestrator calls the Identity, Screening, Corporate and Transaction agents in
    parallel. Each call is an HTTP `POST /a2a/invoke` carrying a custom JSON envelope
    (`a2a_version`, `source_agent`, `target_agent`, `task_id`, `payload`). Despite the name, this is
@@ -48,7 +48,7 @@ A local run is seven processes:
    gateway restarts.
 
 **Demo shortcut.** When the entity matches one of the six demo scenarios
-(`utils/demo_profiles.py`), the orchestrator skips the four parallel agents and uses the recorded
+(`src/argus/utils/demo_profiles.py`), the orchestrator skips the four parallel agents and uses the recorded
 profile. The compliance fan-in still runs live.
 
 An agent that is unreachable is recorded as `status: error` and the assessment continues without it.

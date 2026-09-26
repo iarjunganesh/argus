@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from utils.env_loader import load_repo_env
+from argus.utils.env_loader import load_repo_env
 
 load_repo_env(__file__)
 

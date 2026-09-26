@@ -1,7 +1,7 @@
 """Community Edition presets need no cloud credentials."""
 
-from community import CommunityConfig, LLMTier
-from community.config import EntityStoreBackend, OCRBackend, VectorBackend
+from argus.community import CommunityConfig, LLMTier
+from argus.community.config import EntityStoreBackend, OCRBackend, VectorBackend
 
 
 def test_defaults_are_local_and_free():

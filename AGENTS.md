@@ -51,7 +51,7 @@ is not needed.
 uv sync                                               # install the locked environment
 uv run ruff check .                                   # lint
 uv run ruff format --check .                          # formatting
-uv run mypy agents api utils accessibility community ui config.py
+uv run mypy
 uv run pytest --cov                                   # tests, 100% line + branch coverage required
 uv run python scripts/check_docs.py                   # docs agree with the repository
 uv run python scripts/render_assets.py --check        # image variants current, WCAG AA contrast
@@ -96,12 +96,7 @@ then run every command above.
 
 | Path | What it holds |
 | --- | --- |
-| `agents/` | The orchestrator and the five agent services, each with its `tools/` |
-| `api/` | The FastAPI gateway and its request/response schemas |
-| `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
-| `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
-| `accessibility/` | WCAG contrast utilities, also used to check the images |
-| `community/` | Community Edition configuration presets (a design, not yet runnable) |
+| `src/` | The application: the installable package `argus` (see below) |
 | `data/` | Synthetic data generators and public-source demo data |
 | `foundry_iq/` | Scripts that create and fill the Foundry IQ knowledge bases |
 | `infra/` | Bicep template and Azure setup scripts |
@@ -112,6 +107,18 @@ then run every command above.
 | `docs/` | Architecture as it runs today, and the v2 plan |
 | `roadmap/` | Longer-term ideas that are not scheduled |
 | `archive/` | Frozen hackathon material. Never edit it except to add to its index. |
+
+Inside `src/argus/`:
+
+| Package | What it holds |
+| --- | --- |
+| `agents/` | The orchestrator and the five agent services, each with its `tools/` |
+| `api/` | The FastAPI gateway and its request/response schemas |
+| `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
+| `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
+| `accessibility/` | WCAG contrast utilities, also used to check the images |
+| `community/` | Community Edition configuration presets (a design, not yet runnable) |
+| `config.py` | Settings and the Azure client factories |
 
 `scripts/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.

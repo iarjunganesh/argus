@@ -14,7 +14,7 @@ format:
 	uv run ruff check . --fix
 
 typecheck:
-	uv run mypy agents api utils accessibility community ui config.py
+	uv run mypy
 
 test:
 	uv run pytest --cov
@@ -51,7 +51,7 @@ index-knowledge-bases:
 	uv run python foundry_iq/index_sanctions_and_media.py
 
 run-api:
-	uv run uvicorn api.main:app --host 127.0.0.1 --port 8000
+	uv run uvicorn argus.api.main:app --host 127.0.0.1 --port 8000
 
 run-ui:
-	uv run python ui/gradio_app.py
+	uv run python -m argus.ui.gradio_app

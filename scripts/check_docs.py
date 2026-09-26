@@ -98,7 +98,11 @@ def check_changelog() -> list[str]:
 
 def check_repo_map(files: list[str]) -> list[str]:
     """AGENTS.md's repository map lists exactly the tracked top-level directories."""
-    listed = set(MAP_ROW.findall((ROOT / "AGENTS.md").read_text(encoding="utf-8")))
+    text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    # The first table under the heading lists the top level; later tables go deeper.
+    section = text.split("## Repository map", 1)[-1].lstrip("\n")
+    table = section.split("\n\n", 1)[0]
+    listed = set(MAP_ROW.findall(table))
     tracked = {f.split("/", 1)[0] for f in files if "/" in f and not f.startswith(".")}
     return [f"AGENTS.md repository map is missing {name}/" for name in sorted(tracked - listed)] + [
         f"AGENTS.md repository map lists {name}/, which is not tracked"

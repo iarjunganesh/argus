@@ -1,6 +1,6 @@
 # Roadmap: ARGUS Community Edition
 
-**Status:** Designed — scaffolding in `community/`
+**Status:** Designed — scaffolding in `src/argus/community/`
 **Goal:** Zero-cost, self-hostable ARGUS for NGOs, microfinance institutions, and community banks.
 
 ---

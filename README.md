@@ -79,7 +79,7 @@ ARGUS is being rebuilt after the hackathon. This table is the honest state of th
 | Azure AI Search typology matching | ✅ Works when configured |
 | Azure Document Intelligence OCR | ⚠️ **Not working.** `ocr_processor` imports `azure.ai.formrecognizer`, which isn't a project dependency, so it always returns mock fields. |
 | **Foundry IQ knowledge-base queries** (regulations, sanctions, adverse media) | ⚠️ **Not working.** The tools call `AIProjectClient.knowledge_bases.query`, which doesn't exist in `azure-ai-projects` (checked 1.0.0 and 2.6.1), so every query falls back to mock results. Fixing this is part of the rebuild. |
-| The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
+| The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
 | Gradio UI | ✅ Works |
 
 Every tool result carries a `source` field (`mock` when a fallback was used), so a report can be checked for which parts were live.
@@ -134,9 +134,9 @@ In short:
 
 Longer-term ideas, not yet scheduled, live in [`roadmap/`](roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
 
-- [`accessibility/`](accessibility/) has contrast and ARIA utilities. The current risk palette **fails** WCAG AA on white, which a test records as an expected failure.
-- [`agents/compliance/tools/explain_decision.py`](agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
-- [`community/`](community/) holds a design and configuration sketch; it doesn't run yet.
+- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. The current risk palette **fails** WCAG AA on white, which a test records as an expected failure.
+- [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
+- [`community/`](src/argus/community/) holds a design and configuration sketch; it doesn't run yet.
 
 ---
 
@@ -180,20 +180,20 @@ cp .env.example .env    # optional: add Azure credentials for live calls
 Start the stack. On Windows, `scripts/start_demo.ps1` starts everything and `scripts/end_demo.ps1` stops it. Elsewhere, start each process in its own terminal:
 
 ```bash
-uv run uvicorn agents.identity.agent:app --port 8001
-uv run uvicorn agents.screening.agent:app --port 8002
-uv run uvicorn agents.corporate.agent:app --port 8003
-uv run uvicorn agents.transaction.agent:app --port 8004
-uv run uvicorn agents.compliance.agent:app --port 8005
-uv run uvicorn api.main:app --port 8000
-uv run python ui/gradio_app.py    # then open http://localhost:7860
+uv run uvicorn argus.agents.identity.agent:app --port 8001
+uv run uvicorn argus.agents.screening.agent:app --port 8002
+uv run uvicorn argus.agents.corporate.agent:app --port 8003
+uv run uvicorn argus.agents.transaction.agent:app --port 8004
+uv run uvicorn argus.agents.compliance.agent:app --port 8005
+uv run uvicorn argus.api.main:app --port 8000
+uv run python -m argus.ui.gradio_app    # then open http://localhost:7860
 ```
 
 Run the same checks as CI:
 
 ```bash
 uv run ruff check . && uv run ruff format --check .
-uv run mypy agents api utils accessibility community ui config.py
+uv run mypy
 uv run pytest --cov
 uv run python scripts/check_docs.py
 uv run python scripts/render_assets.py --check

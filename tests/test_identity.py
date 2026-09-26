@@ -2,9 +2,9 @@
 
 from fastapi.testclient import TestClient
 
-import agents.identity.agent as ident
-import agents.identity.tools.customer_lookup as cust
-from agents.identity.tools.identity_validator import identity_validator
+import argus.agents.identity.agent as ident
+import argus.agents.identity.tools.customer_lookup as cust
+from argus.agents.identity.tools.identity_validator import identity_validator
 
 
 def _msg(payload: dict) -> ident.A2AMessage:

@@ -10,7 +10,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_identity_validator_name_match():
-    from agents.identity.tools.identity_validator import identity_validator
+    from argus.agents.identity.tools.identity_validator import identity_validator
 
     registry = {"found": True, "record": {"name": "Jane Doe", "date_of_birth": "1980-01-15"}}
     ocr = [
@@ -23,7 +23,7 @@ async def test_identity_validator_name_match():
 
 @pytest.mark.asyncio
 async def test_identity_validator_name_mismatch():
-    from agents.identity.tools.identity_validator import identity_validator
+    from argus.agents.identity.tools.identity_validator import identity_validator
 
     registry = {"found": True, "record": {"name": "Jane Doe"}}
     ocr = [{"fields": {"full_name": {"value": "John Smith"}}}]
@@ -35,7 +35,7 @@ async def test_identity_validator_name_mismatch():
 
 @pytest.mark.asyncio
 async def test_ocr_processor_azure_doc_intelligence_success(monkeypatch):
-    from agents.identity.tools.ocr_processor import ocr_processor
+    from argus.agents.identity.tools.ocr_processor import ocr_processor
 
     class FakeField:
         def __init__(self, value, confidence):
@@ -97,7 +97,7 @@ async def test_ocr_processor_azure_doc_intelligence_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_jurisdiction_high_risk():
-    from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 
     result = await jurisdiction_mapper("KY")
     assert result["fatf_risk_tier"] == "high"
@@ -106,7 +106,7 @@ async def test_jurisdiction_high_risk():
 
 @pytest.mark.asyncio
 async def test_jurisdiction_low_risk():
-    from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 
     result = await jurisdiction_mapper("SE")
     assert result["fatf_risk_tier"] == "low"
@@ -114,7 +114,7 @@ async def test_jurisdiction_low_risk():
 
 @pytest.mark.asyncio
 async def test_jurisdiction_medium_risk():
-    from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 
     result = await jurisdiction_mapper("ng")
     assert result["country_code"] == "NG"
@@ -124,7 +124,7 @@ async def test_jurisdiction_medium_risk():
 
 @pytest.mark.asyncio
 async def test_jurisdiction_unknown_when_missing_code():
-    from agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
+    from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 
     result = await jurisdiction_mapper("")
     assert result["country_code"] == ""
@@ -136,7 +136,7 @@ async def test_jurisdiction_unknown_when_missing_code():
 
 
 def test_risk_scorer_high_risk():
-    from agents.compliance.tools.risk_scorer import risk_scorer
+    from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
     identity = {"identity_score": 80}
     screening = {
@@ -153,7 +153,7 @@ def test_risk_scorer_high_risk():
 
 
 def test_risk_scorer_low_risk():
-    from agents.compliance.tools.risk_scorer import risk_scorer
+    from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
     result = risk_scorer(
         {"identity_score": 95},
@@ -173,7 +173,7 @@ def test_risk_scorer_low_risk():
 
 
 def test_pattern_detector_structuring():
-    from agents.transaction.tools.pattern_detector import pattern_detector
+    from argus.agents.transaction.tools.pattern_detector import pattern_detector
 
     transactions = [{"amount": 9200, "counterparty": f"Co{i}"} for i in range(7)]
     result = pattern_detector({"transactions": transactions})
@@ -182,7 +182,7 @@ def test_pattern_detector_structuring():
 
 
 def test_pattern_detector_clean():
-    from agents.transaction.tools.pattern_detector import pattern_detector
+    from argus.agents.transaction.tools.pattern_detector import pattern_detector
 
     transactions = [{"amount": 50000, "counterparty": "Big Corp"} for _ in range(5)]
     result = pattern_detector({"transactions": transactions})
@@ -193,14 +193,14 @@ def test_pattern_detector_clean():
 
 
 def test_gap_analyzer_pep():
-    from agents.compliance.tools.gap_analyzer import gap_analyzer
+    from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 
     gaps = gap_analyzer(["pep"], {}, {"overall": 60})
     assert any("PEP" in g or "pep" in g.lower() or "wealth" in g.lower() for g in gaps)
 
 
 def test_gap_analyzer_clean():
-    from agents.compliance.tools.gap_analyzer import gap_analyzer
+    from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 
     gaps = gap_analyzer([], {}, {"overall": 20})
     assert isinstance(gaps, list)

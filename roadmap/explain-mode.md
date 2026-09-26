@@ -1,6 +1,6 @@
 # Roadmap: ARGUS Explain Mode
 
-**Status:** In progress — `explain_decision` tool wired in `agents/compliance/tools/explain_decision.py`
+**Status:** In progress — `explain_decision` tool wired in `src/argus/agents/compliance/tools/explain_decision.py`
 **Goal:** A parallel plain-language report version for end customers, NGO caseworkers, and non-technical reviewers.
 
 ---
@@ -38,7 +38,7 @@ Same underlying data. Different output.
 
 ## Architecture
 
-The `explain_decision` tool already exists in `agents/compliance/tools/explain_decision.py`. In v2 it becomes a first-class output path.
+The `explain_decision` tool already exists in `src/argus/agents/compliance/tools/explain_decision.py`. In v2 it becomes a first-class output path.
 
 ```mermaid
 graph LR

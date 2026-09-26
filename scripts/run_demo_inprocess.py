@@ -9,17 +9,17 @@ from pathlib import Path
 # Ensure repo root is on sys.path for package imports when running the script directly
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agents.orchestrator import agent as orchestrator
+from argus.agents.orchestrator import agent as orchestrator
 
 
 async def call_agent_local(agent_name: str, payload: dict, task_id: str) -> dict:
     # Map agent_name to module
     mapping = {
-        "identity": "agents.identity.agent",
-        "screening": "agents.screening.agent",
-        "corporate": "agents.corporate.agent",
-        "transaction": "agents.transaction.agent",
-        "compliance": "agents.compliance.agent",
+        "identity": "argus.agents.identity.agent",
+        "screening": "argus.agents.screening.agent",
+        "corporate": "argus.agents.corporate.agent",
+        "transaction": "argus.agents.transaction.agent",
+        "compliance": "argus.agents.compliance.agent",
     }
     mod_name = mapping.get(agent_name)
     if not mod_name:

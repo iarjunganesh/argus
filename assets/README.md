@@ -49,7 +49,7 @@ uv run python scripts/render_assets.py --no-raster
   `-light` and `-dark` files.
 - **Contrast is checked.** Each master lists its text/background colour pairs in a
   `/* CONTRAST ... */` comment. `--check` fails if any pair is below WCAG AA (4.5:1) in either
-  theme, using [`accessibility/wcag.py`](../accessibility/wcag.py).
+  theme, using [`accessibility/wcag.py`](../src/argus/accessibility/wcag.py).
 - **Rasters are exports, not sources.** PNG and GIF files need a Chromium browser and ffmpeg,
   so CI doesn't build or check them. Re-run the script after changing a master and commit the
   exports with it.
