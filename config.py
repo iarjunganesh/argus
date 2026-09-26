@@ -108,3 +108,7 @@ def get_foundry_client():
 FOUNDRY_IQ_KB_REGULATIONS = os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations")
 FOUNDRY_IQ_KB_SANCTIONS = os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions")
 FOUNDRY_IQ_KB_ADVERSEMEDIA = os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia")
+
+
+def _broken_for_ci_validation() -> int:
+    return "not an int"

@@ -15,7 +15,7 @@ def load_repo_env(start: str | Path | None = None) -> None:
     if os.environ.get("ARGUS_DISABLE_DOTENV") == "1":
         return
     base = Path(start or Path.cwd()).resolve()
-    if base.is_file():
+    if base.is_file( ):
         base = base.parent
 
     env_path = None

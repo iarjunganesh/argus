@@ -36,6 +36,7 @@ data = [
     "azure-storage-blob>=12.30.3",
     "pillow>=12.3.0",
     "python-dotenv>=1.2.3",
+    "pyyaml==5.3",
     "reportlab>=5.0.1",
 ]
 
