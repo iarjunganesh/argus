@@ -86,7 +86,8 @@ After each release tag, every dependency moves to its latest version in a pull r
 minimums, the GitHub Actions pins, and the Python version once all dependencies support it.
 Microsoft Agent Framework compatibility is part of that check once it is a dependency. **A
 release isn't finished until that pull request exists**; report which packages moved and whether
-anything broke. Until the release workflow automates it, do it by hand:
+anything broke. `release.yml` opens that pull request automatically after each tag (see
+[`docs/RELEASING.md`](docs/RELEASING.md)); to do the same by hand:
 
 ```sh
 uv lock --upgrade && uv sync
@@ -102,7 +103,7 @@ then run every command above.
 | `data/` | Synthetic data generators and public-source demo data |
 | `infra/` | Bicep template, Azure setup scripts, and `foundry_iq/` (create and fill the knowledge bases) |
 | `tests/` | The test suite (hermetic; no cloud access) |
-| `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs check and the image renderer |
+| `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs, version and release checks, the dependency refresh, and the image renderer |
 | `assets/` | Brand and architecture images, each drawn from an SVG master |
 | `docs/` | Architecture as it runs today, the v2 plan, and `roadmap/` (ideas not yet scheduled) |
 | `archive/` | Frozen hackathon material. Never edit it except to add to its index. |

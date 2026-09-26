@@ -9,12 +9,15 @@ Only an explicitly approved tag push publishes a release. Production deployment 
 2. Create the repository secret `DEPS_BOT_TOKEN`. Use a fine-grained PAT restricted to this
    repository, with Contents, Pull requests and Workflows read/write permissions. Workflows
    permission is needed because the refresh updates action pins. Never put the token in a file.
+   Regenerate it before it expires and update the secret; an expired token fails only the
+   refresh, which can then be retried (see below).
 3. Create the `deps-broken` label. These are repository setup actions requiring the maintainer's
    approval. Branch protection also needs separate approval: require the six CI jobs and a PR,
    and prohibit force pushes to `main`.
-4. Move the ready `Unreleased` entries into the target version section. Confirm the package
-   version, lock version and dated changelog section agree. The `0.1.0`
-   section is prepared, not proof of publication; set its actual release date when tagging.
+4. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
+   (the date you tag), add a new empty `## [Unreleased]` above it, set `version` in
+   `pyproject.toml` to `X.Y.Z` and run `uv lock`. Merge it before tagging, so the tagged commit
+   carries its own dated notes.
 5. Run all commands in `AGENTS.md`, plus
    `uv run python scripts/ci/check_versions.py --check` and
    `uv run python scripts/ci/release_notes.py v0.1.0 --output .tmp/release-notes.md`.

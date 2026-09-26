@@ -8,7 +8,8 @@
 - [ ] `uv run ruff check .` and `uv run ruff format --check .`
 - [ ] `uv run mypy`
 - [ ] `uv run pytest --cov` (100% line and branch coverage)
-- [ ] `uv run python scripts/ci/check_docs.py` and `uv run python scripts/ci/render_assets.py --check`
+- [ ] `uv run python scripts/ci/check_docs.py`, `uv run python scripts/ci/check_versions.py --check`
+      and `uv run python scripts/ci/render_assets.py --check`
 
 ## Also
 

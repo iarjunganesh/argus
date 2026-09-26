@@ -30,6 +30,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy
 uv run pytest --cov
 uv run python scripts/ci/check_docs.py
+uv run python scripts/ci/check_versions.py --check
 uv run python scripts/ci/render_assets.py --check
 ```
 
@@ -43,8 +44,8 @@ uv run python scripts/ci/render_assets.py --check
 
 ## What helps most right now
 
-1. An accessible risk palette that passes WCAG AA (see the expected failure in
-   `tests/test_accessibility.py`).
+1. Accessibility beyond the tested risk palette: screen-reader announcements and keyboard
+   navigation (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md)).
 2. Translations of explanation output: the people who most need plain language often don't
    read English.
 

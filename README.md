@@ -196,6 +196,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy
 uv run pytest --cov
 uv run python scripts/ci/check_docs.py
+uv run python scripts/ci/check_versions.py --check
 uv run python scripts/ci/render_assets.py --check
 ```
 
