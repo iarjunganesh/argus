@@ -96,7 +96,7 @@ Rules:
             temperature=0.2,
         )
         text = (response.choices[0].message.content or "").strip()
-    except Exception as exc:  # no model configured, or the call failed: say so and fall back
+    except Exception as exc:  # noqa: BLE001 - any model failure falls back, labelled as such
         logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": str(exc)})
         text = _fallback_explanation(tier, key_findings, held, edd)
         return {"text": text, "source": "fallback"}
@@ -187,7 +187,7 @@ Rules:
         )
         raw = (response.choices[0].message.content or "").strip()
         return _parse_plain_language_response(raw, tier, ref)
-    except Exception:
+    except Exception:  # noqa: BLE001 - any model failure falls back to the fixed letter
         return _fallback_plain_language(tier, ref)
 
 
