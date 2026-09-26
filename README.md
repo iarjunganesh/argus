@@ -134,7 +134,7 @@ In short:
 
 Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
 
-- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. The current risk palette **fails** WCAG AA on white, which a test records as an expected failure.
+- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. Report risk labels use that shared palette as white-on-color badges, checked by the palette and rendered-HTML tests. This is not a full UI accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
 - [`community/`](src/argus/community/) holds a design and configuration sketch; it doesn't run yet.
 
@@ -207,7 +207,7 @@ To use live Azure services, provision them (`infra/`), generate the synthetic da
 
 ARGUS is going through a cleanup before the v2 work starts, so the structure is still moving. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
 
-1. An accessible risk palette that passes WCAG AA (see the expected failure in `tests/test_accessibility.py`)
+1. Accessibility improvements beyond the tested risk palette: screen-reader announcements and keyboard navigation (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
 2. Translations of explanation output — the people who need plain language most often aren't reading in English
 
 ---

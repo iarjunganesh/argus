@@ -13,6 +13,8 @@ from pathlib import Path
 import gradio as gr
 import httpx
 
+from argus.accessibility.wcag import ARGUS_PALETTE
+
 API_BASE = os.getenv("API_BASE", "http://localhost:8000")
 
 
@@ -69,7 +71,14 @@ def format_agent_activity(report: dict) -> str:
 
     rows = ""
     for name, status in agents:
-        color = "#2ecc71" if status == "completed" else "#e74c3c" if status == "error" else "#888"
+        token = (
+            "risk_low"
+            if status == "completed"
+            else "risk_high"
+            if status == "error"
+            else "subdued_text"
+        )
+        color, text_color = ARGUS_PALETTE[token]
         label = "done" if status == "completed" else "error" if status == "error" else status
         key = name.split()[0].lower()
         step_time = ts.get(key, "")
@@ -77,7 +86,7 @@ def format_agent_activity(report: dict) -> str:
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-color-primary,#e5e7eb);">
             <span style="flex:1;font-weight:500">{name}</span>
             <span style="color:var(--body-text-color-subdued,#64748b);font-size:0.8em;font-family:monospace">{step_time}</span>
-            <span style="color:{color};font-size:0.82em;font-weight:600">{label}</span>
+            <span style="background:{color};color:{text_color};padding:2px 8px;border-radius:12px;font-size:0.82em;font-weight:600">{label}</span>
         </div>"""
 
     return f"""
@@ -108,13 +117,7 @@ def format_dimension_scores(report: dict) -> str:
         dimension = dims.get(key, {})
         score = dimension.get("score", 0)
         tier = dimension.get("tier", "-")
-        tier_colors = {
-            "LOW": "#2ecc71",
-            "MEDIUM": "#f39c12",
-            "HIGH": "#e74c3c",
-            "CRITICAL": "#8e1a0e",
-        }
-        color = tier_colors.get(tier, "#888")
+        color, text_color = ARGUS_PALETTE.get(f"risk_{tier.lower()}", ARGUS_PALETTE["subdued_text"])
         bar = max(0, min(int(score), 100))
         rows += f"""
         <tr>
@@ -124,9 +127,9 @@ def format_dimension_scores(report: dict) -> str:
                     <div style="background:{color};border-radius:4px;height:8px;width:{bar}%"></div>
                 </div>
             </td>
-            <td style="padding:6px 12px;text-align:center;color:{color};font-weight:600">{score}</td>
+            <td style="padding:6px 12px;text-align:center;font-weight:600">{score}</td>
             <td style="padding:6px 12px;text-align:center">
-                <span style="background:var(--block-background-fill,#ffffff);color:{color};border:1px solid {color};padding:2px 8px;border-radius:12px;font-size:0.75em;font-weight:600;">{tier}</span>
+                <span style="background:{color};color:{text_color};border:1px solid {color};padding:2px 8px;border-radius:12px;font-size:0.75em;font-weight:600;">{tier}</span>
             </td>
         </tr>"""
 
@@ -161,21 +164,20 @@ def format_executive_summary(report: dict) -> str:
 
     drivers_html = "".join(f"<li>{html.escape(str(driver))}</li>" for driver in drivers)
 
-    tier_colors = {"LOW": "#2ecc71", "MEDIUM": "#f39c12", "HIGH": "#e74c3c", "CRITICAL": "#8e1a0e"}
-    color = tier_colors.get(tier, "#888")
+    color, text_color = ARGUS_PALETTE.get(f"risk_{tier.lower()}", ARGUS_PALETTE["subdued_text"])
 
     return f"""
     <div style="margin:16px 0;padding:18px 20px;border-radius:16px;background:var(--block-background-fill,#ffffff);color:var(--body-text-color,#111827);border:1px solid var(--border-color-primary,#e5e7eb);box-shadow:0 10px 26px rgba(15,23,42,0.08);">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
             <div>
                 <div style="letter-spacing:0.14em;text-transform:uppercase;font-size:0.76em;color:var(--body-text-color-subdued,#64748b);margin-bottom:6px;">ARGUS Decision</div>
-                <h2 style="margin:0;font-size:1.8rem;line-height:1.1;color:{color};">{tier}</h2>
+                <h2 style="margin:0;padding:4px 10px;display:inline-block;border-radius:8px;font-size:1.8rem;line-height:1.1;background:{color};color:{text_color};">{tier}</h2>
                 <p style="margin:6px 0 0;color:var(--body-text-color-subdued,#475569);max-width:640px;">{html.escape(recommendation)}</p>
             </div>
             <div style="min-width:240px;background:var(--background-fill-secondary,#f8fafc);border:1px solid var(--border-color-primary,#e2e8f0);border-radius:14px;padding:14px 16px;">
                 <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
                     <span style="color:var(--body-text-color-subdued,#64748b);">Risk Tier</span>
-                    <strong style="color:{color};">{tier}</strong>
+                    <strong style="background:{color};color:{text_color};padding:2px 8px;border-radius:12px;">{tier}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
                     <span style="color:var(--body-text-color-subdued,#64748b);">Risk Score</span>

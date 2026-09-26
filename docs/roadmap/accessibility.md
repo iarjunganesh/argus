@@ -20,13 +20,13 @@ A compliance tool that is inaccessible is itself a compliance risk.
 
 ## Current state (v1)
 
-- ✅ Light/dark mode — uses Gradio theme variables, no hard-coded colors
+- ✅ Light/dark surfaces use Gradio theme variables; risk and status badges use explicit audited color pairs
 - ✅ Risk tier text always paired with color (never color alone)
 - ✅ Semantic heading structure (h2 → h3 → content)
 - ❌ No ARIA labels on interactive elements
 - ❌ No ARIA live region for async report loading
 - ❌ No keyboard navigation for report sections
-- ❌ Color contrast not programmatically verified (HIGH red: 3.0:1 on white, fails AA)
+- ✅ Shared palette and rendered risk/status badge contrast verified in CI; other UI surfaces still need an accessibility audit
 - ❌ No `prefers-reduced-motion` handling
 - ❌ No high-contrast mode toggle
 
@@ -36,14 +36,16 @@ A compliance tool that is inaccessible is itself a compliance risk.
 
 ### Color contrast
 
-All risk tier colors verified against `src/argus/accessibility/wcag.py`:
+Risk palette correction completed during cleanup. The shared pairs are checked against
+`src/argus/accessibility/wcag.py`; white text on these badge backgrounds has the same ratio:
 
-- HIGH (#e74c3c on #ffffff) — currently 3.98:1, fails AA. Fix: darken to #c0392b (4.56:1 ✅)
-- MEDIUM (#f39c12 on #ffffff) — currently 2.82:1, fails AA. Fix: darken to #d68910 — or pair with bold + underline as a non-color cue
-- LOW (#2ecc71 on #ffffff) — currently 2.33:1, fails AA. Fix: darken text to #1e8449 or use on dark background
-- CRITICAL (#8e1a0e on #ffffff) — 8.2:1 ✅ passes AAA
+- HIGH (#c0392b with #ffffff) — 5.44:1, passes AA
+- MEDIUM (#a16207 with #ffffff) — 4.92:1, passes AA
+- LOW (#1e8449 with #ffffff) — 4.72:1, passes AA
+- CRITICAL (#8e1a0e with #ffffff) — 9.11:1, passes AAA
 
-Strategy: every risk tier MUST use both color AND a non-color cue (icon, pattern, text label). Color contrast ratios are secondary validation.
+Every risk tier retains a text label, so color is not its only cue. Non-color cues do not
+replace the contrast requirement. Remaining work includes auditing all other UI surfaces.
 
 ### ARIA live regions
 
@@ -89,7 +91,7 @@ User preference stored in `localStorage`. Swaps to a high-contrast palette:
 
 ```python
 # tests/test_accessibility.py
-from accessibility.wcag import audit_palette, WCAGLevel, ARGUS_PALETTE
+from argus.accessibility.wcag import audit_palette, WCAGLevel, ARGUS_PALETTE
 
 
 def test_argus_palette_aa_compliance():
@@ -104,4 +106,4 @@ def test_argus_palette_aa_compliance():
 
 - `src/argus/accessibility/wcag.py` — contrast ratio checker, palette auditor
 - `src/argus/accessibility/aria.py` — centralized ARIA label strings
-- `tests/test_accessibility.py` — CI-enforced contrast checks (to be added)
+- `tests/test_accessibility.py` and `tests/test_gradio_ui.py` — CI-enforced palette and rendered-badge contrast checks

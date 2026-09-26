@@ -1,8 +1,39 @@
+import re
+
 import httpx
 import pytest
 
+from argus.accessibility.wcag import ARGUS_PALETTE, WCAGLevel, contrast_ratio
 from argus.ui import gradio_app
 from argus.ui.gradio_app import format_report
+
+
+def assert_badge_contrast(page, label):
+    styles = re.findall(r'<(?:h2|strong|span) style="([^"]+)">' + re.escape(label) + r"</", page)
+    assert styles, f"No badge found for {label}"
+    for style in styles:
+        properties = dict(part.split(":", 1) for part in style.split(";") if part)
+        assert contrast_ratio(properties["color"], properties["background"]) >= WCAGLevel.AA.value
+
+
+@pytest.mark.parametrize("tier", ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"])
+def test_rendered_risk_badges_have_explicit_aa_pairs(tier):
+    summary = gradio_app.format_executive_summary({"risk_summary": {"overall_risk_tier": tier}})
+    dimensions = gradio_app.format_dimension_scores(
+        {"dimension_scores": {"identity": {"tier": tier, "score": 50}}}
+    )
+    assert_badge_contrast(summary, tier)
+    assert_badge_contrast(dimensions, tier)
+    color, _ = ARGUS_PALETTE.get(f"risk_{tier.lower()}", ARGUS_PALETTE["subdued_text"])
+    assert f"background:{color}" in summary and f"background:{color}" in dimensions
+
+
+@pytest.mark.parametrize(
+    "status,label", [("completed", "done"), ("error", "error"), ("pending", "pending")]
+)
+def test_rendered_status_badges_have_explicit_aa_pairs(status, label):
+    page = gradio_app.format_agent_activity({"audit_trace": {"identity_status": status}})
+    assert_badge_contrast(page, label)
 
 
 def test_format_report_includes_executive_summary_and_ocr_visibility():

@@ -23,6 +23,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Offline fixture tests check version drift, wheel compatibility, action resolution and failed
   refresh reporting. GitHub publication and automatic PR creation await the first approved tag.
 
+### Fixed
+
+- **Risk and status badges now meet the normal-text AA contrast threshold.** Darker green,
+  amber and red tokens replace the failing palette; the UI uses the shared audited pairs
+  with explicit white text on colored backgrounds. The formerly expected failure now passes,
+  and rendered-HTML checks cover each risk tier and status, including unknown values. This
+  verifies badge contrast, not full UI accessibility.
+
 ## [0.1.0] — 2026-09-26
 
 Prepared for the first release after cleanup; not yet tagged or published. The actual release
