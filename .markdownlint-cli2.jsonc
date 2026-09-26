@@ -12,6 +12,7 @@
     ".venv/**",
     "node_modules/**",
     ".tmp/**",
+    ".local/**",
     "HANDOFF.md",
     // Frozen hackathon material is kept exactly as submitted.
     "archive/**"

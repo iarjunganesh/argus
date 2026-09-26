@@ -123,7 +123,10 @@ the table lists one that doesn't exist.
 
 ## Handoff between tools
 
-If `HANDOFF.md` exists at the repository root, read it before doing anything else: it holds the
-current state, the next step and decisions already made. Before you stop, update its "Current
-state" and "Next step" sections and add a session-log entry. `HANDOFF.md` and `.tmp/` are local
-working files. Never commit them; `check_docs.py` fails if they are tracked.
+If `.local/HANDOFF.md` exists, read it before doing anything else: it holds the current state, the
+next step and decisions already made. The working plans sit next to it in `.local/`. Before you
+stop, update its "Current state" and "Next step" sections and add a session-log entry.
+
+`.local/` and `.tmp/` are local and never committed; `check_docs.py` fails if either is tracked.
+`.local/` is durable: never delete or clear it. `.tmp/` is disposable scratch that anyone may
+empty; don't keep anything there that must survive.

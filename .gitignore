@@ -78,8 +78,10 @@ data/*.jsonl
 .gradio/
 
 
-# Local scratch and working plans — never commit
+# Disposable scratch (safe to empty at any time) — never commit
 .tmp/
 
-# Agent handoff notes shared between coding tools — never commit
+# Durable local working files: the handoff between coding tools and the working plans — never
+# commit. Unlike .tmp/, this folder must not be cleared.
+.local/
 /HANDOFF.md
