@@ -6,9 +6,11 @@
   Corporate and Transaction agent services in parallel over HTTP with a custom JSON envelope, and
   fans their results in to the Compliance and Risk agent, which computes a deterministic score,
   tier and gaps and asks a language model for the explanation. Six recorded demo profiles can
-  replace the four parallel calls. The Azure data plane: Azure OpenAI, Cosmos DB and Azure AI
-  Search are used when configured and fall back to mock data otherwise; Foundry IQ and Document
-  Intelligence return mock data on every run today.</desc>
+  replace the four parallel calls. Every agent reads data through one data plane of four
+  interfaces, each with a local implementation (synthetic data, the default) and an Azure one:
+  the retriever (AI Search), the entity store and the report store (Cosmos DB), and OCR (Document
+  Intelligence, with no local engine yet). A language model, chosen by one setting, writes only the
+  explanation. The Azure implementations have not yet been run against live services.</desc>
 
   <!-- Hand-placed master. scripts/ci/render_assets.py writes the -light and -dark variants.
        Every status here is checked against the code, not the plan: see docs/ARCHITECTURE.md.
@@ -81,7 +83,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
 
   <rect class="bg" width="1920" height="1080"/>
   <text class="h1" x="60" y="86">ARGUS — System overview</text>
-  <text class="h2" x="60" y="126">How ARGUS runs today: seven processes, five agent services over HTTP, and an Azure data plane with mock fallbacks.</text>
+  <text class="h2" x="60" y="126">How ARGUS runs today: seven processes, five agent services over HTTP, and one data plane, local or Azure.</text>
   <line class="grid" x1="60" y1="152" x2="1860" y2="152"/>
 
   <!-- ============ Column A: the analyst's path ============ -->
@@ -100,7 +102,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <rect class="box" x="60" y="460" width="340" height="150" rx="14"/>
   <text class="label" x="230" y="514">API gateway</text>
   <text class="sub" x="230" y="547">FastAPI · port 8000</text>
-  <text class="sub" x="230" y="577">in-memory report store</text>
+  <text class="sub" x="230" y="577">reports via the report store</text>
 
   <path class="edge" d="M230 610 V689" marker-end="url(#arrow)"/>
   <text class="note" x="244" y="656">fetch report</text>
@@ -110,7 +112,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="label" x="230" y="772">Risk report</text>
   <text class="sub" x="230" y="808">tier · score · findings</text>
   <text class="sub" x="230" y="838">citations · audit trace</text>
-  <text class="sub" x="230" y="868">each fallback marked mock</text>
+  <text class="sub" x="230" y="868">source of every result</text>
 
   <!-- gateway ⇄ orchestrator -->
   <path class="edge" d="M406 535 H440 V262 H704" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
@@ -191,7 +193,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <path class="dashed" d="M706 322 H480 V770 H484" marker-end="url(#arrow)"/>
 
   <!-- ============ Column C: the data plane ============ -->
-  <text class="stepl" x="1400" y="200">DATA PLANE · AZURE</text>
+  <text class="stepl" x="1400" y="200">DATA PLANE · LOCAL OR AZURE</text>
   <path class="edge" d="M1350 562 H1374"/>
   <path class="edge" d="M1374 282 V842"/>
   <path class="edge" d="M1374 282 H1394" marker-end="url(#arrow)"/>
@@ -202,51 +204,52 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
 
   <g>
     <rect class="box" x="1400" y="220" width="460" height="124" rx="14"/>
-    <text class="name" x="1424" y="262">Azure OpenAI</text>
-    <text class="note" x="1424" y="292">GPT-4o, or GitHub Models · the explanation</text>
-    <text class="note" x="1424" y="320">without it: fixed template text</text>
+    <text class="name" x="1424" y="262">Language model</text>
+    <text class="note" x="1424" y="292">one setting · writes the explanation only</text>
+    <text class="note" x="1424" y="320">none: a fixed template, labelled</text>
     <rect class="chip-ok" x="1716" y="238" width="126" height="30" rx="15"/>
-    <text class="chiptxt-ok" x="1779" y="258">LIVE OR MOCK</text>
+    <text class="chiptxt-ok" x="1779" y="258">OPTIONAL</text>
   </g>
   <g>
     <rect class="box" x="1400" y="360" width="460" height="124" rx="14"/>
-    <text class="name" x="1424" y="402">Cosmos DB</text>
-    <text class="note" x="1424" y="432">entities · ownership · PEPs · transactions</text>
-    <text class="note" x="1424" y="460">without it: mock records</text>
+    <text class="name" x="1424" y="402">Retriever</text>
+    <text class="note" x="1424" y="432">regulations · sanctions · adverse media</text>
+    <text class="note" x="1424" y="460">keyword search locally · AI Search</text>
     <rect class="chip-ok" x="1716" y="378" width="126" height="30" rx="15"/>
-    <text class="chiptxt-ok" x="1779" y="398">LIVE OR MOCK</text>
+    <text class="chiptxt-ok" x="1779" y="398">LOCAL · AZURE</text>
   </g>
   <g>
     <rect class="box" x="1400" y="500" width="460" height="124" rx="14"/>
-    <text class="name" x="1424" y="542">Azure AI Search</text>
-    <text class="note" x="1424" y="572">transaction typology matching</text>
-    <text class="note" x="1424" y="600">without it: mock typologies</text>
+    <text class="name" x="1424" y="542">Entity store</text>
+    <text class="note" x="1424" y="572">entities · ownership · PEPs · transactions</text>
+    <text class="note" x="1424" y="600">synthetic files locally · Cosmos DB</text>
     <rect class="chip-ok" x="1716" y="518" width="126" height="30" rx="15"/>
-    <text class="chiptxt-ok" x="1779" y="538">LIVE OR MOCK</text>
+    <text class="chiptxt-ok" x="1779" y="538">LOCAL · AZURE</text>
   </g>
   <g>
     <rect class="box" x="1400" y="640" width="460" height="124" rx="14"/>
-    <text class="name" x="1424" y="682">Foundry IQ</text>
-    <text class="note" x="1424" y="712">regulations · sanctions · adverse media</text>
-    <text class="note" x="1424" y="740">calls an SDK method that does not exist</text>
-    <rect class="chip-no" x="1716" y="658" width="126" height="30" rx="15"/>
-    <text class="chiptxt-no" x="1779" y="678">MOCK TODAY</text>
+    <text class="name" x="1424" y="682">Report store</text>
+    <text class="note" x="1424" y="712">every report and its status</text>
+    <text class="note" x="1424" y="740">in memory locally · Cosmos DB</text>
+    <rect class="chip-ok" x="1716" y="658" width="126" height="30" rx="15"/>
+    <text class="chiptxt-ok" x="1779" y="678">LOCAL · AZURE</text>
   </g>
   <g>
     <rect class="box" x="1400" y="780" width="460" height="124" rx="14"/>
-    <text class="name" x="1424" y="822">Document Intelligence</text>
-    <text class="note" x="1424" y="852">identity document OCR</text>
-    <text class="note" x="1424" y="880">its SDK package is not installed</text>
+    <text class="name" x="1424" y="822">OCR</text>
+    <text class="note" x="1424" y="852">identity documents</text>
+    <text class="note" x="1424" y="880">no local engine yet · Doc Intelligence</text>
     <rect class="chip-no" x="1716" y="798" width="126" height="30" rx="15"/>
-    <text class="chiptxt-no" x="1779" y="818">MOCK TODAY</text>
+    <text class="chiptxt-no" x="1779" y="818">AZURE ONLY</text>
   </g>
+  <text class="note" x="1400" y="950">Azure side tested against SDK stand-ins, not yet run live</text>
 
   <!-- ============ Legend and footer ============ -->
   <line class="grid" x1="60" y1="990" x2="1860" y2="990"/>
   <rect class="chip-ok" x="60" y="1016" width="44" height="22" rx="11"/>
-  <text class="legend" x="116" y="1034">live when configured, mock fallback otherwise</text>
+  <text class="legend" x="116" y="1034">local and Azure implementations</text>
   <rect class="chip-no" x="600" y="1016" width="44" height="22" rx="11"/>
-  <text class="legend" x="656" y="1034">mock on every run today</text>
+  <text class="legend" x="656" y="1034">Azure only for now</text>
   <rect class="dashbox" x="930" y="1014" width="44" height="26" rx="6"/>
   <text class="legend" x="986" y="1034">demo shortcut</text>
   <rect class="accent" x="1170" y="1014" width="44" height="26" rx="6"/>

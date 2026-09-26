@@ -21,7 +21,7 @@ concurrency:
 env:
   # The interpreter comes from .python-version, so CI, local runs and Docker agree.
   UV_LOCKED: "1"
-  # Tests run with no cloud credentials. Every external client falls back to mock data.
+  # Tests run with no cloud credentials, on the local data plane and a fixture data set.
   PYTHONUTF8: "1"
 
 jobs:

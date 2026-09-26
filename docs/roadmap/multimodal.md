@@ -68,4 +68,4 @@ Multi-modal cannot become an exclusion mechanism. Every evidence type is supplem
 - [ ] Face match tool in Identity Agent
 - [ ] Gradio UI: webcam capture component (ARIA-labelled, keyboard accessible)
 - [ ] Community Edition: OpenCV + Resemblyzer path
-- [ ] Tests: mock liveness/face API responses, accessibility test for capture UI
+- [ ] Tests: stand-in liveness/face API responses, accessibility test for capture UI
