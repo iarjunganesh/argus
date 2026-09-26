@@ -46,7 +46,7 @@ async def assess(request: KYCRequest, background_tasks: BackgroundTasks):
     logger.info(
         "kyc.request.submitted", extra={"report_id": report_id, "entity": request.entity_name}
     )
-    background_tasks.add_task(_run_assessment, report_id, request.dict())
+    background_tasks.add_task(_run_assessment, report_id, request.model_dump())
     return {"report_id": report_id, "status": "processing"}
 
 
