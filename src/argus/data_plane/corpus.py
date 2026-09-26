@@ -14,6 +14,24 @@ from pathlib import Path
 # summary for retrieval, not the legal text.
 REGULATION_DOCUMENTS = [
     {
+        "id": "fatf-rec-6",
+        "title": "FATF Recommendation 6 — Targeted Financial Sanctions",
+        "source_doc": "fatf-40-recommendations.pdf",
+        "category": "regulation",
+        "content": (
+            "FATF Recommendation 6: countries should implement targeted financial sanctions "
+            "regimes to comply with United Nations Security Council resolutions on terrorism "
+            "and terrorist financing. The resolutions require countries to freeze without delay "
+            "the funds or other assets of, and to ensure that no funds or other assets are made "
+            "available to or for the benefit of, any person or entity designated by the Security "
+            "Council or by the country under resolution 1373. Without delay means, ideally, "
+            "within a matter of hours of a designation. The Interpretive Note requires financial "
+            "institutions to report to competent authorities any assets frozen or actions taken "
+            "in compliance with the prohibition requirements, including attempted transactions. "
+            "Recommendation 7 applies the same freezing duty to proliferation financing."
+        ),
+    },
+    {
         "id": "fatf-rec-10",
         "title": "FATF Recommendation 10 — Customer Due Diligence",
         "source_doc": "fatf-40-recommendations.pdf",
@@ -42,8 +60,10 @@ REGULATION_DOCUMENTS = [
             "systems to determine if the customer is a PEP; obtain senior management "
             "approval to establish or continue business; take reasonable measures to "
             "establish the source of wealth and funds; conduct enhanced ongoing monitoring "
-            "of the relationship. Domestic PEPs and those in international organisations "
-            "should be subject to risk-based enhanced measures."
+            "of the relationship. For domestic PEPs and those entrusted with a prominent "
+            "function by an international organisation, the last three measures apply in cases "
+            "of a higher risk business relationship. The requirements for all types of PEP also "
+            "apply to their family members and close associates."
         ),
     },
     {
@@ -55,25 +75,25 @@ REGULATION_DOCUMENTS = [
             "FATF Recommendation 20: If a financial institution suspects or has "
             "reasonable grounds to suspect that funds are the proceeds of a criminal "
             "activity, or are related to terrorist financing, it should be required by "
-            "law to report promptly to the financial intelligence unit (FIU). Countries "
-            "should ensure that financial institutions report all suspicious transactions "
-            "regardless of whether they are thought to involve tax matters. Countries "
-            "should consider adopting measures to allow financial institutions to carry "
-            "out the transaction before filing a STR, where not reporting would tip off "
-            "the customer."
+            "law to report promptly its suspicions to the financial intelligence unit (FIU). "
+            "The Interpretive Note requires all suspicious transactions, including attempted "
+            "transactions, to be reported regardless of the amount. Recommendation 21 "
+            "prohibits disclosing (tipping off) that a suspicious transaction report is being "
+            "filed with the FIU."
         ),
     },
     {
         "id": "4amld-art-18",
-        "title": "4AMLD Article 18 — Enhanced Due Diligence",
+        "title": "4AMLD Articles 18 and 18a — Enhanced Due Diligence",
         "source_doc": "4amld-directive.pdf",
         "category": "regulation",
         "content": (
             "4AMLD Article 18 requires Member States to ensure that obliged entities "
             "apply enhanced customer due diligence measures in situations which by their "
             "nature can present a higher risk of money laundering or terrorist financing. "
-            "High-risk third countries identified by the Commission must be subject to "
-            "enhanced due diligence. Enhanced measures include: obtaining additional "
+            "Under Article 18a (added by the 5th AML Directive), business relationships "
+            "involving high-risk third countries identified by the Commission must be subject "
+            "to enhanced due diligence. Enhanced measures include: obtaining additional "
             "information on the customer and beneficial owner; obtaining additional "
             "information on the intended nature of the business relationship; obtaining "
             "information on the source of funds; obtaining senior management approval; "
@@ -81,17 +101,18 @@ REGULATION_DOCUMENTS = [
         ),
     },
     {
-        "id": "6amld-art-3",
-        "title": "6AMLD Article 3 — Predicate Offences",
+        "id": "6amld-art-2",
+        "title": "6AMLD Article 2 — Criminal Activity (Predicate Offences)",
         "source_doc": "6amld-directive.pdf",
         "category": "regulation",
         "content": (
-            "6AMLD extends the list of predicate offences for money laundering to "
-            "include 22 categories: participation in an organised criminal group; "
-            "terrorism including financing; trafficking in human beings; sexual "
-            "exploitation; illicit trafficking in narcotic drugs; illicit trafficking in "
-            "weapons; illicit trafficking in stolen goods; corruption and bribery; fraud; "
-            "counterfeiting currency; counterfeiting products; environmental crime; "
+            "6AMLD (Directive (EU) 2018/1673) Article 2 defines criminal activity for money "
+            "laundering and lists 22 categories of predicate offences: participation in an "
+            "organised criminal group; terrorism including financing; trafficking in human "
+            "beings; sexual exploitation; illicit trafficking in narcotic drugs; illicit "
+            "trafficking in weapons; illicit trafficking in stolen goods; corruption and "
+            "bribery; fraud; counterfeiting currency; counterfeiting products; environmental "
+            "crime; "
             "murder and grievous bodily injury; kidnapping, illegal restraint and "
             "hostage-taking; robbery or theft; smuggling; extortion; forgery; piracy; "
             "insider trading and market manipulation; cybercrime; tax crimes."
@@ -118,7 +139,7 @@ REGULATION_DOCUMENTS = [
     },
     {
         "id": "dora-art-5",
-        "title": "DORA Article 5 — ICT Risk Management Framework",
+        "title": "DORA Articles 5 and 6 — ICT Risk Governance and Framework",
         "source_doc": "dora-regulation.pdf",
         "category": "regulation",
         "content": (
@@ -126,22 +147,22 @@ REGULATION_DOCUMENTS = [
             "governance and control framework that ensures an effective and prudent "
             "management of ICT risk. The management body shall define, approve, oversee "
             "and be accountable for the implementation of all arrangements related to the "
-            "ICT risk management framework. ICT risk management framework shall include "
+            "ICT risk management framework. Under Article 6, the framework shall include "
             "strategies, policies, procedures, ICT protocols and tools necessary to "
             "protect all information assets and ICT assets including computer software, "
             "hardware, servers, and all relevant physical components."
         ),
     },
     {
-        "id": "wolfsberg-kyc",
-        "title": "Wolfsberg Group — KYC Principles",
-        "source_doc": "wolfsberg-kyc-principles.pdf",
+        "id": "wolfsberg-private-banking",
+        "title": "Wolfsberg Group — AML Principles for Private Banking",
+        "source_doc": "wolfsberg-private-banking-principles.pdf",
         "category": "regulation",
         "content": (
-            "The Wolfsberg Group KYC Principles state that banks will endeavour to "
-            "accept only those customers whose source of wealth and funds can be "
+            "The Wolfsberg AML Principles for Private Banking state that the bank will "
+            "endeavour to accept only those clients whose source of wealth and funds can be "
             "reasonably established to be legitimate. The primary responsibility for this "
-            "lies with the relationship manager who sponsors acceptance of the customer. "
+            "lies with the private banker who sponsors the client for acceptance. "
             "Basic account opening requires: identification of customer identity; "
             "identification of beneficial ownership for legal entity customers; "
             "purpose and nature of the account; source of wealth for high-risk customers; "
