@@ -5,12 +5,13 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -111,6 +112,8 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Docs agree with the repository
         run: uv run python scripts/ci/check_docs.py
+      - name: Version pins agree
+        run: uv run python scripts/ci/check_versions.py --check
       # Theme variants must match their SVG masters, and every declared text colour pair must
       # pass WCAG AA in both themes. Rasters (PNG/GIF) need a browser and are not checked here.
       - name: Brand and architecture assets are current

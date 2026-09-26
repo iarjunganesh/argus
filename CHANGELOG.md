@@ -15,6 +15,22 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Release automation validates the tagged commit before publication.** The workflow reuses
+  the full CI gate and requires a matching package version and changelog section. Local
+  regression tests cover missing, duplicate and mismatched release metadata and prereleases.
+- **Post-release dependency reviews record failures as well as upgrades.** The refresh prepares
+  a PR with the version inventory and gate results, and keeps interpreter upgrades separate.
+  Offline fixture tests check version drift, wheel compatibility, action resolution and failed
+  refresh reporting. GitHub publication and automatic PR creation await the first approved tag.
+
+## [0.1.0] — 2026-09-26
+
+Prepared for the first release after cleanup; not yet tagged or published. The actual release
+date will be confirmed when tagging. Earlier release history is in the
+[hackathon archive](archive/hackathon-2026/CHANGELOG-v1.md).
+
+### Added
+
 - **The standard GitHub community files:** `CONTRIBUTING.md`, `SECURITY.md` (private
   vulnerability reporting, which is enabled on the repository), `CODE_OF_CONDUCT.md`
   (Contributor Covenant 2.1), issue forms, a pull request template with the CI checklist,

@@ -55,6 +55,7 @@ uv run ruff format --check .                          # formatting
 uv run mypy
 uv run pytest --cov                                   # tests, 100% line + branch coverage required
 uv run python scripts/ci/check_docs.py                   # docs agree with the repository
+uv run python scripts/ci/check_versions.py --check        # version pins agree (offline)
 uv run python scripts/ci/render_assets.py --check        # image variants current, WCAG AA contrast
 ```
 
