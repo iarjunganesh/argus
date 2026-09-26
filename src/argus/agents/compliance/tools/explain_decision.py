@@ -10,6 +10,12 @@ from argus.utils.structured_logger import get_logger
 
 logger = get_logger("tool.explain_decision")
 
+SANCTIONS_TEXT = {
+    "potential_match": "potential match, not yet confirmed or cleared by a person",
+    "no_match": "no match found",
+    "not_run": "did not run; the case cannot be cleared without it",
+}
+
 
 async def explain_decision(
     entity: dict,
@@ -21,6 +27,13 @@ async def explain_decision(
     """Return `{"text": ..., "source": "model" | "fallback"}`."""
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
     score = risk_summary.get("overall_risk_score", 0)
+    held = risk_summary.get("tier_basis") == "sanctions_match"
+    tier_basis = (
+        "a potential sanctions match, which holds the case whatever the score"
+        if held
+        else "the score band"
+    )
+    sanctions = SANCTIONS_TEXT.get(risk_summary.get("sanctions_screening", ""), "not reported")
 
     findings_text = (
         "\n".join(f"- {finding}" for finding in key_findings[:5]) or "- No material findings"
@@ -46,6 +59,8 @@ async def explain_decision(
 Entity: {entity.get("name")} ({entity.get("type")}, jurisdiction: {entity.get("jurisdiction")})
 Risk Score: {score}/100
 Risk Tier: {tier}
+Tier set by: {tier_basis}
+Sanctions screening: {sanctions}
 
 Key findings identified:
 {findings_text}
@@ -60,6 +75,9 @@ Write exactly 3 to 5 sentences explaining WHY this entity received a {tier} risk
 Rules:
 - Use plain English. Assume the reader is a bank manager, not a lawyer.
 - Reference specific findings.
+- If the tier was set by a sanctions match, say so, and say that a person must confirm or clear
+  the match before anything else happens.
+- If sanctions screening did not run, say that the case cannot be cleared until it has.
 - Reference specific regulations by name when present.
 - Do NOT use bullet points or numbered lists.
 - Do NOT start with 'The entity'.
@@ -76,13 +94,19 @@ Rules:
         text = (response.choices[0].message.content or "").strip()
     except Exception as exc:  # no model configured, or the call failed: say so and fall back
         logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": str(exc)})
-        return {"text": _fallback_explanation(tier, key_findings), "source": "fallback"}
+        return {"text": _fallback_explanation(tier, key_findings, held), "source": "fallback"}
     if not text:
-        return {"text": _fallback_explanation(tier, key_findings), "source": "fallback"}
+        return {"text": _fallback_explanation(tier, key_findings, held), "source": "fallback"}
     return {"text": text, "source": "model"}
 
 
-def _fallback_explanation(tier: str, findings: list) -> str:
+def _fallback_explanation(tier: str, findings: list, held: bool = False) -> str:
+    if held:
+        return (
+            f"This case is held at {tier} because screening found a potential sanctions match; "
+            "sanctions are not weighed against other risk, so the score does not lower the tier. "
+            "A compliance officer must confirm or clear the match before any onboarding decision."
+        )
     if not findings:
         return f"This case was assessed as {tier} risk based on the combined screening and compliance analysis."
     primary_finding = findings[0]

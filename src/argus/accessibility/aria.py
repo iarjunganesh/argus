@@ -17,7 +17,6 @@ class ARIALabels:
     decision_card: str = "Executive risk decision summary"
     risk_tier_value: str = "Overall risk tier"
     risk_score_value: str = "Overall risk score out of 100"
-    confidence_value: str = "Assessment confidence percentage"
 
     # Agent timeline
     timeline_region: str = "Agent investigation timeline"
