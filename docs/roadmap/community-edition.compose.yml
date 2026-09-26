@@ -1,5 +1,9 @@
 version: "3.9"
 
+# SKETCH ONLY: this does not run. It is the intended shape of the Community Edition stack
+# described in community-edition.md; the community Dockerfile and the SQLite, Qdrant and
+# Tesseract backends it expects don't exist yet.
+#
 # ARGUS Community Edition — one command, no Azure subscription required.
 #
 # Services:
@@ -8,7 +12,7 @@ version: "3.9"
 #   qdrant            Local vector DB replacing Azure AI Search
 #
 # Usage:
-#   docker compose -f community/docker-compose.yml up
+#   docker compose -f docs/roadmap/community-edition.compose.yml up   (once it exists)
 #   Then open: http://localhost:7860
 
 services:

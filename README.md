@@ -132,7 +132,7 @@ In short:
 - **All three Microsoft IQs.** Foundry IQ for cited regulatory knowledge, Fabric IQ for evaluation data and corporate-ownership relationships, and Work IQ for case-handover context.
 - **Neutral where it's cheap.** The model provider, the container host, the tools (MCP) and telemetry can be swapped by configuration. The data plane stays Azure, with a local implementation for tests and self-hosting.
 
-Longer-term ideas, not yet scheduled, live in [`roadmap/`](roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
+Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
 
 - [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. The current risk palette **fails** WCAG AA on white, which a test records as an expected failure.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).

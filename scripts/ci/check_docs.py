@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SKIP_PREFIXES = ("archive/",)
 
 # Public documents that must not ship with unfinished markers.
-PUBLIC_DOCS = ("README.md", "CHANGELOG.md", "docs/", "roadmap/")
+PUBLIC_DOCS = ("README.md", "CHANGELOG.md", "docs/")
 UNFINISHED = re.compile(r"\b(TBD|FIXME|XXX)\b|lorem ipsum|\[to fill\]", re.IGNORECASE)
 
 # Local working files that must never be tracked.

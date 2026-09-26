@@ -99,12 +99,10 @@ then run every command above.
 | `src/` | The application: the installable package `argus` (see below) |
 | `data/` | Synthetic data generators and public-source demo data |
 | `infra/` | Bicep template, Azure setup scripts, and `foundry_iq/` (create and fill the knowledge bases) |
-| `observability/` | Placeholder for monitoring configuration |
 | `tests/` | The test suite (hermetic; no cloud access) |
 | `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs check and the image renderer |
 | `assets/` | Brand and architecture images, each drawn from an SVG master |
-| `docs/` | Architecture as it runs today, and the v2 plan |
-| `roadmap/` | Longer-term ideas that are not scheduled |
+| `docs/` | Architecture as it runs today, the v2 plan, and `roadmap/` (ideas not yet scheduled) |
 | `archive/` | Frozen hackathon material. Never edit it except to add to its index. |
 
 Inside `src/argus/`:

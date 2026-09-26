@@ -59,13 +59,15 @@ Community Edition ships with:
 
 2. **False-positive playbook** — documented patterns with Foundry IQ / open-corpus citations showing WHY a given entity is flagged and HOW to distinguish it from genuine risk
 
-3. **Explain Mode output** — every report includes the plain-language version (see `roadmap/explain-mode.md`)
+3. **Explain Mode output** — every report includes the plain-language version (see [`explain-mode.md`](explain-mode.md))
 
 ---
 
 ## Rollout Plan
 
-### Phase 1 — Docker Compose (this branch)
+### Phase 1 — Docker Compose
+
+A first sketch of the stack is in [`community-edition.compose.yml`](community-edition.compose.yml). It does not run yet.
 
 - [ ] Dockerfile for community image
 - [ ] SQLite adapter for entity/transaction store
