@@ -107,6 +107,14 @@ The report's `explanation_source` says whether a language model wrote the explan
 the fixed template did (`fallback`). `audit_trace.retrieval_queries` counts only knowledge-base
 searches that answered, and `audit_trace.data_backend` names the data plane in use.
 
+Regulatory triggers are retrieved passages only: when the regulations search is unavailable or
+finds nothing relevant, the report lists none. A typology search that falls back still names the
+patterns ARGUS's own rules detected (`source: rules`, no document cited), and the transaction
+agent is marked `fallback`.
+
+Each service loads the repository's `.env` itself (through the data plane, the model factory and
+the gateway), so a setting there takes effect however the service is started.
+
 ## Data plane
 
 Agents never call Azure directly. Each tool reads through one of four interfaces in
