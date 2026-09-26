@@ -1,98 +1,49 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to ARGUS are recorded here. The format follows
+[Keep a Changelog 1.1](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.5.0] - 2026-06-11
+An entry states **what became true and how it was checked**, not which files moved.
 
-### Changed
+Versioning restarted at `v0.1.0` on 2026-09-26. The history of the hackathon releases
+(`v0.1.0-hackathon` to `v1.6.0`) is kept in
+[`archive/hackathon-2026/CHANGELOG-v1.md`](archive/hackathon-2026/CHANGELOG-v1.md), and the former tags
+are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README.md).
 
-- Published demo video to YouTube: https://youtu.be/yaTNCgCwX4s
-- Updated root README `Demo Video` link from TODO placeholder to live YouTube URL.
-- Updated architecture submission checklist to mark demo video as completed with link.
-
-## [v1.4.0] - 2026-06-10
-
-### Changed
-
-- Added MIT license and surfaced it in the root README.
-- Clarified coverage reporting by separating agents-only CI coverage from full-repository coverage.
-- Added a lightweight observability placeholder note and README stub for planned Azure Monitor integration.
-- Refreshed submission references in the root README to point at the final submission markdown files.
-
-### Documentation
-
-- Added a full-repo coverage badge alongside the agents-only badge for judge transparency.
-- Updated the root README submission pointers to the canonical files in `submission/`.
-
-## [v1.3.0] - 2026-06-09
-
-### Changed
-
-- Added deterministic demo-profile shortcut in orchestrator fan-out path so known demo entities skip live parallel calls while keeping compliance fan-in live.
-- Reworked Gradio results flow for recording clarity: decision-first layout, explicit "Why This Risk Rating?", agent metrics banner, Foundry IQ grounded badge, visible dimensions/timeline/findings/triggers/actions, and collapsible OCR/JSON detail.
-- Updated final submission runbook and narration script to use runtime-safe wording for variable risk tiers and conditional Foundry IQ availability.
-- Integrated canonical logo asset (`assets/argus.svg`) across README, docs index, and demo guidance references.
-
-### Documentation
-
-- Promoted `submission/ARGUS_FINAL_DEMO_RUNBOOK.md` and `submission/ARGUS_FINAL_AUDIO_SCRIPT.md` as canonical freeze artifacts.
-- Updated docs index to remove stale references to removed pre-submission and voiceover files.
-
-### Tests
-
-- Added orchestrator regression coverage for demo-profile shortcut behavior.
-- Added branch tests for jurisdiction mapping and Azure OCR success-path mocking.
-- Updated Gradio UI assertion from "Primary Drivers" to "Why This Risk Rating?".
-
-## [v1.2.0] - 2026-06-08
-
-### Changed
-
-- Refreshed Gradio report styling to use theme-safe neutral cards with semantic text accents for risk tiers across light and dark modes.
-- Updated demo narration assets for a two-entity judge flow under five minutes.
-- Updated architecture and README wording to align with synthetic core data plus public-source adverse-media summaries.
-- Replaced the duplicate demo script with a single canonical voiceover asset and removed the stale script reference from docs indexes.
-- Added a voiceover sync map and wait-window guidance so the sequence-diagram beat stays aligned with the narrated demo flow.
-- Aligned the IQ prerequisite cross-reference and root README with the issued Global AI badge status.
-- Removed the duplicate visible risk-tier banner in the Gradio report while keeping test compatibility markers in place.
-
-### Documentation
-
-- Consolidated submission workflow to a single canonical runbook: `docs/ARGUS_PreSubmission_Steps.md`.
-- Removed archived duplicate runbooks:
-  - `docs/ARGUS_FinalSteps.md`
-  - `docs/ARGUS_NextSteps_June8-14.md`
-  - `docs/ARGUS_Recording_Guide.md`
-- Updated documentation index and root README references to point to the canonical runbook.
-
-### Repository Hygiene
-
-- Added `.gradio/` to `.gitignore` to prevent local UI artifacts from appearing in commits.
-
-## [v0.1.0-hackathon] - 2026-06-06
+## [Unreleased]
 
 ### Added
 
-- Structured JSON logging utility (`utils/structured_logger.py`)
-- Agent `/health` endpoints for identity, screening, corporate, compliance, and transaction agents
-- Aggregated health endpoint in API (`GET /api/v1/admin/health`)
-- Demo runbook (`docs/DEMO_RUNBOOK.md`)
-- Demo recording helper script (`scripts/record_demo.ps1`)
-- Batch KYC runner (`scripts/batch_run_kyc.py`)
-- Cosmos count checker script (`scripts/check_cosmos_counts.py`)
-- Batch report artifact (`data/reports_batch.jsonl`)
+- **An architecture page that matches the running code** (`docs/ARCHITECTURE.md`): processes,
+  request flow, the demo-profile shortcut and every service fallback, checked against the code.
+- **The v2 plan is public** (`docs/ARGUS-V2-PLAN.md`), with its starting evidence taken from the
+  code review rather than from the old README.
 
 ### Changed
 
-- Updated `README.md` with demo/testing and batch-run guidance
-- Updated runbook commands to use stable API mode (without `--reload`) for batch runs
-- Improved batch runner resilience:
-  - submit retries
-  - transient poll error handling
-  - per-item failure logging to `data/reports_batch_errors.jsonl`
+- **Hackathon material is archived, not deleted.** Submission runbooks, narration, slides, the
+  original architecture spec and the v1 changelog moved to `archive/hackathon-2026/` with
+  `git mv`, so their history is preserved.
+- **Versioning restarted.** Tags `v1.2.0` to `v1.6.0` were deleted locally and on GitHub; each
+  tag's commit is recorded in the archive README. The orphaned `v1.6.0` commit (`9aee081`) was
+  checked to have a tree identical to `d2c9380` on `main` before deletion, so no content was lost.
+- **The README describes the code as it is.** It adds a status table of what works live, what
+  falls back to mock data, and what doesn't work, and removes claims the code didn't support
+  (Semantic Kernel, the A2A protocol, Azure AI Foundry Agent Service, a runnable community
+  edition, a passing WCAG example).
 
 ### Fixed
 
-- Corporate graph generation edge case (`n=1` ownership split)
-- Orchestrator indentation bug causing runtime failures
-- Cosmos upload ID mapping and upload robustness
+- **The test suite runs from the repository root.** The empty root `__init__.py` made pytest
+  treat the parent directory as the import root. Checked: 50 passed, 1 xfailed.
+
+### Removed
+
+- **Generated files are no longer tracked:** `coverage.xml` and `data/reports_batch.jsonl`.
+
+### Known issues
+
+- **Foundry IQ queries never reach Foundry IQ.** `regulations_rag`, `sanctions_checker` and
+  `adverse_media_scanner` call `AIProjectClient.knowledge_bases.query`, which does not exist in
+  `azure-ai-projects` 1.0.0 or 2.6.1 (checked 2026-09-26). Every call falls back to mock results.

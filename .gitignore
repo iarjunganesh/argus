@@ -44,13 +44,17 @@ azd-env/
 .DS_Store
 Thumbs.db
 
-# Node (build tooling for diagram/GIF scripts)
+# Node (diagram tooling now, web/ UI later)
 node_modules/
+web/.next/
 package-lock.json
 
-# Test / coverage
+# Test / coverage / tool caches
 .pytest_cache/
 .coverage
+coverage.xml
+.ruff_cache/
+.mypy_cache/
 htmlcov/
 *.log
 
@@ -73,5 +77,8 @@ data/*.jsonl
 .gradio/
 
 
-# Local scratch (winner email, draft posts) — never commit
+# Local scratch and working plans — never commit
 .tmp/
+
+# Agent handoff notes shared between coding tools — never commit
+/HANDOFF.md
