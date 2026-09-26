@@ -15,6 +15,28 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Every tool reads data through one data plane, with a local and an Azure implementation.**
+  Four interfaces in `src/argus/data_plane/` (retriever, entity store, report store, OCR);
+  `ARGUS_DATA_BACKEND` picks `local` (the default: synthetic data in `data/`, no cloud account)
+  or `azure` (AI Search, Cosmos DB, Document Intelligence). Both search the same documents: the
+  regulations corpus and the search-document builders moved to `data_plane/corpus.py`, which
+  `infra/foundry_iq/` now uploads. Checked: tests for both implementations; the Azure ones run
+  against stand-ins for the Azure SDKs, not yet against live services.
+- **Every result says where it came from.** Each agent response carries `source` (`computed`,
+  `fallback` or `demo_profile`) and names the tools that fell back; the report's audit trace
+  collects them with the data backend, counts only knowledge-base searches that answered, and
+  `explanation_source` says whether a model or the fixed template wrote the explanation.
+  Checked: a provenance test per agent, and the Gradio report tested in all three states.
+- **One setting chooses the language model:** `ARGUS_MODEL_PROVIDER` is `none` (the default),
+  `azure-openai` (through Azure OpenAI's v1 endpoint), `openai` or `github-models`, in
+  `src/argus/models.py`. Checked: `tests/test_models.py`.
+- **The six demo scenarios are a regression test.** `tests/test_demo_scenarios.py` checks that
+  tier, score, dimension scores, findings and recommended actions match what was recorded before
+  this refactor. All six matched.
+- **The hosting decision (D1) is written down** in `docs/ARCHITECTURE.md`: Container Apps scaling
+  to zero, GitHub's container registry, Vercel, and the free tiers of AI Search, Cosmos DB and
+  Document Intelligence in Sweden Central, about $0 a month when idle. Estimated from list prices;
+  the exit gate observes a real idle day.
 - **Release automation validates the tagged commit before publication.** The workflow reuses
   the full CI gate and requires a matching package version and changelog section. Local
   regression tests cover missing, duplicate and mismatched release metadata and prereleases.
@@ -70,6 +92,23 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **Reports are stored through the report store:** in memory with the local backend, in Cosmos
+  DB (`kyc_reports`) with the Azure one, replacing the gateway's module-level dicts.
+- **Browser origins allowed to call the API come from `ARGUS_CORS_ORIGINS`** (none by default)
+  instead of `*`, and only `GET` and `POST` are allowed. Checked: a request from another origin
+  gets no CORS header.
+- **A screening hit needs the entity's full name, or one alias, in the retrieved passage.**
+  Sanctions queries no longer include the nationality, and adverse-media queries no longer add
+  generic words such as "fraud". Checked on the generated data: an unlisted person no longer
+  matched a sanctions entry through a shared country code, or adverse media through shared words.
+- **Diagrams and docs describe the data plane**, and the retired "mock" wording can't return:
+  `scripts/ci/check_docs.py` fails if it appears in the README, `AGENTS.md`, `CONTRIBUTING.md`,
+  `docs/` or the image sources (checked with a probe line).
+- **The Gradio report shows the data backend, the knowledge-base searches that answered and any
+  fallbacks.** It used to show "Foundry IQ Grounded" whenever its fixed query count was above zero,
+  including runs where every query had fallen back.
+- **Citations are `citation`** (was `foundry_iq_citation`), with the knowledge base named
+  `regulations`, `sanctions` or `adverse_media`.
 - **Local working files have a durable home, separate from scratch.** The cross-tool handoff and
   the working plans live in the ignored `.local/`, which must never be cleared; `.tmp/` is
   disposable scratch. `AGENTS.md` and the Copilot instructions point to `.local/HANDOFF.md`.
@@ -104,6 +143,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **Unknown entities no longer get invented evidence.** When a data service was unavailable,
+  tools returned fabricated positives: a registry match (`MOCK-001`), a 51% beneficial owner, a
+  transaction history with a structuring pattern for any name, OCR fields that then failed the
+  name check, and typology citations to report chapters that weren't retrieved. They now return
+  results that assert nothing, labelled `fallback`. Checked: a fallback test per tool.
+- **The audit trace no longer reports fixed counts.** `tool_calls` was always 15 and the
+  knowledge-base query count always 3; the count is now of searches that answered.
+- **OCR can reach Document Intelligence.** It uses `azure-ai-documentintelligence` and the
+  prebuilt ID model; before, it imported a package that wasn't installed. Not yet run live.
 - **Risk and status badges now meet the normal-text AA contrast threshold.** Darker green,
   amber and red tokens replace the failing palette; the UI uses the shared audited pairs
   with explicit white text on colored backgrounds. The formerly expected failure now passes,
@@ -117,6 +165,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **`azure-ai-projects`**, which only backed a knowledge-base call that didn't exist, and the old
+  model settings `USE_GITHUB_MODELS` and `AZURE_OPENAI_API_VERSION` (replaced by
+  `ARGUS_MODEL_PROVIDER`). Also an unused orchestrator system prompt.
 - **Every `sys.path` hack** (9 files): scripts now import the installed `argus` package.
 - **`observability/`**, which held only a "planned" note (OpenTelemetry is in the v2 plan), and
   **`scripts/create_test_doc.py`**, which nothing used. The Community Edition compose file left
@@ -136,8 +187,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Known issues
 
-- **Foundry IQ queries never reach Foundry IQ.** `regulations_rag`, `sanctions_checker` and
-  `adverse_media_scanner` call `AIProjectClient.knowledge_bases.query`, which does not exist in
-  `azure-ai-projects` 1.0.0 or 2.6.1 (checked 2026-09-26). Every call falls back to mock results.
-- **OCR never reaches Document Intelligence.** `ocr_processor` imports `azure.ai.formrecognizer`,
-  which is not a project dependency, so every call returns mock fields.
+- **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
+  Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
+- **No local OCR engine yet.** With the local backend, identity documents are reported as unread
+  (`fallback`) until Tesseract is added.
+- **A sanctions match alone scores LOW.** Screening weighs 30% and the regulatory estimate has no
+  sanctions term, so an entity whose only signal is a sanctions hit scores about 18 (seen with the
+  generated data). The weights and thresholds are unchanged by this work.
