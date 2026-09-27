@@ -1,6 +1,7 @@
 """Local OCR through Tesseract: text lines, labelled fields, and every way it can be unavailable."""
 
 import io
+import os
 import shutil
 import sys
 
@@ -112,8 +113,13 @@ def test_without_the_ocr_group_local_ocr_is_unavailable(monkeypatch):
         tesseract.extract_fields(png())
 
 
-@pytest.mark.skipif(shutil.which("tesseract") is None, reason="Tesseract is not installed")
 def test_real_tesseract_reads_a_synthetic_passport():
+    # Skipped where the Tesseract program is not installed; CI installs it and sets
+    # REQUIRE_TESSERACT, so there a missing program fails instead of skipping silently.
+    if shutil.which("tesseract") is None:
+        if os.getenv("REQUIRE_TESSERACT"):
+            pytest.fail("REQUIRE_TESSERACT is set, but the Tesseract program is not installed")
+        pytest.skip("Tesseract is not installed")
     image = png(
         [
             "Surname / Given names: Ada Synthetic",
