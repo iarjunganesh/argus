@@ -132,6 +132,7 @@ class MemoryReportStore:
     def __init__(self) -> None:
         self._status: dict[str, str] = {}
         self._reports: dict[str, dict] = {}
+        self._events: dict[str, list[dict]] = {}
 
     async def save_status(self, report_id: str, status: str) -> None:
         self._status[report_id] = status
@@ -144,6 +145,12 @@ class MemoryReportStore:
 
     async def report(self, report_id: str) -> dict | None:
         return self._reports.get(report_id)
+
+    async def append_event(self, report_id: str, event: dict) -> None:
+        self._events.setdefault(report_id, []).append(event)
+
+    async def events(self, report_id: str) -> list[dict]:
+        return list(self._events.get(report_id, []))
 
 
 class LocalOCR:

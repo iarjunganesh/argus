@@ -151,6 +151,24 @@ async def test_report_store_keeps_status_and_report_in_one_document(monkeypatch)
     assert await store.report("r1") == {"tier": "LOW"}
 
 
+async def test_report_store_appends_progress_events_to_the_report_document(monkeypatch):
+    db = _cosmos(monkeypatch)
+    store = az.CosmosReportStore()
+
+    assert await store.events("r1") == []
+    await store.save_status("r1", "processing")
+    await store.append_event("r1", {"type": "agent_started"})
+    await store.append_event("r1", {"type": "agent_completed"})
+
+    assert db.container.upserts[-1] == {
+        "id": "r1",
+        "report_id": "r1",
+        "status": "processing",
+        "events": [{"type": "agent_started"}, {"type": "agent_completed"}],
+    }
+    assert await store.events("r1") == [{"type": "agent_started"}, {"type": "agent_completed"}]
+
+
 # ── Document Intelligence ─────────────────────────────────────────────────────
 
 

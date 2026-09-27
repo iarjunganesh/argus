@@ -119,14 +119,17 @@ class CosmosReportStore:
         rows = await _call("Cosmos kyc_reports", _query(REPORTS_CONTAINER, sql, id=report_id))
         return rows[0] if rows else None
 
-    async def _upsert(self, report_id: str, **fields: Any) -> None:
-        current = await self._read(report_id) or {"id": report_id, "report_id": report_id}
-        item = {**current, **fields}
+    async def _current(self, report_id: str) -> dict:
+        return await self._read(report_id) or {"id": report_id, "report_id": report_id}
 
+    async def _write(self, item: dict) -> None:
         def run() -> None:
             get_cosmos_database().get_container_client(REPORTS_CONTAINER).upsert_item(item)
 
         await _call("Cosmos kyc_reports", run)
+
+    async def _upsert(self, report_id: str, **fields: Any) -> None:
+        await self._write({**await self._current(report_id), **fields})
 
     async def save_status(self, report_id: str, status: str) -> None:
         await self._upsert(report_id, status=status)
@@ -141,6 +144,14 @@ class CosmosReportStore:
     async def report(self, report_id: str) -> dict | None:
         item = await self._read(report_id)
         return item.get("report") if item else None
+
+    async def append_event(self, report_id: str, event: dict) -> None:
+        item = await self._current(report_id)
+        await self._write({**item, "events": [*item.get("events", []), event]})
+
+    async def events(self, report_id: str) -> list[dict]:
+        item = await self._read(report_id)
+        return list(item.get("events", [])) if item else []
 
 
 # Document Intelligence's ID model names fields differently from ARGUS's validators.

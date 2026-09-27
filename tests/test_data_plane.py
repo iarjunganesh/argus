@@ -140,6 +140,18 @@ async def test_memory_report_store_round_trip():
     assert await store.report("r1") == {"ok": True}
 
 
+async def test_memory_report_store_keeps_progress_events_in_order():
+    store = MemoryReportStore()
+
+    assert await store.events("r1") == []
+    await store.append_event("r1", {"type": "a"})
+    await store.append_event("r1", {"type": "b"})
+    events = await store.events("r1")
+    events.append({"type": "not stored"})  # callers get a copy
+
+    assert await store.events("r1") == [{"type": "a"}, {"type": "b"}]
+
+
 async def test_local_ocr_reports_it_cannot_read():
     with pytest.raises(dp.DataPlaneUnavailable):
         await LocalOCR().extract(b"image", "passport")

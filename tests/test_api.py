@@ -1,4 +1,7 @@
-"""API: submit, poll, fetch, health, and the background assessment."""
+"""API: submit, poll, fetch, stream, health, and the background assessment."""
+
+import asyncio
+import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,7 +20,7 @@ def client():
 def test_submitted_assessment_can_be_polled_and_fetched(client, monkeypatch):
     received = []
 
-    async def assessment(request):
+    async def assessment(request, on_event):
         received.append(request)
         return {"risk_summary": {"overall_risk_tier": "LOW"}}
 
@@ -34,7 +37,7 @@ def test_submitted_assessment_can_be_polled_and_fetched(client, monkeypatch):
 
 
 def test_failed_assessment_is_reported_as_error(client, monkeypatch):
-    async def assessment(request):
+    async def assessment(request, on_event):
         raise RuntimeError("orchestrator down")
 
     monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
@@ -73,7 +76,7 @@ def test_reports_are_written_through_the_report_store(client, use_plane, monkeyp
     store = MemoryReportStore()
     use_plane(reports=store)
 
-    async def assessment(request):
+    async def assessment(request, on_event):
         return {"risk_summary": {}}
 
     monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
@@ -94,3 +97,99 @@ def test_no_browser_origin_is_allowed_by_default(client):
 
     assert main.cors_origins() == []
     assert "access-control-allow-origin" not in response.headers
+
+
+# ── progress stream (server-sent events) ─────────────────────────────────────
+
+
+def _parse_sse(text: str) -> list[dict]:
+    """Split an event stream into its events: `{"event": ..., "id": ..., "data": ...}`."""
+    events = []
+    for block in text.strip().replace("\r\n", "\n").split("\n\n"):
+        fields = dict(line.split(": ", 1) for line in block.splitlines() if ": " in line)
+        events.append({**fields, "data": json.loads(fields["data"])})
+    return events
+
+
+@pytest.fixture
+def two_agents(monkeypatch):
+    """An assessment whose workflow reports one agent starting and finishing."""
+
+    async def assessment(request, on_event):
+        await on_event({"type": "agent_started", "agent": "identity"})
+        await on_event({"type": "agent_completed", "agent": "identity", "source": "fallback"})
+        return {"risk_summary": {}}
+
+    monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
+
+
+def test_the_stream_replays_each_agent_event_then_the_final_status(client, two_agents):
+    report_id = client.post("/api/v1/kyc/assess", json=REQUEST).json()["report_id"]
+
+    response = client.get(f"/api/v1/kyc/stream/{report_id}")
+
+    assert response.headers["content-type"].startswith("text/event-stream")
+    assert _parse_sse(response.text) == [
+        {
+            "event": "agent_started",
+            "id": "0",
+            "data": {"type": "agent_started", "agent": "identity"},
+        },
+        {
+            "event": "agent_completed",
+            "id": "1",
+            "data": {"type": "agent_completed", "agent": "identity", "source": "fallback"},
+        },
+        {
+            "event": "status",
+            "data": {"type": "status", "report_id": report_id, "status": "completed"},
+        },
+    ]
+
+
+def test_a_reconnecting_client_resumes_after_its_last_event(client, two_agents):
+    report_id = client.post("/api/v1/kyc/assess", json=REQUEST).json()["report_id"]
+
+    resumed = client.get(f"/api/v1/kyc/stream/{report_id}", headers={"Last-Event-ID": "0"})
+    garbled = client.get(f"/api/v1/kyc/stream/{report_id}", headers={"Last-Event-ID": "x"})
+
+    assert [e["event"] for e in _parse_sse(resumed.text)] == ["agent_completed", "status"]
+    assert len(_parse_sse(garbled.text)) == 3  # an unusable ID replays everything
+
+
+def test_the_stream_of_an_unknown_report_is_404(client):
+    response = client.get("/api/v1/kyc/stream/nope")
+
+    assert response.status_code == 404
+
+
+async def test_the_stream_follows_an_assessment_that_is_still_running(monkeypatch):
+    from argus.data_plane import get_data_plane
+
+    monkeypatch.setattr(main, "STREAM_POLL_SECONDS", 0.001)
+    reports = get_data_plane().reports
+    await reports.save_status("r1", "processing")
+
+    async def run():
+        await asyncio.sleep(0.01)
+        await reports.append_event("r1", {"type": "agent_started"})
+        await asyncio.sleep(0.01)
+        await reports.save_status("r1", "completed")
+
+    task = asyncio.create_task(run())
+    events = [e async for e in main.progress_events("r1")]
+    await task
+
+    assert [(e.event, e.id) for e in events] == [("agent_started", "0"), ("status", None)]
+    assert events[-1].data["status"] == "completed"
+
+
+async def test_the_stream_closes_at_its_time_limit_with_the_current_status(monkeypatch):
+    from argus.data_plane import get_data_plane
+
+    monkeypatch.setattr(main, "STREAM_MAX_SECONDS", 0)
+    await get_data_plane().reports.save_status("r1", "processing")
+
+    events = [e async for e in main.progress_events("r1")]
+
+    assert [(e.event, e.data["status"]) for e in events] == [("status", "processing")]
