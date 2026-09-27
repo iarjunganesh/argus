@@ -149,7 +149,10 @@ services (that happens with the deployment work).
 
 The language model is chosen separately by `ARGUS_MODEL_PROVIDER` (`none` by default, or
 `azure-openai`, `openai`, `github-models`) in `src/argus/models.py`. It only writes the
-explanation. Settings are read from environment variables, or from `.env` (see `.env.example`).
+explanation. Reasoning models (the GPT-5 family, including the planned `gpt-5.4-mini`, and the
+o-series) reject `max_tokens` and `temperature`, so they are called with `max_completion_tokens`
+only; `ARGUS_MODEL_REASONING` (`auto` from the model name, or `true`/`false`) says which kind the
+model is. Settings are read from environment variables, or from `.env` (see `.env.example`).
 
 ## Hosting (decision D1, recorded 2026-09-27; not deployed yet)
 

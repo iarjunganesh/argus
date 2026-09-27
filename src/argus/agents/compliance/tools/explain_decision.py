@@ -92,8 +92,7 @@ Rules:
         response = await chat.client.chat.completions.create(
             model=chat.model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=250,
-            temperature=0.2,
+            **chat.limits(max_tokens=250, temperature=0.2),
         )
         text = (response.choices[0].message.content or "").strip()
     except Exception as exc:  # noqa: BLE001 - any model failure falls back, labelled as such
@@ -182,8 +181,7 @@ Rules:
         response = await chat.client.chat.completions.create(
             model=chat.model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=400,
-            temperature=0.3,
+            **chat.limits(max_tokens=400, temperature=0.3),
         )
         raw = (response.choices[0].message.content or "").strip()
         return _parse_plain_language_response(raw, tier, ref)

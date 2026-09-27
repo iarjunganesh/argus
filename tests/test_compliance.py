@@ -21,19 +21,21 @@ def _payload(upstream: dict) -> dict:
 class FakeLLM:
     """Stands in for AsyncOpenAI: records the prompt and returns fixed content."""
 
-    def model(self):
+    def model(self, reasoning: bool = False):
         """This client as the configured chat model, for patching `get_chat_model`."""
         from argus.models import ChatModel
 
-        return lambda: ChatModel("test", "test-model", self)
+        return lambda: ChatModel("test", "test-model", self, reasoning=reasoning)
 
     def __init__(self, content: str | None = None, error: Exception | None = None):
         self.content = content
         self.error = error
         self.prompts: list[str] = []
+        self.calls: list[dict] = []
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
 
     async def _create(self, **kwargs):
+        self.calls.append(kwargs)
         self.prompts.append(kwargs["messages"][0]["content"])
         if self.error:
             raise self.error
@@ -223,11 +225,30 @@ async def test_explanation_comes_from_the_model(monkeypatch):
     )
 
     assert explanation == {"text": "Rated HIGH because of PEP exposure.", "source": "model"}
+    assert (llm.calls[0]["max_tokens"], llm.calls[0]["temperature"]) == (250, 0.2)
     assert "FATF Rec.12" in llm.prompts[0]
     assert "- Identity: 10/100" in llm.prompts[0]
     assert "Tier set by: the score band" in llm.prompts[0]
     assert "Sanctions screening: not reported" in llm.prompts[0]
     assert "Enhanced due diligence: not required by a rule" in llm.prompts[0]
+
+
+async def test_a_reasoning_model_gets_a_completion_budget_and_no_temperature(monkeypatch):
+    from argus.models import REASONING_COMPLETION_TOKENS
+
+    llm = FakeLLM(content="Rated LOW.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model(reasoning=True))
+
+    explanation = await ed.explain_decision(
+        {"name": "Acme"}, {"overall_risk_tier": "LOW"}, {}, [], []
+    )
+    letter = await ed.explain_decision_plain_language({}, {"overall_risk_tier": "LOW"}, [])
+
+    assert explanation["source"] == "model"
+    assert letter
+    for call in llm.calls:
+        assert call["max_completion_tokens"] == REASONING_COMPLETION_TOKENS
+        assert "max_tokens" not in call and "temperature" not in call
 
 
 async def test_the_model_is_told_when_enhanced_due_diligence_is_required(monkeypatch):
