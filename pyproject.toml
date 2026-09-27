@@ -37,6 +37,7 @@ ui = [
 # Local OCR. Also needs the Tesseract program itself (https://tesseract-ocr.github.io/).
 ocr = [
     "pillow>=12.3.0",
+    "pypdfium2>=5.13.0",
     "pytesseract>=0.3.13",
 ]
 data = [

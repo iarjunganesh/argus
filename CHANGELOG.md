@@ -15,13 +15,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
-- **Local OCR through Tesseract.** With the local backend, identity documents are read by
-  Tesseract and their `Label: value` lines become the same fields Document Intelligence gives
-  (name, date of birth, document number, and so on), each with its confidence. It needs the new
-  `ocr` dependency group and the Tesseract program; without them, or for a file it cannot read
-  (including a truncated image), the document is still reported as unread (`fallback`). The container image leaves it out: deployments use Document Intelligence.
-  Checked: tests with Tesseract stand-ins, and a real Tesseract 5 read of a rendered synthetic
-  passport, which CI now runs with Tesseract installed.
+- **Local OCR through Tesseract.** With the local backend, identity documents (PNG, or PDF,
+  whose pages are rendered first) are read by Tesseract and their `Label: value` lines become the
+  same fields Document Intelligence gives (name, date of birth, document number, and so on), each
+  with its confidence. It needs the new `ocr` dependency group and the Tesseract program; without
+  them, or for a file it cannot read (including a truncated image), the document is still
+  reported as unread (`fallback`). The container image leaves it out: deployments use Document
+  Intelligence. Checked: tests with Tesseract stand-ins; a real Tesseract 5 read of a rendered
+  synthetic passport as PNG and as PDF, which CI now runs with Tesseract installed; and once by
+  hand over the 48 documents from `generate_ocr_documents.py`: every PDF gave all its fields, the
+  degraded PNGs fewer, down to none for the worst.
 
 - **A container image for the API.** The root `Dockerfile` builds a multi-stage `uv` image on the
   pinned Python 3.14 image: runtime dependencies only, from wheels (`--no-build`), a non-root
@@ -312,6 +315,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Known issues
 
+- **The API does not accept identity documents yet.** `POST /api/v1/kyc/assess` has no
+  documents field, so OCR (local or Document Intelligence) runs only when the Identity agent is
+  called directly with `documents`, as the tests do.
 - **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
 - **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
