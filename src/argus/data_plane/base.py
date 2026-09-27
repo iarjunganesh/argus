@@ -51,7 +51,7 @@ class EntityStore(Protocol):
 
 
 class ReportStore(Protocol):
-    """The only code that writes assessment reports and their status."""
+    """The only code that writes assessment reports, their status and their progress events."""
 
     async def save_status(self, report_id: str, status: str) -> None: ...
 
@@ -60,6 +60,12 @@ class ReportStore(Protocol):
     async def save_report(self, report_id: str, report: dict) -> None: ...
 
     async def report(self, report_id: str) -> dict | None: ...
+
+    async def append_event(self, report_id: str, event: dict) -> None:
+        """Record one progress event. Each report has one writer, so events keep their order."""
+        ...
+
+    async def events(self, report_id: str) -> list[dict]: ...
 
 
 class OCR(Protocol):
