@@ -14,9 +14,7 @@ dependencies = [
     "azure-cosmos>=4.17.1",
     "azure-identity>=1.25.3",
     "azure-search-documents>=12.0.0",
-    "faker>=40.39.0",
     "fastapi>=0.141.1",
-    "httpx>=0.28.1",
     "openai>=3.19.2",
     "pydantic>=2.13.5",
     "uvicorn[standard]>=0.54.0",
@@ -24,6 +22,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.3.1",
     "packaging>=26.3",
     "pytest>=9.1.1",
@@ -33,9 +32,11 @@ dev = [
 ]
 ui = [
     "gradio>=6.28.0",
+    "httpx>=0.28.1",
 ]
 data = [
     "azure-storage-blob>=12.30.3",
+    "faker>=40.39.0",
     "pillow>=12.3.0",
     "python-dotenv>=1.2.3",
     "reportlab>=5.0.1",
