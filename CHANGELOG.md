@@ -15,6 +15,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Local OCR through Tesseract.** With the local backend, identity documents are read by
+  Tesseract and their `Label: value` lines become the same fields Document Intelligence gives
+  (name, date of birth, document number, and so on), each with its confidence. It needs the new
+  `ocr` dependency group and the Tesseract program; without them the document is still reported as
+  unread (`fallback`). The container image leaves it out: deployments use Document Intelligence.
+  Checked: tests with Tesseract stand-ins, and a real Tesseract 5 read of a rendered synthetic
+  passport, which CI now runs with Tesseract installed.
+
 - **A container image for the API.** The root `Dockerfile` builds a multi-stage `uv` image on the
   pinned Python 3.14 image: runtime dependencies only, a non-root user, and a `HEALTHCHECK` on
   `/health`. `.dockerignore` is an allow-list, so `.env` never reaches the build. Checked: a new
@@ -305,8 +313,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 - **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
-- **No local OCR engine yet.** With the local backend, identity documents are reported as unread
-  (`fallback`) until Tesseract is added.
 - **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
   every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
   in lower-risk relationships.

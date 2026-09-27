@@ -9,8 +9,8 @@
   explanation. Six recorded demo profiles can stand in for the four parallel agents. Every agent
   reads data through one data plane of four interfaces, each with a local implementation
   (synthetic data, the default) and an Azure one: the retriever (Foundry IQ knowledge bases), the
-  entity store and the report store (Cosmos DB), and OCR (Document Intelligence, with no local
-  engine yet). A language model, chosen by one setting, writes only the explanation. The Azure
+  entity store and the report store (Cosmos DB), and OCR (Tesseract locally, Document
+  Intelligence on Azure). A language model, chosen by one setting, writes only the explanation. The Azure
   implementations have not yet been run against live services.</desc>
 
   <!-- Hand-placed master. scripts/ci/render_assets.py writes the -light and -dark variants.
@@ -239,9 +239,9 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
     <rect class="box" x="1400" y="780" width="460" height="124" rx="14"/>
     <text class="name" x="1424" y="822">OCR</text>
     <text class="note" x="1424" y="852">identity documents</text>
-    <text class="note" x="1424" y="880">no local engine yet · Doc Intelligence</text>
-    <rect class="chip-no" x="1716" y="798" width="126" height="30" rx="15"/>
-    <text class="chiptxt-no" x="1779" y="818">AZURE ONLY</text>
+    <text class="note" x="1424" y="880">Tesseract locally · Doc Intelligence</text>
+    <rect class="chip-ok" x="1716" y="798" width="126" height="30" rx="15"/>
+    <text class="chiptxt-ok" x="1779" y="818">LOCAL · AZURE</text>
   </g>
   <text class="note" x="1400" y="950">Azure side tested against SDK stand-ins, not yet run live</text>
 
@@ -249,11 +249,9 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <line class="grid" x1="60" y1="990" x2="1860" y2="990"/>
   <rect class="chip-ok" x="60" y="1016" width="44" height="22" rx="11"/>
   <text class="legend" x="116" y="1034">local and Azure implementations</text>
-  <rect class="chip-no" x="600" y="1016" width="44" height="22" rx="11"/>
-  <text class="legend" x="656" y="1034">Azure only for now</text>
-  <rect class="dashbox" x="930" y="1014" width="44" height="26" rx="6"/>
-  <text class="legend" x="986" y="1034">demo shortcut</text>
-  <rect class="accent" x="1170" y="1014" width="44" height="26" rx="6"/>
-  <text class="legend" x="1226" y="1034">orchestration and decision</text>
+  <rect class="dashbox" x="600" y="1014" width="44" height="26" rx="6"/>
+  <text class="legend" x="656" y="1034">demo shortcut</text>
+  <rect class="accent" x="870" y="1014" width="44" height="26" rx="6"/>
+  <text class="legend" x="926" y="1034">orchestration and decision</text>
   <text class="foot" x="1860" y="1066">Current runtime · details in docs/ARCHITECTURE.md</text>
 </svg>

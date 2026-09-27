@@ -72,7 +72,7 @@ A first sketch of the stack is in [`community-edition.compose.yml`](community-ed
 - [ ] Dockerfile for community image
 - [ ] SQLite adapter for entity/transaction store
 - [ ] Qdrant adapter for vector search
-- [ ] Tesseract OCR path in `identity_validator`
+- [x] Tesseract OCR path (`src/argus/data_plane/tesseract.py`, the local `OCR` implementation)
 - [ ] Open corpus seed script
 - [ ] `CommunityConfig` wired into all agent constructors
 
