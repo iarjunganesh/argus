@@ -15,10 +15,11 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/app/.venv
 WORKDIR /src
 # Runtime dependencies only: no dependency groups (dev tools, Gradio, data generators, Tesseract).
+# --no-build: wheels only, so no package's build script runs (the project itself still builds).
 COPY pyproject.toml uv.lock README.md LICENSE ./
-RUN uv sync --locked --no-default-groups --no-install-project --no-editable
+RUN uv sync --locked --no-default-groups --no-install-project --no-editable --no-build
 COPY src ./src
-RUN uv sync --locked --no-default-groups --no-editable
+RUN uv sync --locked --no-default-groups --no-editable --no-build
 
 FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS runtime
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin argus

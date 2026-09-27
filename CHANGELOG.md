@@ -24,8 +24,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   passport, which CI now runs with Tesseract installed.
 
 - **A container image for the API.** The root `Dockerfile` builds a multi-stage `uv` image on the
-  pinned Python 3.14 image: runtime dependencies only, a non-root user, and a `HEALTHCHECK` on
-  `/health`. `.dockerignore` is an allow-list, so `.env` never reaches the build. Checked: a new
+  pinned Python 3.14 image: runtime dependencies only, from wheels (`--no-build`), a non-root
+  user, and a `HEALTHCHECK` on `/health`. `.dockerignore` is an allow-list, so `.env` never
+  reaches the build. Checked: a new
   CI job builds the image, runs one demo assessment through it (`scripts/ci/smoke_api.py`: stream,
   report, tier and sources) and waits for the health check; the same passed locally.
 - **The version inventory covers the container base images.** `check_versions.py` requires tag

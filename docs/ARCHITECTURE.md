@@ -44,7 +44,8 @@ run as a step of the orchestrator's workflow inside the API process.
 
 The root `Dockerfile` builds the API alone (the Gradio UI is not in it): a multi-stage `uv` build
 on the Python image of the `.python-version` minor, installing the runtime dependencies only (no
-dependency groups: no dev tools, Gradio, data generators or Tesseract). It runs as a non-root user
+dependency groups: no dev tools, Gradio, data generators or Tesseract), from wheels only
+(`--no-build`, so no package's build script runs). It runs as a non-root user
 (uid 10001), listens on port 8000, and its `HEALTHCHECK` calls `/health`. Both base images are
 pinned by tag and digest, checked by `scripts/ci/check_versions.py` and moved by the post-release
 refresh. `.dockerignore` is an allow-list, so `.env` and other local files never reach the build.
