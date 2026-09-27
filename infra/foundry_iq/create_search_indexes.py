@@ -174,7 +174,7 @@ def create_search_indexes():
     except ImportError:
         _create_indexes_via_rest(endpoint, key)
 
-    print("\nFoundry IQ indexes ready. Run 'make index-knowledge-bases' to populate them.")
+    print("\nFoundry IQ indexes ready.")
 
 
 if __name__ == "__main__":

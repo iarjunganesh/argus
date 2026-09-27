@@ -1,53 +1,83 @@
 """
 create_knowledge_bases.py
-Creates the three Foundry IQ knowledge bases for ARGUS.
+Creates the three Foundry IQ knowledge bases for ARGUS on Azure AI Search.
 Run once after Azure resources are provisioned.
-Usage: python infra/foundry_iq/create_knowledge_bases.py
+Usage: uv run python infra/foundry_iq/create_knowledge_bases.py
+
+For each knowledge base (regulations, sanctions, adverse media) this creates, in order:
+  1. the search index (create_search_indexes.py), with the "default" semantic configuration;
+  2. a search index knowledge source that returns the fields a citation needs;
+  3. the knowledge base itself, with no model: the stable 2026-04-01 API retrieves minimally and
+     extractively, which is what the data plane's FoundryIQRetriever asks for.
+
+The names come from `argus.data_plane.azure`, so the runtime and this script always agree.
 """
 
 import os
 
+from argus.data_plane.azure import (
+    KNOWLEDGE_BASE_NAMES,
+    SOURCE_DATA_FIELDS,
+    knowledge_source_name,
+)
 from argus.utils.env_loader import load_repo_env
 
 load_repo_env(__file__)
 
-KNOWLEDGE_BASES = [
-    {
-        "name": os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations"),
-        "description": "FATF 40 Recommendations, 4AMLD/6AMLD, GDPR Art.9, DORA regulatory text",
-        "index_name": "argus-regulations-index",
-    },
-    {
-        "name": os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions"),
-        "description": "Synthetic sanctions data (OFAC/UN/EU/UK schema)",
-        "index_name": "argus-sanctions-index",
-    },
-    {
-        "name": os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia"),
-        "description": "Synthetic adverse media news corpus",
-        "index_name": "argus-media-index",
-    },
-]
+DESCRIPTIONS = {
+    "regulations": "FATF Recommendations, 4AMLD/6AMLD, GDPR Art. 9, DORA and Wolfsberg texts",
+    "sanctions": "Synthetic sanctions data (OFAC/UN/EU/UK schema)",
+    "adverse_media": "Synthetic adverse media news corpus",
+}
 
 
 def create_knowledge_bases():
-    """
-    Foundry IQ knowledge bases are backed by Azure AI Search indexes.
-    This function delegates to create_search_indexes.py which sets up
-    the indexes with the correct schema and semantic configuration.
-    """
-    print("Creating Foundry IQ knowledge bases (Azure AI Search indexes)...")
-    try:
-        # Sibling script: the running script's folder is on the import path.
-        from create_search_indexes import create_search_indexes
+    from azure.core.credentials import AzureKeyCredential
+    from azure.search.documents.indexes import SearchIndexClient
+    from azure.search.documents.indexes.models import (
+        KnowledgeBase,
+        KnowledgeSourceReference,
+        SearchIndexFieldReference,
+        SearchIndexKnowledgeSource,
+        SearchIndexKnowledgeSourceParameters,
+    )
 
-        create_search_indexes()
-        print("\nAll Foundry IQ knowledge bases ready. Run index scripts next:")
-        print("  uv run python infra/foundry_iq/index_regulations.py")
-        print("  uv run python infra/foundry_iq/index_sanctions_and_media.py")
-    except (KeyError, ImportError) as e:
-        print(f"Foundry IQ index creation skipped in this environment: {e}")
-        print("Assuming the Azure AI Search indexes already exist and continuing.")
+    # Sibling script: the running script's folder is on the import path.
+    from create_search_indexes import create_search_indexes
+
+    create_search_indexes()
+
+    client = SearchIndexClient(
+        os.environ["AZURE_SEARCH_ENDPOINT"], AzureKeyCredential(os.environ["AZURE_SEARCH_API_KEY"])
+    )
+    print("Creating Foundry IQ knowledge sources and knowledge bases...")
+    for knowledge_base, name in KNOWLEDGE_BASE_NAMES.items():
+        source = knowledge_source_name(knowledge_base)
+        client.create_or_update_knowledge_source(
+            SearchIndexKnowledgeSource(
+                name=source,
+                description=DESCRIPTIONS[knowledge_base],
+                search_index_parameters=SearchIndexKnowledgeSourceParameters(
+                    search_index_name=name,
+                    semantic_configuration_name="default",
+                    source_data_fields=[
+                        SearchIndexFieldReference(name=f) for f in SOURCE_DATA_FIELDS
+                    ],
+                ),
+            )
+        )
+        client.create_or_update_knowledge_base(
+            KnowledgeBase(
+                name=name,
+                description=DESCRIPTIONS[knowledge_base],
+                knowledge_sources=[KnowledgeSourceReference(name=source)],
+            )
+        )
+        print(f"  ✅ {knowledge_base}  →  knowledge base: {name}  (source: {source})")
+
+    print("\nAll Foundry IQ knowledge bases ready. Fill the indexes next:")
+    print("  uv run python infra/foundry_iq/index_regulations.py")
+    print("  uv run python infra/foundry_iq/index_sanctions_and_media.py")
 
 
 if __name__ == "__main__":

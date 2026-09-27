@@ -92,7 +92,7 @@ def build_data_plane() -> DataPlane:
 
         return DataPlane(
             backend="azure",
-            retriever=azure.AzureSearchRetriever(),
+            retriever=azure.FoundryIQRetriever(),
             entities=azure.CosmosEntityStore(),
             reports=azure.CosmosReportStore(),
             ocr=azure.DocumentIntelligenceOCR(),
