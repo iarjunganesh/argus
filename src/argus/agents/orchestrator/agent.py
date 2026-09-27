@@ -101,7 +101,7 @@ class _Dispatch(Executor):
 class _ParallelAgent(Executor):
     @handler
     async def run(self, assessment: Assessment, ctx: WorkflowContext[AgentOutcome, dict]) -> None:
-        if assessment.profile is not None:
+        if assessment.profile:
             # A recorded demo scenario: its result stands in for the agent's tools.
             response = {
                 "agent": self.id,
