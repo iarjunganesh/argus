@@ -9,7 +9,7 @@ and is no longer maintained.
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../assets/architecture/system-overview-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="../assets/architecture/system-overview-light.svg">
-    <img width="100%" src="../assets/architecture/system-overview-light.svg" alt="The current ARGUS runtime: UI, gateway, orchestrator and five agent services, reading data through one data plane with an Azure and a local implementation."/>
+    <img width="100%" src="../assets/architecture/system-overview-light.svg" alt="The current ARGUS runtime: the Gradio UI calls one API process, which runs the orchestrator's Agent Framework workflow (four agents in parallel, then compliance) and reads data through one data plane with an Azure and a local implementation."/>
   </picture>
 </p>
 
@@ -19,39 +19,58 @@ The diagram's sources and the one-request walkthrough
 
 ## Processes
 
-A local run is seven processes:
+A local run is two processes:
 
 | Process | Entry point | Port | Role |
 | --- | --- | --- | --- |
-| API gateway | `src/argus/api/main.py` | 8000 | Accepts KYC requests, runs the orchestrator as a background task, serves reports |
-| Identity agent | `src/argus/agents/identity/agent.py` | 8001 | Customer lookup, OCR, identity validation |
-| Screening agent | `src/argus/agents/screening/agent.py` | 8002 | Sanctions, adverse media, PEP checks |
-| Corporate agent | `src/argus/agents/corporate/agent.py` | 8003 | Ownership (UBO), registry lookup, jurisdiction risk |
-| Transaction agent | `src/argus/agents/transaction/agent.py` | 8004 | Transaction monitoring, patterns, typology matching |
-| Compliance agent | `src/argus/agents/compliance/agent.py` | 8005 | Regulations lookup, risk scoring, gap analysis, explanation |
-| UI | `src/argus/ui/gradio_app.py` | 7860 | Gradio front end that calls the API gateway |
+| API | `src/argus/api/main.py` | 8000 | Accepts KYC requests, runs each assessment's workflow in this process, streams its progress, serves reports |
+| UI | `src/argus/ui/gradio_app.py` | 7860 | Gradio front end that calls the API |
 
-`scripts/dev/start_demo.ps1` starts all seven on Windows and `scripts/dev/end_demo.ps1` stops them.
+The five agents are not services: each is a module with one `assess(request, task_id)` function,
+run as a step of the orchestrator's workflow inside the API process.
+
+| Agent | Module | Role |
+| --- | --- | --- |
+| Identity | `src/argus/agents/identity/agent.py` | Customer lookup, OCR, identity validation |
+| Screening | `src/argus/agents/screening/agent.py` | Sanctions, adverse media, PEP checks |
+| Corporate | `src/argus/agents/corporate/agent.py` | Ownership (UBO), registry lookup, jurisdiction risk |
+| Transaction | `src/argus/agents/transaction/agent.py` | Transaction monitoring, patterns, typology matching |
+| Compliance | `src/argus/agents/compliance/agent.py` | Regulations lookup, risk scoring, gap analysis, explanation |
+
+`scripts/dev/start_demo.ps1` starts both on Windows and `scripts/dev/end_demo.ps1` stops them.
+`uv run python scripts/dev/run_demo_inprocess.py` runs one assessment without either.
 
 ## Request flow
 
-1. The UI posts to `POST /api/v1/kyc/assess`. The gateway returns a `report_id` immediately and
-   runs `src/argus/agents/orchestrator/agent.py` as a FastAPI background task.
-2. **Fan-out.** The orchestrator calls the Identity, Screening, Corporate and Transaction agents in
-   parallel. Each call is an HTTP `POST /a2a/invoke` carrying a custom JSON envelope
-   (`a2a_version`, `source_agent`, `target_agent`, `task_id`, `payload`). Despite the name, this is
-   **not** the A2A protocol specification.
-3. **Fan-in.** The orchestrator sends all four results to the Compliance agent, which computes the
-   risk score, tier and gaps deterministically and asks a language model for a short explanation.
-4. The gateway stores the report through the data plane's `ReportStore`: in memory with the local
-   backend (lost when the gateway restarts), in Cosmos DB (`kyc_reports`) with the Azure backend.
-   The UI polls `GET /api/v1/kyc/status/{id}` and `GET /api/v1/kyc/report/{id}`.
+1. The UI posts to `POST /api/v1/kyc/assess`. The API returns a `report_id` immediately and runs
+   the assessment as a FastAPI background task.
+2. The orchestrator (`src/argus/agents/orchestrator/agent.py`) runs the assessment as one
+   **Microsoft Agent Framework workflow** (`agent-framework-core`, pinned to an exact version),
+   built with `WorkflowBuilder`: a dispatch step, then a **fan-out** to the Identity, Screening,
+   Corporate and Transaction agents, which run concurrently, then a **fan-in** to the Compliance
+   agent, which receives all four results, computes the risk score, tier and gaps
+   deterministically and asks a language model for a short explanation. No model takes part in
+   the workflow's routing; it is a fixed graph.
+3. Each agent's start and finish (with its `source` and any `fallbacks`) is recorded through the
+   data plane's `ReportStore` as it happens. `GET /api/v1/kyc/stream/{id}` sends these as
+   server-sent events (`agent_started`, `agent_completed`, then one `status` event), replaying
+   what was recorded before the client connected; a client that reconnects with `Last-Event-ID`
+   resumes after the last event it received.
+4. The API stores the report through the `ReportStore`: in memory with the local backend (lost
+   when the API restarts), in Cosmos DB (`kyc_reports`) with the Azure backend. The UI polls
+   `GET /api/v1/kyc/status/{id}` and `GET /api/v1/kyc/report/{id}`. `GET /health` answers while
+   the process is up.
+
+The API's shape is pinned by `tests/test_api_contract.py`: the reviewed OpenAPI document in
+`tests/fixtures/openapi.json`, and the fields of the report and of the progress events.
 
 **Demo shortcut.** When the entity matches one of the six demo scenarios
-(`src/argus/utils/demo_profiles.py`), the orchestrator skips the four parallel agents and uses the recorded
-profile. The compliance fan-in still runs live.
+(`src/argus/utils/demo_profiles.py`), the four parallel steps use the recorded profile instead of
+running their agents. The compliance fan-in still runs live.
 
-An agent that is unreachable is recorded as `status: error` and the assessment continues without it.
+An agent that raises is recorded as `status: error`, `source: unavailable`, and the assessment
+continues without it. There is no A2A protocol: if a process boundary is ever needed, the plan is
+the real protocol through Agent Framework's A2A support, not a custom envelope.
 
 ## Risk scoring
 
@@ -110,7 +129,7 @@ Every agent response carries a `source`, and the report's `audit_trace` collects
 | `computed` | Every tool the agent ran answered from the configured data plane |
 | `fallback` | At least one tool's service was unavailable; that tool returned a result that asserts nothing (not found, no hits, no fields read). `audit_trace.fallbacks` names the tools. |
 | `demo_profile` | A recorded demo scenario, not computed |
-| `unavailable` | The agent itself could not be reached |
+| `unavailable` | The agent itself failed, so there is no result |
 
 The report's `explanation_source` says whether a language model wrote the explanation (`model`) or
 the fixed template did (`fallback`). `audit_trace.retrieval_queries` counts only knowledge-base
@@ -121,8 +140,8 @@ finds nothing relevant, the report lists none. A typology search that falls back
 patterns ARGUS's own rules detected (`source: rules`, no document cited), and the transaction
 agent is marked `fallback`.
 
-Each service loads the repository's `.env` itself (through the data plane, the model factory and
-the gateway), so a setting there takes effect however the service is started.
+The repository's `.env` is loaded by the data plane, the model factory and the API, whichever is
+imported first, so a setting there takes effect however ARGUS is started.
 
 ## Data plane
 
@@ -132,14 +151,15 @@ the implementation set:
 
 | Interface | Used by | `local` (default) | `azure` |
 | --- | --- | --- | --- |
-| `Retriever` | `regulations_rag`, `sanctions_checker`, `adverse_media_scanner`, `typology_matcher` | Keyword search, weighted by word rarity, over the same documents the Azure indexes hold | Azure AI Search, semantic ranker |
+| `Retriever` | `regulations_rag`, `sanctions_checker`, `adverse_media_scanner`, `typology_matcher` | Keyword search, weighted by word rarity, over the same documents the Azure indexes hold | Foundry IQ knowledge bases: the retrieve action on Azure AI Search (stable API 2026-04-01; semantic intent, minimal extractive retrieval, no model), ranked by the semantic reranker |
 | `EntityStore` | `customer_lookup`, `registry_lookup`, `ubo_resolver`, `pep_checker`, `transaction_monitor` | `data/synthetic/*.jsonl` | Cosmos DB |
-| `ReportStore` | The API gateway | In memory | Cosmos DB `kyc_reports` |
+| `ReportStore` | The API (reports, status and progress events) | In memory | Cosmos DB `kyc_reports` |
 | `OCR` | `ocr_processor` | None yet: documents are reported as unread (`fallback`) | Document Intelligence, prebuilt ID model |
 
 The regulations corpus and the builders that turn synthetic records into search documents live in
 `src/argus/data_plane/corpus.py`, and `infra/foundry_iq/` uploads exactly those documents, so both
-backends answer from the same content. A screening hit also needs every word of the entity's name,
+backends answer from the same content. `infra/foundry_iq/create_knowledge_bases.py` creates, for each
+of the three knowledge bases, its index, a knowledge source over that index, and the knowledge base. A screening hit also needs every word of the entity's name,
 or of one alias, to appear in the retrieved passage.
 
 With the local backend, a fresh clone without generated data finds nothing and says so; run the

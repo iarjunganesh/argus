@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080"
      role="img" aria-labelledby="title desc">
   <title id="title">ARGUS system overview: the current runtime</title>
-  <desc id="desc">An analyst uses the Gradio UI, which posts to the FastAPI gateway. The gateway runs
-  the orchestrator as a background task. The orchestrator fans out to the Identity, Screening,
-  Corporate and Transaction agent services in parallel over HTTP with a custom JSON envelope, and
-  fans their results in to the Compliance and Risk agent, which computes a deterministic score,
-  tier and gaps and asks a language model for the explanation. Six recorded demo profiles can
-  replace the four parallel calls. Every agent reads data through one data plane of four
-  interfaces, each with a local implementation (synthetic data, the default) and an Azure one:
-  the retriever (AI Search), the entity store and the report store (Cosmos DB), and OCR (Document
-  Intelligence, with no local engine yet). A language model, chosen by one setting, writes only the
-  explanation. The Azure implementations have not yet been run against live services.</desc>
+  <desc id="desc">An analyst uses the Gradio UI, which posts to the FastAPI API and can follow the
+  assessment as server-sent events. The API runs the orchestrator as a background task, in the same
+  process: one Microsoft Agent Framework workflow fans out to the Identity, Screening, Corporate and
+  Transaction agents, which run concurrently, and fans their results in to the Compliance and Risk
+  agent, which computes a deterministic score, tier and gaps and asks a language model for the
+  explanation. Six recorded demo profiles can stand in for the four parallel agents. Every agent
+  reads data through one data plane of four interfaces, each with a local implementation
+  (synthetic data, the default) and an Azure one: the retriever (Foundry IQ knowledge bases), the
+  entity store and the report store (Cosmos DB), and OCR (Document Intelligence, with no local
+  engine yet). A language model, chosen by one setting, writes only the explanation. The Azure
+  implementations have not yet been run against live services.</desc>
 
   <!-- Hand-placed master. scripts/ci/render_assets.py writes the -light and -dark variants.
        Every status here is checked against the code, not the plan: see docs/ARCHITECTURE.md.
@@ -83,7 +84,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
 
   <rect class="bg" width="1920" height="1080"/>
   <text class="h1" x="60" y="86">ARGUS — System overview</text>
-  <text class="h2" x="60" y="126">How ARGUS runs today: seven processes, five agent services over HTTP, and one data plane, local or Azure.</text>
+  <text class="h2" x="60" y="126">How ARGUS runs today: two processes, five agents in one Agent Framework workflow, and one data plane, local or Azure.</text>
   <line class="grid" x1="60" y1="152" x2="1860" y2="152"/>
 
   <!-- ============ Column A: the analyst's path ============ -->
@@ -97,12 +98,12 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="sub" x="230" y="376">to be replaced by a web UI</text>
 
   <path class="edge" d="M230 395 V454" marker-end="url(#arrow)"/>
-  <text class="note" x="244" y="431">submit · poll status</text>
+  <text class="note" x="244" y="431">submit · poll · stream</text>
 
   <rect class="box" x="60" y="460" width="340" height="150" rx="14"/>
-  <text class="label" x="230" y="514">API gateway</text>
+  <text class="label" x="230" y="514">API</text>
   <text class="sub" x="230" y="547">FastAPI · port 8000</text>
-  <text class="sub" x="230" y="577">reports via the report store</text>
+  <text class="sub" x="230" y="577">runs the whole workflow</text>
 
   <path class="edge" d="M230 610 V689" marker-end="url(#arrow)"/>
   <text class="note" x="244" y="656">fetch report</text>
@@ -118,14 +119,14 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <path class="edge" d="M406 535 H440 V262 H704" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
   <text class="edgetxt" x="590" y="250">background task · report</text>
 
-  <!-- ============ Column B: the five agent services ============ -->
+  <!-- ============ Column B: the workflow, inside the API process ============ -->
   <rect class="frame" x="470" y="180" width="880" height="740" rx="18"/>
-  <text class="edgetxt" x="910" y="904">Five agent services · a custom JSON envelope over HTTP (not the A2A protocol)</text>
+  <text class="edgetxt" x="910" y="904">Inside the API process · one Microsoft Agent Framework workflow · no HTTP between agents</text>
 
   <rect class="accent" x="710" y="210" width="400" height="130" rx="14"/>
   <text class="on" x="910" y="262">Orchestrator</text>
-  <text class="onsub" x="910" y="296">fan-out × 4 in parallel · fan-in</text>
-  <text class="onsub" x="910" y="324">synthesises the report</text>
+  <text class="onsub" x="910" y="296">Agent Framework workflow</text>
+  <text class="onsub" x="910" y="324">fan-out × 4 in parallel · fan-in</text>
 
   <!-- fan-out -->
   <path id="out1" class="flow" d="M910 340 V380 H587 V414" marker-end="url(#flowarrow)"/>
@@ -139,7 +140,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
 
   <g>
     <rect class="box" x="490" y="420" width="195" height="180" rx="14"/>
-    <text class="step" x="587" y="452">PORT 8001</text>
+    <text class="step" x="587" y="452">AGENT</text>
     <text class="label" x="587" y="492" style="font-size:25px">Identity</text>
     <text class="tool" x="587" y="528">customer_lookup</text>
     <text class="tool" x="587" y="554">ocr_processor</text>
@@ -147,7 +148,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   </g>
   <g>
     <rect class="box" x="705" y="420" width="195" height="180" rx="14"/>
-    <text class="step" x="802" y="452">PORT 8002</text>
+    <text class="step" x="802" y="452">AGENT</text>
     <text class="label" x="802" y="492" style="font-size:25px">Screening</text>
     <text class="tool" x="802" y="528">sanctions_checker</text>
     <text class="tool" x="802" y="554">adverse_media_scanner</text>
@@ -155,7 +156,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   </g>
   <g>
     <rect class="box" x="920" y="420" width="195" height="180" rx="14"/>
-    <text class="step" x="1017" y="452">PORT 8003</text>
+    <text class="step" x="1017" y="452">AGENT</text>
     <text class="label" x="1017" y="492" style="font-size:25px">Corporate</text>
     <text class="tool" x="1017" y="528">ubo_resolver</text>
     <text class="tool" x="1017" y="554">registry_lookup</text>
@@ -163,7 +164,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   </g>
   <g>
     <rect class="box" x="1135" y="420" width="195" height="180" rx="14"/>
-    <text class="step" x="1232" y="452">PORT 8004</text>
+    <text class="step" x="1232" y="452">AGENT</text>
     <text class="label" x="1232" y="492" style="font-size:25px">Transaction</text>
     <text class="tool" x="1232" y="528">transaction_monitor</text>
     <text class="tool" x="1232" y="554">pattern_detector</text>
@@ -179,7 +180,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="edgetxt" x="1190" y="672">all four results</text>
 
   <rect class="decision" x="780" y="690" width="550" height="160" rx="14"/>
-  <text class="onsub" x="1055" y="722" style="font-size:15px;font-weight:700;letter-spacing:3px">PORT 8005</text>
+  <text class="onsub" x="1055" y="722" style="font-size:15px;font-weight:700;letter-spacing:3px">FAN-IN</text>
   <text class="on" x="1055" y="760">Compliance &amp; Risk</text>
   <text class="onsub" x="1055" y="794">deterministic score · tier · compliance gaps</text>
   <text class="onsub" x="1055" y="824">a language model writes the explanation</text>
@@ -189,7 +190,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="step" x="620" y="722">SHORTCUT</text>
   <text class="label" x="620" y="760" style="font-size:25px">Demo profiles</text>
   <text class="sub" x="620" y="794">6 recorded scenarios</text>
-  <text class="sub" x="620" y="822">skip the 4 parallel calls</text>
+  <text class="sub" x="620" y="822">stand in for 4 agents</text>
   <path class="dashed" d="M706 322 H480 V770 H484" marker-end="url(#arrow)"/>
 
   <!-- ============ Column C: the data plane ============ -->
@@ -214,7 +215,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
     <rect class="box" x="1400" y="360" width="460" height="124" rx="14"/>
     <text class="name" x="1424" y="402">Retriever</text>
     <text class="note" x="1424" y="432">regulations · sanctions · adverse media</text>
-    <text class="note" x="1424" y="460">keyword search locally · AI Search</text>
+    <text class="note" x="1424" y="460">keyword search locally · Foundry IQ</text>
     <rect class="chip-ok" x="1716" y="378" width="126" height="30" rx="15"/>
     <text class="chiptxt-ok" x="1779" y="398">LOCAL · AZURE</text>
   </g>
@@ -229,7 +230,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <g>
     <rect class="box" x="1400" y="640" width="460" height="124" rx="14"/>
     <text class="name" x="1424" y="682">Report store</text>
-    <text class="note" x="1424" y="712">every report and its status</text>
+    <text class="note" x="1424" y="712">reports · status · progress events</text>
     <text class="note" x="1424" y="740">in memory locally · Cosmos DB</text>
     <rect class="chip-ok" x="1716" y="658" width="126" height="30" rx="15"/>
     <text class="chiptxt-ok" x="1779" y="678">LOCAL · AZURE</text>
