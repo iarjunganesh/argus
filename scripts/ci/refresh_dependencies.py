@@ -111,8 +111,9 @@ def run(root: Path, tag: str, steps: list[tuple[str, list[str]]]) -> int:
         ]
     body += [
         "",
-        "Agent Framework is not a dependency yet; its contract gate starts in Phase 5.",
-        "Web and container inventories start when those surfaces exist in Phase 5.",
+        "Agent Framework is pinned exactly; the orchestrator and API contract tests (Tests) run",
+        "the workflow on the refreshed version. Container base images are refreshed by tag and",
+        "digest. The web inventory starts when that surface exists in Phase 5.",
         "",
     ]
     (root / "docs/DEPENDENCY-REFRESH.md").write_text("\n".join(body), encoding="utf-8")

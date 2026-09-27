@@ -56,9 +56,19 @@ existing published tag. Manual dispatch retries the refresh without republishing
   binary-only installation. Its normal PR CI must pass before merge. This conservative test
   can defer an upgrade because of a platform-specific optional package; review that explicitly.
 
-Web, container images and Agent Framework are absent today. The inventory fails closed if a
-root Dockerfile or web manifest appears without extending it. Add npm, image currency, exact
-Agent Framework upgrades and the offline workflow contract test in Phase 5, with those features.
+- **Container base images.** `--check` requires every `FROM` in the root `Dockerfile` to be pinned
+  by version tag and `sha256` digest, one pin per image, to an image the inventory knows (Python
+  and uv), with the Python image on the `.python-version` minor. `--check-upstream` reads the
+  newest release (the newest CPython patch of that minor; uv's latest GitHub release) and asks the
+  registry (Docker Hub, GitHub Container Registry) for its digest; it also reports an image
+  `rebuilt` under the same tag, usually for base-OS security fixes. `--write` moves the pins, and
+  the interpreter PR moves the Python image to the new minor. A tag the registry has not published
+  yet stays as it is and is reported.
+- **Agent Framework** is pinned exactly, and `--write` keeps it exact. The orchestrator and API
+  contract tests run the workflow on the refreshed version.
+
+The web manifest is absent today; the inventory fails closed if `web/package.json` appears
+without extending it (Phase 5).
 The build backend is reported separately because it is outside the lock; the refresh raises
 its minimum to the latest release and retains an upper bound at the next minor.
 
