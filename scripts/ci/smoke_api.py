@@ -1,6 +1,8 @@
 """Smoke-test a running ARGUS API: one demo assessment end to end, with no cloud credentials.
 
-usage: python scripts/ci/smoke_api.py [BASE_URL]      (default http://127.0.0.1:8000)
+usage: python scripts/ci/smoke_api.py [PORT]      (default 8000)
+
+It only talks to this machine (127.0.0.1): the API under test is a local container or server.
 
 Checks /health, submits the Wirecard AG demo scenario, follows its progress stream until the
 final status, then fetches the report and checks its tier and where each result came from.
@@ -12,7 +14,6 @@ from __future__ import annotations
 import json
 import sys
 import time
-from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 REQUEST = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
@@ -21,13 +22,11 @@ EXPECTED_SOURCES = {**dict.fromkeys(AGENTS[:4], "demo_profile"), "compliance": "
 
 
 def call(base: str, path: str, body: dict | None = None, timeout: float = 30) -> bytes:
-    url = base.rstrip("/") + path
-    if urlsplit(url).scheme not in ("http", "https"):
-        raise ValueError(f"Not an HTTP URL: {url}")
+    url = base + path
     data = json.dumps(body).encode() if body is not None else None
     headers = {"Content-Type": "application/json"}
-    request = Request(url, data=data, headers=headers)  # noqa: S310 - http(s) only, checked
-    with urlopen(request, timeout=timeout) as response:  # noqa: S310 - http(s) only, checked
+    request = Request(url, data=data, headers=headers)  # noqa: S310 - always http://127.0.0.1
+    with urlopen(request, timeout=timeout) as response:  # noqa: S310 - always http://127.0.0.1
         return response.read()
 
 
@@ -35,11 +34,13 @@ def wait_for_health(base: str, seconds: float = 60) -> None:
     deadline = time.monotonic() + seconds
     while True:
         try:
-            if json.loads(call(base, "/health", timeout=2)) == {"status": "ok"}:
-                return
-        except OSError:
-            if time.monotonic() > deadline:
-                raise
+            health = json.loads(call(base, "/health", timeout=2))
+        except (OSError, ValueError) as exc:
+            health = exc
+        if health == {"status": "ok"}:
+            return
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"/health did not report ok within {seconds:g} s: {health!r}")
         time.sleep(1)
 
 
@@ -76,7 +77,10 @@ def smoke(base: str) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    base = argv[1] if len(argv) > 1 else "http://127.0.0.1:8000"
+    port = int(argv[1]) if len(argv) > 1 else 8000
+    if not 0 < port < 65536:
+        raise ValueError(f"Not a TCP port: {port}")
+    base = f"http://127.0.0.1:{port}"
     problems = smoke(base)
     print("\n".join(problems) if problems else f"Smoke assessment passed against {base}.")
     return int(bool(problems))
