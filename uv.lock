@@ -69,9 +69,7 @@ dependencies = [
     { name = "azure-cosmos" },
     { name = "azure-identity" },
     { name = "azure-search-documents" },
-    { name = "faker" },
     { name = "fastapi" },
-    { name = "httpx" },
     { name = "openai" },
     { name = "pydantic" },
     { name = "uvicorn", extra = ["standard"] },
@@ -80,11 +78,13 @@ dependencies = [
 [package.dev-dependencies]
 data = [
     { name = "azure-storage-blob" },
+    { name = "faker" },
     { name = "pillow" },
     { name = "python-dotenv" },
     { name = "reportlab" },
 ]
 dev = [
+    { name = "httpx" },
     { name = "mypy" },
     { name = "packaging" },
     { name = "pytest" },
@@ -94,6 +94,7 @@ dev = [
 ]
 ui = [
     { name = "gradio" },
+    { name = "httpx" },
 ]
 
 [package.metadata]
@@ -104,9 +105,7 @@ requires-dist = [
     { name = "azure-cosmos", specifier = ">=4.17.1" },
     { name = "azure-identity", specifier = ">=1.25.3" },
     { name = "azure-search-documents", specifier = ">=12.0.0" },
-    { name = "faker", specifier = ">=40.39.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
-    { name = "httpx", specifier = ">=0.28.1" },
     { name = "openai", specifier = ">=3.19.2" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
@@ -115,11 +114,13 @@ requires-dist = [
 [package.metadata.requires-dev]
 data = [
     { name = "azure-storage-blob", specifier = ">=12.30.3" },
+    { name = "faker", specifier = ">=40.39.0" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "reportlab", specifier = ">=5.0.1" },
 ]
 dev = [
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "mypy", specifier = ">=2.3.1" },
     { name = "packaging", specifier = ">=26.3" },
     { name = "pytest", specifier = ">=9.1.1" },
@@ -127,7 +128,10 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.16.9" },
 ]
-ui = [{ name = "gradio", specifier = ">=6.28.0" }]
+ui = [
+    { name = "gradio", specifier = ">=6.28.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+]
 
 [[package]]
 name = "ast-serialize"
