@@ -77,7 +77,7 @@ ARGUS is being rebuilt after the hackathon. This table is the honest state of th
 | Plain-English decision explanation | ✅ Works with the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models); without one, a fixed template, labelled as such |
 | **Local data plane** (default): knowledge-base search, entities, ownership, transactions, reports | ✅ Works with no cloud account, on the synthetic data in `data/`. A clone without generated data finds nothing, and says so. |
 | **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ Built and tested against stand-ins for the Azure SDKs; **not yet run against live services**. That happens with the deployment work. |
-| OCR without Azure | ⚠️ No local OCR engine yet: documents are reported as unread, labelled `fallback` |
+| OCR without Azure | ✅ Tesseract reads the synthetic identity documents when it is installed (the `ocr` dependency group and the Tesseract program); without it, documents are reported as unread, labelled `fallback` |
 | The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
 | Gradio UI | ✅ Works |
 

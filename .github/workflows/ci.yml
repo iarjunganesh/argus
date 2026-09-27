@@ -66,6 +66,9 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           enable-cache: true
+      # The local OCR test reads a rendered document with the real Tesseract program.
+      - name: Install Tesseract
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr
       # The floor lives in pyproject.toml ([tool.coverage.report] fail_under) and is 100%, line and
       # branch. Lowering it is a deliberate, reviewed change.
       - name: Pytest with coverage floor

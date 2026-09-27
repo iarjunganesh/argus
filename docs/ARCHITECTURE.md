@@ -169,7 +169,7 @@ the implementation set:
 | `Retriever` | `regulations_rag`, `sanctions_checker`, `adverse_media_scanner`, `typology_matcher` | Keyword search, weighted by word rarity, over the same documents the Azure indexes hold | Foundry IQ knowledge bases: the retrieve action on Azure AI Search (stable API 2026-04-01; semantic intent, minimal extractive retrieval, no model), ranked by the semantic reranker |
 | `EntityStore` | `customer_lookup`, `registry_lookup`, `ubo_resolver`, `pep_checker`, `transaction_monitor` | `data/synthetic/*.jsonl` | Cosmos DB |
 | `ReportStore` | The API (reports, status and progress events) | In memory | Cosmos DB `kyc_reports` |
-| `OCR` | `ocr_processor` | None yet: documents are reported as unread (`fallback`) | Document Intelligence, prebuilt ID model |
+| `OCR` | `ocr_processor` | Tesseract, reading the `Label: value` lines of the synthetic documents, when the `ocr` group and the Tesseract program are installed; otherwise documents are unread (`fallback`) | Document Intelligence, prebuilt ID model |
 
 The regulations corpus and the builders that turn synthetic records into search documents live in
 `src/argus/data_plane/corpus.py`, and `infra/foundry_iq/` uploads exactly those documents, so both

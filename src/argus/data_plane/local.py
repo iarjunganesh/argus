@@ -6,6 +6,7 @@ fresh clone without generated data still runs, and simply finds nothing.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import math
 import re
@@ -13,7 +14,8 @@ from collections import Counter
 from functools import cached_property
 from pathlib import Path
 
-from argus.data_plane.base import DataPlaneUnavailable, KnowledgeBase, Passage
+from argus.data_plane import tesseract
+from argus.data_plane.base import KnowledgeBase, Passage
 from argus.data_plane.corpus import (
     adverse_media_documents,
     load_jsonl,
@@ -154,10 +156,10 @@ class MemoryReportStore:
 
 
 class LocalOCR:
-    """No local OCR engine yet, so every document reports as unreadable."""
+    """Tesseract, when it is installed (see `argus.data_plane.tesseract`)."""
 
     async def extract(self, image: bytes, doc_type: str) -> dict[str, dict]:
-        raise DataPlaneUnavailable("No local OCR engine is installed")
+        return await asyncio.to_thread(tesseract.extract_fields, image)
 
 
 def local_retriever(data_dir: Path) -> LocalRetriever:

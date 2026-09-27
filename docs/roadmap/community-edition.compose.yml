@@ -1,8 +1,9 @@
 version: "3.9"
 
 # SKETCH ONLY: this does not run. It is the intended shape of the Community Edition stack
-# described in community-edition.md; the community Dockerfile and the SQLite, Qdrant and
-# Tesseract backends it expects don't exist yet.
+# described in community-edition.md; the community Dockerfile (the root Dockerfile builds the API
+# only) and the SQLite and Qdrant backends it expects don't exist yet. Local OCR through
+# Tesseract does exist (argus.data_plane.tesseract).
 #
 # ARGUS Community Edition — one command, no Azure subscription required.
 #

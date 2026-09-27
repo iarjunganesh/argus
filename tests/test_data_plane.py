@@ -152,7 +152,7 @@ async def test_memory_report_store_keeps_progress_events_in_order():
     assert await store.events("r1") == [{"type": "a"}, {"type": "b"}]
 
 
-async def test_local_ocr_reports_it_cannot_read():
+async def test_local_ocr_cannot_read_what_is_not_an_image():
     with pytest.raises(dp.DataPlaneUnavailable):
         await LocalOCR().extract(b"image", "passport")
 

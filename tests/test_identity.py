@@ -82,7 +82,7 @@ async def test_identity_agent_invoke(monkeypatch):
     assert res["result"]["identity_score"] >= 0
 
 
-async def test_ocr_without_an_engine_reads_nothing_and_says_so():
+async def test_a_document_that_cannot_be_read_gives_nothing_and_says_so():
     from argus.agents.identity.tools import ocr_processor as ocp
 
     fake_b64 = base64.b64encode(b"fake-image-bytes").decode()
