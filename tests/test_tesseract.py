@@ -25,6 +25,14 @@ def png(lines: list[str] | None = None) -> bytes:
     return buffer.getvalue()
 
 
+def pdf(*pages: list[str]) -> bytes:
+    """A PDF with one rendered page per entry, at 300 dpi, so each page renders back to its size."""
+    images = [Image.open(io.BytesIO(png(lines))).convert("RGB") for lines in pages]
+    buffer = io.BytesIO()
+    images[0].save(buffer, format="PDF", resolution=300, save_all=True, append_images=images[1:])
+    return buffer.getvalue()
+
+
 def tesseract_data(*lines: list[tuple[str, int]]) -> dict[str, list]:
     """Tesseract's `image_to_data` dictionary for lines of (word, confidence) pairs."""
     data: dict[str, list] = {"text": [], "conf": [], "block_num": [], "par_num": [], "line_num": []}
@@ -101,12 +109,31 @@ def test_tesseract_failures_make_the_document_unavailable(monkeypatch, error, re
         tesseract.extract_fields(png())
 
 
-@pytest.mark.parametrize("image", [b"not an image", png(["Name: Ada"])[:200]])
-def test_what_is_not_a_readable_image_is_unavailable(monkeypatch, image):
+def test_each_pdf_page_is_rendered_and_read_up_to_the_page_limit(monkeypatch):
+    sizes = []
+
+    def image_to_data(image, output_type):
+        sizes.append(image.size)
+        page = len(sizes)
+        return tesseract_data([(f"Page{page}", 90)], [("Nationality:", 90), (f"N{page}", 90)])
+
+    monkeypatch.setattr(pytesseract, "image_to_data", image_to_data)
+
+    fields = tesseract.extract_fields(pdf(*[["x"]] * (tesseract.MAX_PDF_PAGES + 1)))
+
+    assert len(sizes) == tesseract.MAX_PDF_PAGES
+    assert all(abs(w - 1100) <= 1 and abs(h - 150) <= 1 for w, h in sizes)  # 300 dpi, as saved
+    assert fields == {"nationality": {"value": "N1", "confidence": 0.9}}  # the first page wins
+
+
+@pytest.mark.parametrize(
+    "document", [b"not an image", png(["Name: Ada"])[:200], b"%PDF-1.7 not really"]
+)
+def test_what_cannot_be_read_is_unavailable(monkeypatch, document):
     monkeypatch.setattr(pytesseract, "image_to_data", lambda *a, **k: pytest.fail("not reached"))
 
     with pytest.raises(DataPlaneUnavailable, match="could not read"):
-        tesseract.extract_fields(image)  # the second is a truncated PNG
+        tesseract.extract_fields(document)  # the second is a truncated PNG, the third a bad PDF
 
 
 def test_without_the_ocr_group_local_ocr_is_unavailable(monkeypatch):
@@ -116,14 +143,15 @@ def test_without_the_ocr_group_local_ocr_is_unavailable(monkeypatch):
         tesseract.extract_fields(png())
 
 
-def test_real_tesseract_reads_a_synthetic_passport():
+@pytest.mark.parametrize("render", [png, pdf])
+def test_real_tesseract_reads_a_synthetic_passport(render):
     # Skipped where the Tesseract program is not installed; CI installs it and sets
     # REQUIRE_TESSERACT, so there a missing program fails instead of skipping silently.
     if shutil.which("tesseract") is None:
         if os.getenv("REQUIRE_TESSERACT"):
             pytest.fail("REQUIRE_TESSERACT is set, but the Tesseract program is not installed")
         pytest.skip("Tesseract is not installed")
-    image = png(
+    document = render(
         [
             "Surname / Given names: Ada Synthetic",
             "Date of birth: 1990-01-15",
@@ -131,7 +159,7 @@ def test_real_tesseract_reads_a_synthetic_passport():
         ]
     )
 
-    fields = tesseract.extract_fields(image)
+    fields = tesseract.extract_fields(document)
 
     assert {name: f["value"] for name, f in fields.items()} == {
         "full_name": "Ada Synthetic",
