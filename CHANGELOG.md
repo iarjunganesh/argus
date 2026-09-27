@@ -15,6 +15,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **An assessment can be followed as it runs.** `GET /api/v1/kyc/stream/{id}` sends server-sent
+  events: each agent's start and finish (with its `source` and any fallbacks), then the final
+  status. Events are kept in the report store, so a late or reconnecting client (`Last-Event-ID`)
+  misses nothing. Checked: tests for replay, resume, 404, a running assessment and the time
+  limit, and one assessment streamed by hand through uvicorn.
+- **The API contract is pinned.** `tests/test_api_contract.py` compares the OpenAPI document with
+  the reviewed `tests/fixtures/openapi.json` and pins the fields of the report and of the
+  progress events, checked on reports computed by the real workflow.
+- **`GET /health`** answers while the API process is up.
+
 - **SonarQube Cloud analyses every pull request** (automatic analysis, quality gate on new code).
 - **Ruff now also checks security, complexity and error handling.** Added rule sets: security
   (`S`, the bandit rules), complexity (`C90`, at most 10 branches per function), async misuse
@@ -100,6 +110,21 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **One process runs the whole assessment, as a Microsoft Agent Framework workflow.** The
+  orchestrator builds a fixed graph with `WorkflowBuilder` (`agent-framework-core` pinned to
+  1.19.0): the Identity, Screening, Corporate and Transaction agents run concurrently, then fan in
+  to Compliance. The agents are plain functions called in-process; no model routes the workflow.
+  A local run is now the API and the UI (ports 8000 and 7860) instead of seven processes. An agent
+  that raises is reported as `unavailable` and the others continue, as before. Checked: the six
+  demo scenarios give the same tiers, scores, findings and actions (unchanged fixture), and
+  orchestrator tests cover fan-in, failure, demo profiles and event order.
+- **The Azure retriever uses Foundry IQ knowledge bases** instead of querying the search indexes
+  directly: the retrieve action of the stable 2026-04-01 API, with a semantic intent (minimal,
+  extractive retrieval, no model), ranked by the semantic reranker.
+  `infra/foundry_iq/create_knowledge_bases.py` now also creates the knowledge sources and the
+  knowledge bases. Checked against a stand-in client with the SDK's request models; not yet
+  against a live search service.
+
 - **The Gradio UI listens on this machine only by default** (it listened on all interfaces). Set
   `GRADIO_SERVER_NAME=0.0.0.0` to expose it.
 - **A potential sanctions match holds the case at CRITICAL, whatever the weighted score.**
@@ -178,6 +203,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **Explanations work with GPT-5 and o-series models.** They reject `max_tokens` and
+  `temperature`, so every explanation from the planned `gpt-5.4-mini` deployment would have
+  fallen back to the template. Reasoning models now get `max_completion_tokens` only;
+  `ARGUS_MODEL_REASONING` (`auto`, `true`, `false`) says which kind the model is. The prompts are
+  unchanged. Checked by tests on the arguments sent; not yet against a live model.
+- **`scripts/dev/start_demo.ps1` parses again**: a corrupted line had broken it.
+
 - **The Cosmos transactions query passes its row limit as a query parameter** instead of
   formatting it into the SQL text. The value was already an integer, so this was not exploitable.
   Not yet run against a live Cosmos account.
@@ -232,6 +264,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   treat the parent directory as the import root. Checked: 50 passed, 1 xfailed.
 
 ### Removed
+
+- **The five per-agent FastAPI services and their custom `/a2a/invoke` JSON envelope** (never the
+  A2A protocol), the `*_AGENT_URL` settings, and the admin endpoints that listed and polled the
+  services (`/api/v1/admin/agents`, `/api/v1/admin/health`).
 
 - **`azure-ai-projects`**, which only backed a knowledge-base call that didn't exist, and the old
   model settings `USE_GITHUB_MODELS` and `AZURE_OPENAI_API_VERSION` (replaced by

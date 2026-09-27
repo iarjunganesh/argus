@@ -6,11 +6,11 @@ and [`CONTRIBUTING.md`](CONTRIBUTING.md) is its short version for first-time con
 
 ## What ARGUS is
 
-ARGUS is a multi-agent KYC (know-your-customer) risk screening system in Python: five FastAPI
-agent services, an orchestrator, a FastAPI gateway and a Gradio UI. Fixed rules compute the risk
-score and tier; a language model only writes the explanation. It won a Hack for Good award in the
-Microsoft Agents League 2026 and is now being cleaned up before the v2 work in
-[`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
+ARGUS is a multi-agent KYC (know-your-customer) risk screening system in Python: a FastAPI API
+that runs five agents as one in-process Microsoft Agent Framework workflow, and a Gradio UI. Fixed
+rules compute the risk score and tier; a language model only writes the explanation. It won a Hack
+for Good award in the Microsoft Agents League 2026 and is now being cleaned up before the v2 work
+in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
 
 State as of 2026-09-27: every tool reads through a data plane with a local implementation
 (synthetic data, the default, no cloud account) and an Azure one that is not yet verified against
@@ -114,8 +114,8 @@ Inside `src/argus/`:
 
 | Package | What it holds |
 | --- | --- |
-| `agents/` | The orchestrator and the five agent services, each with its `tools/` |
-| `api/` | The FastAPI gateway and its request/response schemas |
+| `agents/` | The orchestrator (the Agent Framework workflow) and the five agents, each with its `tools/` |
+| `api/` | The FastAPI API (submit, status, report, progress stream) and its request schemas |
 | `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
 | `data_plane/` | The four data interfaces (retriever, entity store, report store, OCR), each with a local and an Azure implementation |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
