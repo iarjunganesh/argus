@@ -1,33 +1,14 @@
 """Transaction agent scoring and the typology fallback."""
 
-from fastapi.testclient import TestClient
-
 import argus.agents.transaction.agent as tx
 from argus.agents.transaction.tools.pattern_detector import pattern_detector
 from argus.agents.transaction.tools.typology_matcher import _rule_typology_hits
 
 
-def _msg(payload: dict) -> tx.A2AMessage:
-    return tx.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent="transaction",
-        task_id="t-tx",
-        payload=payload,
-    )
-
-
 async def test_analysis_can_be_switched_off():
-    response = await tx.invoke(_msg({"include_transaction_analysis": False}))
+    response = await tx.assess({"include_transaction_analysis": False}, "t")
 
     assert response["result"]["skipped"] is True
-
-
-async def test_demo_profile_short_circuits_the_tools():
-    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
-    response = await tx.invoke(_msg(payload))
-
-    assert response["result"]["transaction_count"] == 8
 
 
 async def test_no_history_scores_zero(monkeypatch):
@@ -36,7 +17,7 @@ async def test_no_history_scores_zero(monkeypatch):
 
     monkeypatch.setattr(tx, "transaction_monitor", monitor)
 
-    result = (await tx.invoke(_msg({"entity_name": "Quiet Ltd"})))["result"]
+    result = (await tx.assess({"entity_name": "Quiet Ltd"}, "t"))["result"]
 
     assert result["transaction_risk_score"] == 0
     assert result["typology_hits"] == []
@@ -54,13 +35,9 @@ async def test_layering_is_scored(monkeypatch):
     monkeypatch.setattr(tx, "pattern_detector", lambda history: {"layering_flag": True})
     monkeypatch.setattr(tx, "typology_matcher", typologies)
 
-    result = (await tx.invoke(_msg({"entity_name": "Busy Ltd"})))["result"]
+    result = (await tx.assess({"entity_name": "Busy Ltd"}, "t"))["result"]
 
     assert result["transaction_risk_score"] == 40  # layering 30 + one typology 10
-
-
-def test_health():
-    assert TestClient(tx.app).get("/health").json()["service"] == "transaction"
 
 
 def test_pattern_detector_without_transactions():
@@ -142,7 +119,7 @@ async def test_an_unavailable_typology_search_marks_the_agent_as_fallback(
     monkeypatch.setattr(tx, "pattern_detector", lambda history: {"structuring_flag": True})
     use_plane(retriever=unavailable)
 
-    response = await tx.invoke(_msg({"entity_name": "Busy Ltd"}))
+    response = await tx.assess({"entity_name": "Busy Ltd"}, "t")
 
     assert response["source"] == "fallback"
     assert response["fallbacks"] == ["typology_matcher"]
@@ -166,15 +143,8 @@ def test_pattern_detector_clean():
     assert result["structuring_flag"] is False
 
 
-def test_transaction_agent_invoke(a2a_request):
-    from argus.agents.transaction.agent import app
-
-    client = TestClient(app)
-    resp = client.post(
-        "/a2a/invoke", json={**a2a_request, "target_agent": "argus-transaction-agent-v1"}
-    )
-    assert resp.status_code == 200
-    data = resp.json()
+async def test_transaction_agent_invoke(kyc_request):
+    data = await tx.assess(kyc_request, "t")
     assert data["agent"] == "transaction"
     assert "transaction_risk_score" in data["result"]
 
@@ -195,17 +165,11 @@ async def test_transaction_monitor_falls_back_when_the_store_is_down(use_plane, 
 
 
 async def test_agent_reports_its_provenance(use_plane, unavailable):
-    response = await tx.invoke(_msg({"entity_name": "Ada Synthetic"}))
+    response = await tx.assess({"entity_name": "Ada Synthetic"}, "t")
     assert response["source"] == "computed" and response["fallbacks"] == []
     assert response["result"]["structuring_flag"] is True
 
     use_plane(entities=unavailable)
-    response = await tx.invoke(_msg({"entity_name": "Ada Synthetic"}))
+    response = await tx.assess({"entity_name": "Ada Synthetic"}, "t")
     assert response["source"] == "fallback"
     assert response["fallbacks"] == ["transaction_monitor"]
-
-
-async def test_demo_profile_is_labelled():
-    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
-
-    assert (await tx.invoke(_msg(payload)))["source"] == "demo_profile"

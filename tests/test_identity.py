@@ -2,21 +2,9 @@
 
 import base64
 
-from fastapi.testclient import TestClient
-
 import argus.agents.identity.agent as ident
 import argus.agents.identity.tools.customer_lookup as cust
 from argus.agents.identity.tools.identity_validator import identity_validator
-
-
-def _msg(payload: dict) -> ident.A2AMessage:
-    return ident.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent="identity",
-        task_id="t-id",
-        payload=payload,
-    )
 
 
 async def test_each_document_is_read_and_cross_checked(monkeypatch):
@@ -36,23 +24,12 @@ async def test_each_document_is_read_and_cross_checked(monkeypatch):
         "entity_name": "Jan Test",
         "documents": [{"image_base64": "AAA", "doc_type": "id_card"}, {}],
     }
-    result = (await ident.invoke(_msg(payload)))["result"]
+    result = (await ident.assess(payload, "t"))["result"]
 
     assert read == [("AAA", "id_card"), ("", "passport")]
     assert result["ocr_documents"] == 2
     assert result["verified_fields"] == ["name", "name"]
     assert result["identity_score"] == 100
-
-
-async def test_demo_profile_short_circuits_the_tools():
-    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
-    response = await ident.invoke(_msg(payload))
-
-    assert response["result"]["identity_score"] == 96
-
-
-def test_health():
-    assert TestClient(ident.app).get("/health").json()["service"] == "identity"
 
 
 async def test_customer_lookup_reports_missing_entity():
@@ -87,8 +64,6 @@ async def test_date_of_birth_checked_even_without_registry_name():
 async def test_identity_agent_invoke(monkeypatch):
     import argus.agents.identity.agent as ident
 
-    monkeypatch.setattr(ident, "get_demo_profile", lambda name, etype, j: None)
-
     async def fake_customer(name, etype, rn):
         return {"found": True}
 
@@ -102,14 +77,8 @@ async def test_identity_agent_invoke(monkeypatch):
     monkeypatch.setattr(ident, "ocr_processor", fake_ocr)
     monkeypatch.setattr(ident, "identity_validator", fake_validator)
 
-    msg = ident.A2AMessage(
-        a2a_version="1.0",
-        source_agent="x",
-        target_agent="y",
-        task_id="t2",
-        payload={"entity_name": "Bob", "entity_type": "individual", "documents": []},
-    )
-    res = await ident.invoke(msg)
+    payload = {"entity_name": "Bob", "entity_type": "individual", "documents": []}
+    res = await ident.assess(payload, "t2")
     assert res["result"]["identity_score"] >= 0
 
 
@@ -165,14 +134,6 @@ async def test_identity_validator_name_mismatch():
     assert result["confidence_score"] < 100
 
 
-def test_openapi_docs_are_served():
-    from argus.agents.identity.agent import app
-
-    client = TestClient(app)
-    resp = client.get("/docs")
-    assert resp.status_code == 200
-
-
 async def test_customer_lookup_reads_the_local_registry():
     result = await cust.customer_lookup("Ada Synthetic", "individual", None)
 
@@ -193,17 +154,11 @@ async def test_agent_names_the_tools_that_fell_back():
         "entity_type": "individual",
         "documents": [{"image_base64": base64.b64encode(b"x").decode()}],
     }
-    response = await ident.invoke(_msg(payload))
+    response = await ident.assess(payload, "t")
 
     assert response["source"] == "fallback"
     assert response["fallbacks"] == ["ocr_processor[0]"]
     assert response["result"]["registry_match"] is True
-
-
-async def test_demo_profile_is_labelled():
-    payload = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
-
-    assert (await ident.invoke(_msg(payload)))["source"] == "demo_profile"
 
 
 async def test_ocr_processor_rejects_an_empty_image():

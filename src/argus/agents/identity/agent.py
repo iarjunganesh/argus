@@ -3,47 +3,22 @@ ARGUS Identity Agent
 Verifies entity identity via registry lookups and document OCR.
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-
 from argus.agents.identity.tools.customer_lookup import customer_lookup
 from argus.agents.identity.tools.identity_validator import identity_validator
 from argus.agents.identity.tools.ocr_processor import ocr_processor
-from argus.agents.provenance import demo_provenance, provenance
-from argus.utils.demo_profiles import get_demo_profile
+from argus.agents.provenance import provenance
 from argus.utils.structured_logger import get_logger
 
-app = FastAPI(title="ARGUS Identity Agent")
 logger = get_logger("agent.identity")
 
 
-class A2AMessage(BaseModel):
-    a2a_version: str
-    source_agent: str
-    target_agent: str
-    task_id: str
-    payload: dict
+async def assess(request: dict, task_id: str) -> dict:
+    entity_name = request.get("entity_name", "")
+    entity_type = request.get("entity_type", "individual")
+    reg_number = request.get("registration_number")
+    documents = request.get("documents", [])  # list of base64 doc images
 
-
-@app.post("/a2a/invoke")
-async def invoke(message: A2AMessage):
-    p = message.payload
-    entity_name = p.get("entity_name", "")
-    entity_type = p.get("entity_type", "individual")
-    reg_number = p.get("registration_number")
-    documents = p.get("documents", [])  # list of base64 doc images
-    jurisdiction = p.get("jurisdiction", "")
-
-    logger.info("invoke", extra={"task_id": message.task_id, "entity": entity_name})
-    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
-    if demo_profile and demo_profile.get("identity"):
-        return {
-            "agent": "identity",
-            "task_id": message.task_id,
-            "status": "completed",
-            **demo_provenance(),
-            "result": demo_profile["identity"],
-        }
+    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
 
     # Step 1: Registry lookup
     registry_result = await customer_lookup(entity_name, entity_type, reg_number)
@@ -61,13 +36,11 @@ async def invoke(message: A2AMessage):
     validation = await identity_validator(registry_result, ocr_results)
 
     identity_score = validation.get("confidence_score", 50)
-    logger.info(
-        "invoke.completed", extra={"task_id": message.task_id, "identity_score": identity_score}
-    )
+    logger.info("assess.completed", extra={"task_id": task_id, "identity_score": identity_score})
 
     return {
         "agent": "identity",
-        "task_id": message.task_id,
+        "task_id": task_id,
         "status": "completed",
         **provenance(
             customer_lookup=registry_result,
@@ -81,8 +54,3 @@ async def invoke(message: A2AMessage):
             "verified_fields": validation.get("verified_fields", []),
         },
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "identity", "version": "0.1.0"}

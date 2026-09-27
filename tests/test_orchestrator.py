@@ -1,34 +1,157 @@
-"""Orchestrator transport: the A2A envelope sent to each sub-agent."""
+"""The orchestrator workflow: fan-out, fan-in, demo scenarios, degradation and progress events."""
 
-import json
-
-import httpx
+import pytest
 
 from argus.agents.orchestrator import agent as orchestrator
 
+REQUEST = {"entity_name": "TestCo", "entity_type": "corporate", "jurisdiction": "NL"}
 
-async def test_call_agent_posts_envelope_and_returns_json(monkeypatch):
-    seen = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        seen.append(request)
-        return httpx.Response(200, json={"agent": "identity", "status": "completed"})
+@pytest.fixture
+def fake_agents(monkeypatch):
+    """Replace every agent with one that records its call and answers `{"foo": name}`."""
+    calls: dict[str, dict] = {}
 
-    real_client = httpx.AsyncClient
+    def fake(name):
+        async def assess(request, task_id):
+            calls[name] = request
+            return {
+                "agent": name,
+                "status": "completed",
+                "source": "computed",
+                "fallbacks": [],
+                "result": {"foo": name},
+            }
+
+        return assess
+
+    for name, module in orchestrator._MODULES.items():
+        monkeypatch.setattr(module, "assess", fake(name))
+    return calls
+
+
+async def test_the_four_agents_fan_in_to_compliance(fake_agents):
+    report = await orchestrator.run_kyc_assessment(REQUEST)
+
+    assert set(fake_agents) == set(orchestrator.AGENTS)
+    for name in orchestrator.PARALLEL_AGENTS:
+        assert fake_agents[name] == REQUEST
+    upstream = fake_agents["compliance"]["upstream_results"]
+    assert {name: r["result"] for name, r in upstream.items()} == {
+        name: {"foo": name} for name in orchestrator.PARALLEL_AGENTS
+    }
+    assert fake_agents["compliance"]["entity_name"] == "TestCo"
+    assert report["entity"]["name"] == "TestCo"
+    assert report["audit_trace"]["agents_invoked"] == list(orchestrator.AGENTS)
+    assert set(report["audit_trace"]["agent_sources"].values()) == {"computed"}
+
+
+async def test_an_agent_that_fails_is_unavailable_and_the_others_continue(fake_agents, monkeypatch):
+    async def broken(request, task_id):
+        raise RuntimeError("identity down")
+
+    monkeypatch.setattr(orchestrator._MODULES["identity"], "assess", broken)
+
+    report = await orchestrator.run_kyc_assessment(REQUEST)
+
+    trace = report["audit_trace"]
+    assert trace["identity_status"] == "error"
+    assert trace["agent_sources"]["identity"] == "unavailable"
+    assert trace["agent_sources"]["screening"] == "computed"
+    upstream = fake_agents["compliance"]["upstream_results"]
+    assert upstream["identity"]["result"] is None
+    assert upstream["identity"]["error"] == "identity down"
+
+
+async def test_a_demo_scenario_stands_in_for_the_parallel_agents(fake_agents):
+    request = {"entity_name": "Jane Synthetic", "entity_type": "individual", "jurisdiction": "DE"}
+
+    report = await orchestrator.run_kyc_assessment(request)
+
+    assert set(fake_agents) == {"compliance"}  # the four parallel agents were not run
+    upstream = fake_agents["compliance"]["upstream_results"]
+    assert upstream["identity"]["result"]["identity_score"] == 96
+    assert upstream["transaction"]["result"]["transaction_count"] == 8
+    sources = report["audit_trace"]["agent_sources"]
+    assert [sources[a] for a in orchestrator.AGENTS] == ["demo_profile"] * 4 + ["computed"]
+
+
+async def test_a_demo_scenario_without_a_section_gives_that_agent_an_empty_result(
+    fake_agents, monkeypatch
+):
+    from argus.utils import demo_profiles
+
     monkeypatch.setattr(
-        httpx,
-        "AsyncClient",
-        lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs),
+        demo_profiles, "get_demo_profile", lambda name, etype, j: {"identity": {"x": 1}}
     )
 
-    result = await orchestrator.call_agent("identity", {"entity_name": "X"}, "task-1")
+    await orchestrator.run_kyc_assessment(REQUEST)
 
-    assert result == {"agent": "identity", "status": "completed"}
-    assert str(seen[0].url) == f"{orchestrator.AGENT_URLS['identity']}/a2a/invoke"
-    body = json.loads(seen[0].content)
-    assert body["target_agent"] == "argus-identity-agent-v1"
-    assert body["task_id"] == "task-1"
-    assert body["payload"] == {"entity_name": "X"}
+    upstream = fake_agents["compliance"]["upstream_results"]
+    assert upstream["identity"]["result"] == {"x": 1}
+    assert upstream["corporate"]["result"] == {}
+
+
+async def test_each_agent_reports_its_start_and_finish(fake_agents, monkeypatch):
+    async def partly(request, task_id):
+        return {
+            "agent": "screening",
+            "status": "completed",
+            "source": "fallback",
+            "fallbacks": ["sanctions_checker"],
+            "result": {},
+        }
+
+    monkeypatch.setattr(orchestrator._MODULES["screening"], "assess", partly)
+    events = []
+
+    async def sink(event):
+        events.append(event)
+
+    await orchestrator.run_kyc_assessment(REQUEST, on_event=sink)
+
+    for name in orchestrator.AGENTS:
+        kinds = [e["type"] for e in events if e["agent"] == name]
+        assert kinds == ["agent_started", "agent_completed"], name
+    completed = {e["agent"]: e for e in events if e["type"] == "agent_completed"}
+    assert completed["screening"]["source"] == "fallback"
+    assert completed["screening"]["fallbacks"] == ["sanctions_checker"]
+    assert completed["identity"] == {
+        "type": "agent_completed",
+        "agent": "identity",
+        "at": completed["identity"]["at"],
+        "status": "completed",
+        "source": "computed",
+        "fallbacks": [],
+    }
+    # Compliance starts only after all four parallel agents have finished.
+    order = [(e["type"], e["agent"]) for e in events]
+    compliance_start = order.index(("agent_started", "compliance"))
+    finished_before = {a for kind, a in order[:compliance_start] if kind == "agent_completed"}
+    assert finished_before == set(orchestrator.PARALLEL_AGENTS)
+
+
+async def test_the_report_has_a_timeline_and_latency(fake_agents):
+    report = await orchestrator.run_kyc_assessment(REQUEST)
+
+    steps = [entry["step"] for entry in report["timeline"]]
+    assert steps == [
+        "Request received",
+        "Identity Agent",
+        "Screening Agent",
+        "Corporate Agent",
+        "Transaction Agent",
+        "Parallel agents complete",
+        "Compliance & Risk Agent",
+        "Final report generated",
+    ]
+    assert report["total_latency_seconds"] >= 0
+
+
+def test_the_workflow_graph_is_dispatch_then_four_agents_then_compliance():
+    workflow = orchestrator.build_workflow()
+
+    assert set(workflow.executors) == {"dispatch", *orchestrator.AGENTS}
 
 
 async def test_synthesise_report_handles_missing_and_present_fields():
@@ -61,78 +184,3 @@ async def test_synthesise_report_handles_missing_and_present_fields():
     assert trace["agent_sources"]["identity"] == "fallback"
     assert trace["agent_sources"]["screening"] == "demo_profile"
     assert trace["fallbacks"] == {"identity": ["ocr_processor[0]"]}
-
-
-async def test_run_kyc_assessment_with_mocked_call_agent(monkeypatch):
-    # Patch call_agent to return simple structured results for each agent
-    async def fake_call(agent_name, payload, task_id):
-        return {"agent": agent_name, "status": "ok", "result": {"foo": agent_name}}
-
-    monkeypatch.setattr(orchestrator, "call_agent", fake_call)
-
-    kyc = {"entity_name": "TestCo", "entity_type": "company", "jurisdiction": "NL"}
-    report = await orchestrator.run_kyc_assessment(kyc)
-    assert report["entity"]["name"] == "TestCo"
-    assert "audit_trace" in report
-    assert report["audit_trace"]["agents_invoked"] == [
-        "identity",
-        "screening",
-        "corporate",
-        "transaction",
-        "compliance",
-    ]
-
-
-async def test_run_kyc_assessment_uses_demo_profile_shortcut(monkeypatch):
-    import argus.utils.demo_profiles as demo_profiles
-
-    calls = []
-
-    async def fake_call(agent_name, payload, task_id):
-        calls.append(agent_name)
-        return {"agent": agent_name, "status": "ok", "result": {"foo": agent_name}}
-
-    monkeypatch.setattr(orchestrator, "call_agent", fake_call)
-
-    # Force deterministic shortcut branch.
-    monkeypatch.setattr(
-        demo_profiles,
-        "get_demo_profile",
-        lambda name, etype, j: {
-            "identity": {"identity_score": 95},
-            "screening": {"screening_risk_score": 5},
-            "corporate": {"corporate_score": 5},
-            "transaction": {"transaction_risk_score": 5},
-        },
-    )
-
-    kyc = {"entity_name": "DemoCo", "entity_type": "corporate", "jurisdiction": "US"}
-    report = await orchestrator.run_kyc_assessment(kyc)
-
-    assert report["entity"]["name"] == "DemoCo"
-    assert calls == ["compliance"]
-
-
-async def test_call_agent_http_error(monkeypatch):
-    import httpx
-
-    from argus.agents.orchestrator import agent as orch
-
-    async def raise_http(*args, **kwargs):
-        raise httpx.ConnectError("connection refused")
-
-    # Monkeypatch httpx.AsyncClient.post
-    class FakeAsyncClient:
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args):
-            pass
-
-        async def post(self, url, json=None):
-            raise httpx.ConnectError("connection refused")
-
-    monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: FakeAsyncClient())
-    result = await orch.call_agent("identity", {"entity_name": "X"}, "task-err-001")
-    assert result["status"] == "error"
-    assert result["agent"] == "identity"

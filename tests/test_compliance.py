@@ -2,8 +2,6 @@
 
 from types import SimpleNamespace
 
-from fastapi.testclient import TestClient
-
 import argus.agents.compliance.agent as comp
 import argus.agents.compliance.tools.explain_decision as ed
 import argus.agents.compliance.tools.regulations_rag as rr
@@ -11,19 +9,13 @@ from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
 
-def _msg(upstream: dict) -> comp.A2AMessage:
-    return comp.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent="compliance",
-        task_id="t-comp",
-        payload={
-            "entity_name": "Acme",
-            "entity_type": "corporate",
-            "jurisdiction": "NL",
-            "upstream_results": {k: {"result": v} for k, v in upstream.items()},
-        },
-    )
+def _payload(upstream: dict) -> dict:
+    return {
+        "entity_name": "Acme",
+        "entity_type": "corporate",
+        "jurisdiction": "NL",
+        "upstream_results": {k: {"result": v} for k, v in upstream.items()},
+    }
 
 
 class FakeLLM:
@@ -66,7 +58,7 @@ async def test_every_risk_indicator_reaches_findings_and_actions():
         "transaction": {"structuring_flag": True, "transaction_risk_score": 100},
     }
 
-    result = (await comp.invoke(_msg(upstream)))["result"]
+    result = (await comp.assess(_payload(upstream), "t"))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "CRITICAL"
     assert result["risk_summary"]["decision_recommendation"].startswith("Hold:")
@@ -96,14 +88,14 @@ async def test_medium_tier_and_non_pep_findings_are_skipped():
         "transaction": {},
     }
 
-    result = (await comp.invoke(_msg(upstream)))["result"]
+    result = (await comp.assess(_payload(upstream), "t"))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "MEDIUM"
     assert result["key_findings"] == ["PEP identified: "]
 
 
 async def test_clean_entity_is_low_risk_with_default_action():
-    result = (await comp.invoke(_msg({"screening": {"sanctions_hit": False}})))["result"]
+    result = (await comp.assess(_payload({"screening": {"sanctions_hit": False}}), "t"))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "LOW"
     assert result["risk_summary"]["sanctions_screening"] == "no_match"
@@ -117,7 +109,7 @@ async def test_clean_entity_is_low_risk_with_default_action():
 async def test_a_sanctions_match_alone_holds_the_case_whatever_the_score():
     screening = {"sanctions_hit": True, "screening_risk_score": 60, "findings": []}
 
-    result = (await comp.invoke(_msg({"screening": screening})))["result"]
+    result = (await comp.assess(_payload({"screening": screening}), "t"))["result"]
 
     summary = result["risk_summary"]
     assert summary["overall_risk_score"] < 35  # the weighted score alone would be LOW
@@ -135,10 +127,10 @@ async def test_a_sanctions_match_alone_holds_the_case_whatever_the_score():
 async def test_a_case_whose_sanctions_screening_did_not_run_is_incomplete():
     fell_back = {"result": {"sanctions_hit": False}, "fallbacks": ["sanctions_checker"]}
     for screening in ({}, {"status": "error", "result": None}, fell_back):
-        message = _msg({})
-        message.payload["upstream_results"]["screening"] = screening
+        payload = _payload({})
+        payload["upstream_results"]["screening"] = screening
 
-        result = (await comp.invoke(message))["result"]
+        result = (await comp.assess(payload, "t"))["result"]
 
         summary = result["risk_summary"]
         assert summary["sanctions_screening"] == "not_run"
@@ -154,7 +146,7 @@ async def test_a_case_whose_sanctions_screening_did_not_run_is_incomplete():
 async def test_a_pep_match_requires_enhanced_due_diligence_whatever_the_tier():
     screening = {"pep_hit": True, "screening_risk_score": 25, "findings": [{"type": "pep"}]}
 
-    result = (await comp.invoke(_msg({"screening": screening})))["result"]
+    result = (await comp.assess(_payload({"screening": screening}), "t"))["result"]
 
     summary = result["risk_summary"]
     assert summary["overall_risk_tier"] == "LOW"  # a PEP match does not raise the tier
@@ -166,7 +158,7 @@ async def test_a_pep_match_requires_enhanced_due_diligence_whatever_the_tier():
 
 
 async def test_a_case_without_a_pep_match_does_not_require_edd_by_rule():
-    result = (await comp.invoke(_msg({"screening": {"sanctions_hit": False}})))["result"]
+    result = (await comp.assess(_payload({"screening": {"sanctions_hit": False}}), "t"))["result"]
 
     assert result["risk_summary"]["edd_required"] is False
 
@@ -193,10 +185,6 @@ def test_every_score_band_maps_to_its_tier():
 
 def test_unknown_tier_recommendation():
     assert comp._recommendation("UNKNOWN") == "Review required."
-
-
-def test_health():
-    assert TestClient(comp.app).get("/health").json()["service"] == "compliance"
 
 
 # ── risk scorer and gap analyzer ──────────────────────────────────────────────
@@ -393,7 +381,7 @@ async def test_a_compliance_report_without_retrieval_has_no_regulatory_triggers(
 ):
     use_plane(retriever=unavailable)
 
-    response = await comp.invoke(_msg({"screening": {"sanctions_hit": False}}))
+    response = await comp.assess(_payload({"screening": {"sanctions_hit": False}}), "t")
 
     assert response["fallbacks"] == ["regulations_rag"]
     assert response["result"]["regulatory_triggers"] == []
@@ -433,10 +421,7 @@ async def test_compliance_agent_invoke(monkeypatch):
             "transaction": {"result": {}},
         },
     }
-    msg = comp.A2AMessage(
-        a2a_version="1.0", source_agent="x", target_agent="y", task_id="t3", payload=payload
-    )
-    res = await comp.invoke(msg)
+    res = await comp.assess(payload, "t3")
     assert res["result"]["risk_summary"]["overall_risk_tier"] == "HIGH"
     assert res["result"]["explanation"] == "explanation"
     assert res["result"]["explanation_source"] == "model"
@@ -491,31 +476,20 @@ def test_gap_analyzer_clean():
     assert isinstance(gaps, list)
 
 
-def test_compliance_agent_handles_none_upstream_results():
-    from argus.agents.compliance.agent import app
-
-    client = TestClient(app)
+async def test_compliance_agent_handles_none_upstream_results():
     payload = {
-        "a2a_version": "1.0",
-        "source_agent": "argus-orchestrator-v1",
-        "target_agent": "argus-compliance-agent-v1",
-        "task_id": "test-task-none-upstream",
-        "payload": {
-            "entity_name": "Synthetic Entity Ltd.",
-            "entity_type": "corporate",
-            "jurisdiction": "KY",
-            "upstream_results": {
-                "identity": {"status": "error", "result": None},
-                "screening": {"status": "error", "result": None},
-                "corporate": {"status": "completed", "result": {}},
-                "transaction": {"status": "completed", "result": {}},
-            },
+        "entity_name": "Synthetic Entity Ltd.",
+        "entity_type": "corporate",
+        "jurisdiction": "KY",
+        "upstream_results": {
+            "identity": {"status": "error", "result": None},
+            "screening": {"status": "error", "result": None},
+            "corporate": {"status": "completed", "result": {}},
+            "transaction": {"status": "completed", "result": {}},
         },
     }
 
-    resp = client.post("/a2a/invoke", json=payload)
-    assert resp.status_code == 200
-    data = resp.json()
+    data = await comp.assess(payload, "test-task-none-upstream")
     assert data["status"] == "completed"
     assert "risk_summary" in data["result"]
     assert "explanation" in data["result"]
