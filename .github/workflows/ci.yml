@@ -132,7 +132,7 @@ jobs:
       - name: Smoke assessment
         run: |
           docker run --detach --name argus --publish 8000:8000 argus:ci
-          python3 scripts/ci/smoke_api.py http://127.0.0.1:8000
+          python3 scripts/ci/smoke_api.py 8000
       - name: The health check passes
         run: timeout 90 sh -c 'until [ "$(docker inspect --format "{{.State.Health.Status}}" argus)" = healthy ]; do sleep 2; done'
       - name: Container log
