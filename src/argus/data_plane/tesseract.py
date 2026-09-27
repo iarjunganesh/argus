@@ -37,16 +37,16 @@ def extract_fields(image: bytes) -> dict[str, dict]:
     """Return `{field_name: {"value": str, "confidence": float}}` read from the image."""
     try:
         import pytesseract
-        from PIL import Image, UnidentifiedImageError
+        from PIL import Image
     except ImportError as exc:
         raise DataPlaneUnavailable("Local OCR needs the `ocr` dependency group") from exc
     try:
-        data = pytesseract.image_to_data(
-            Image.open(io.BytesIO(image)), output_type=pytesseract.Output.DICT
-        )
-    except pytesseract.TesseractNotFoundError as exc:
+        page = Image.open(io.BytesIO(image))
+        page.load()  # decode now: a truncated image fails here, not somewhere inside Tesseract
+        data = pytesseract.image_to_data(page, output_type=pytesseract.Output.DICT)
+    except pytesseract.TesseractNotFoundError as exc:  # an OSError too, so it comes first
         raise DataPlaneUnavailable("Tesseract is not installed") from exc
-    except (UnidentifiedImageError, pytesseract.TesseractError) as exc:
+    except (OSError, pytesseract.TesseractError) as exc:  # OSError: Pillow cannot read it
         raise DataPlaneUnavailable(f"Tesseract could not read the document: {exc}") from exc
     return labelled_fields(text_lines(data))
 

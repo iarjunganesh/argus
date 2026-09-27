@@ -18,8 +18,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **Local OCR through Tesseract.** With the local backend, identity documents are read by
   Tesseract and their `Label: value` lines become the same fields Document Intelligence gives
   (name, date of birth, document number, and so on), each with its confidence. It needs the new
-  `ocr` dependency group and the Tesseract program; without them the document is still reported as
-  unread (`fallback`). The container image leaves it out: deployments use Document Intelligence.
+  `ocr` dependency group and the Tesseract program; without them, or for a file it cannot read
+  (including a truncated image), the document is still reported as unread (`fallback`). The container image leaves it out: deployments use Document Intelligence.
   Checked: tests with Tesseract stand-ins, and a real Tesseract 5 read of a rendered synthetic
   passport, which CI now runs with Tesseract installed.
 

@@ -101,9 +101,12 @@ def test_tesseract_failures_make_the_document_unavailable(monkeypatch, error, re
         tesseract.extract_fields(png())
 
 
-def test_what_is_not_an_image_is_unavailable():
+@pytest.mark.parametrize("image", [b"not an image", png(["Name: Ada"])[:200]])
+def test_what_is_not_a_readable_image_is_unavailable(monkeypatch, image):
+    monkeypatch.setattr(pytesseract, "image_to_data", lambda *a, **k: pytest.fail("not reached"))
+
     with pytest.raises(DataPlaneUnavailable, match="could not read"):
-        tesseract.extract_fields(b"not an image")
+        tesseract.extract_fields(image)  # the second is a truncated PNG
 
 
 def test_without_the_ocr_group_local_ocr_is_unavailable(monkeypatch):
