@@ -3,52 +3,28 @@ ARGUS Corporate Intelligence Agent
 Resolves UBO structure and maps corporate ownership graph.
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-
 from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 from argus.agents.corporate.tools.registry_lookup import registry_lookup
 from argus.agents.corporate.tools.ubo_resolver import ubo_resolver
-from argus.agents.provenance import demo_provenance, provenance
-from argus.utils.demo_profiles import get_demo_profile
+from argus.agents.provenance import provenance
 from argus.utils.structured_logger import get_logger
 
-app = FastAPI(title="ARGUS Corporate Intelligence Agent")
 logger = get_logger("agent.corporate")
 
 
-class A2AMessage(BaseModel):
-    a2a_version: str
-    source_agent: str
-    target_agent: str
-    task_id: str
-    payload: dict
+async def assess(request: dict, task_id: str) -> dict:
+    entity_name = request.get("entity_name", "")
+    entity_type = request.get("entity_type", "corporate")
+    reg_number = request.get("registration_number")
+    jurisdiction = request.get("jurisdiction", "")
 
-
-@app.post("/a2a/invoke")
-async def invoke(message: A2AMessage):
-    p = message.payload
-    entity_name = p.get("entity_name", "")
-    entity_type = p.get("entity_type", "corporate")
-    reg_number = p.get("registration_number")
-    jurisdiction = p.get("jurisdiction", "")
-
-    logger.info("invoke", extra={"task_id": message.task_id, "entity": entity_name})
-    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
-    if demo_profile and demo_profile.get("corporate"):
-        return {
-            "agent": "corporate",
-            "task_id": message.task_id,
-            "status": "completed",
-            **demo_provenance(),
-            "result": demo_profile["corporate"],
-        }
+    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
 
     # Only run UBO resolution for corporate entities
     if entity_type != "corporate":
         return {
             "agent": "corporate",
-            "task_id": message.task_id,
+            "task_id": task_id,
             "status": "completed",
             **provenance(),
             "result": {"skipped": True, "reason": "Entity is individual — UBO not applicable"},
@@ -75,7 +51,7 @@ async def invoke(message: A2AMessage):
 
     return {
         "agent": "corporate",
-        "task_id": message.task_id,
+        "task_id": task_id,
         "status": "completed",
         **provenance(registry_lookup=registry_result, ubo_resolver=ubo_result),
         "result": {
@@ -86,8 +62,3 @@ async def invoke(message: A2AMessage):
             "corporate_score": corporate_score,
         },
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "corporate", "version": "0.1.0"}

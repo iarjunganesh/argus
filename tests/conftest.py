@@ -66,17 +66,11 @@ def unavailable():
 
 
 @pytest.fixture
-def a2a_request() -> dict:
-    """The JSON envelope the orchestrator posts to every agent's /a2a/invoke."""
+def kyc_request() -> dict:
+    """A KYC request as the workflow passes it to each agent."""
     return {
-        "a2a_version": "1.0",
-        "source_agent": "argus-orchestrator-v1",
-        "target_agent": "argus-agent-v1",
-        "task_id": "test-task-001",
-        "payload": {
-            "entity_name": "Synthetic Entity Ltd.",
-            "entity_type": "corporate",
-            "jurisdiction": "NL",
-            "aliases": ["SE Ltd"],
-        },
+        "entity_name": "Synthetic Entity Ltd.",
+        "entity_type": "corporate",
+        "jurisdiction": "NL",
+        "aliases": ["SE Ltd"],
     }

@@ -4,50 +4,22 @@ Screens entities against sanctions, adverse media, and PEP databases.
 sanctions_checker and adverse_media_scanner search the knowledge bases in the data plane.
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-from argus.agents.provenance import demo_provenance, provenance
+from argus.agents.provenance import provenance
 from argus.agents.screening.tools.adverse_media_scanner import adverse_media_scanner
 from argus.agents.screening.tools.pep_checker import pep_checker
 from argus.agents.screening.tools.sanctions_checker import sanctions_checker
-from argus.utils.demo_profiles import get_demo_profile
-from argus.utils.env_loader import load_repo_env
 from argus.utils.structured_logger import get_logger
 
-load_repo_env(__file__)
-app = FastAPI(title="ARGUS Screening Agent")
 logger = get_logger("agent.screening")
 
 
-class A2AMessage(BaseModel):
-    a2a_version: str
-    source_agent: str
-    target_agent: str
-    task_id: str
-    payload: dict
+async def assess(request: dict, task_id: str) -> dict:
+    entity_name = request.get("entity_name", "")
+    aliases = request.get("aliases", [])
+    nationality = request.get("nationality", "")
+    dob_or_inc = request.get("dob_or_incorporated", "")
 
-
-@app.post("/a2a/invoke")
-async def invoke(message: A2AMessage):
-    payload = message.payload
-    entity_name = payload.get("entity_name", "")
-    aliases = payload.get("aliases", [])
-    nationality = payload.get("nationality", "")
-    dob_or_inc = payload.get("dob_or_incorporated", "")
-    entity_type = payload.get("entity_type", "individual")
-    jurisdiction = payload.get("jurisdiction", "")
-
-    logger.info("invoke", extra={"task_id": message.task_id, "entity": entity_name})
-    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
-    if demo_profile and demo_profile.get("screening"):
-        return {
-            "agent": "screening",
-            "task_id": message.task_id,
-            "status": "completed",
-            **demo_provenance(),
-            "result": demo_profile["screening"],
-        }
+    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
 
     # Run all three screening tools
     sanctions_result = await sanctions_checker(entity_name, aliases, nationality)
@@ -73,7 +45,7 @@ async def invoke(message: A2AMessage):
 
     return {
         "agent": "screening",
-        "task_id": message.task_id,
+        "task_id": task_id,
         "status": "completed",
         **provenance(
             sanctions_checker=sanctions_result,
@@ -92,8 +64,3 @@ async def invoke(message: A2AMessage):
             ),
         },
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "screening", "version": "0.1.0"}

@@ -3,54 +3,28 @@ ARGUS Transaction Intelligence Agent
 Analyses synthetic transaction history for AML patterns and typologies.
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-from argus.agents.provenance import demo_provenance, provenance
+from argus.agents.provenance import provenance
 from argus.agents.transaction.tools.pattern_detector import pattern_detector
 from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
 from argus.agents.transaction.tools.typology_matcher import typology_matcher
-from argus.utils.demo_profiles import get_demo_profile
 from argus.utils.structured_logger import get_logger
 
-app = FastAPI(title="ARGUS Transaction Intelligence Agent")
 logger = get_logger("agent.transaction")
 
 
-class A2AMessage(BaseModel):
-    a2a_version: str
-    source_agent: str
-    target_agent: str
-    task_id: str
-    payload: dict
+async def assess(request: dict, task_id: str) -> dict:
+    entity_name = request.get("entity_name", "")
 
-
-@app.post("/a2a/invoke")
-async def invoke(message: A2AMessage):
-    p = message.payload
-    entity_name = p.get("entity_name", "")
-    entity_type = p.get("entity_type", "corporate")
-    jurisdiction = p.get("jurisdiction", "")
-
-    if not p.get("include_transaction_analysis", True):
+    if not request.get("include_transaction_analysis", True):
         return {
             "agent": "transaction",
-            "task_id": message.task_id,
+            "task_id": task_id,
             "status": "completed",
             **provenance(),
             "result": {"skipped": True, "reason": "Transaction analysis disabled for this request"},
         }
 
-    logger.info("invoke", extra={"task_id": message.task_id, "entity": entity_name})
-    demo_profile = get_demo_profile(entity_name, entity_type, jurisdiction)
-    if demo_profile and demo_profile.get("transaction"):
-        return {
-            "agent": "transaction",
-            "task_id": message.task_id,
-            "status": "completed",
-            **demo_provenance(),
-            "result": demo_profile["transaction"],
-        }
+    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
 
     # Load transaction history
     tx_history = await transaction_monitor(entity_name)
@@ -74,7 +48,7 @@ async def invoke(message: A2AMessage):
 
     return {
         "agent": "transaction",
-        "task_id": message.task_id,
+        "task_id": task_id,
         "status": "completed",
         **provenance(transaction_monitor=tx_history, typology_matcher=typology),
         "result": {
@@ -87,8 +61,3 @@ async def invoke(message: A2AMessage):
             "transaction_risk_score": transaction_risk_score,
         },
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "transaction", "version": "0.1.0"}

@@ -1,6 +1,5 @@
-"""API gateway: submit, poll, fetch, admin endpoints, and the background assessment."""
+"""API: submit, poll, fetch, health, and the background assessment."""
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -55,31 +54,8 @@ def test_unknown_report_is_404_with_status(client):
     assert client.get("/api/v1/kyc/status/nope").json()["status"] == "not_found"
 
 
-def test_agent_registry_honours_url_overrides(client, monkeypatch):
-    monkeypatch.setenv("SCREENING_AGENT_URL", "http://screening.internal")
-
-    agents = {a["name"]: a["endpoint"] for a in client.get("/api/v1/admin/agents").json()["agents"]}
-
-    assert agents["identity"] == "http://localhost:8001"
-    assert agents["screening"] == "http://screening.internal"
-
-
-def test_aggregated_health_reports_each_outcome(client, monkeypatch):
-    def fake_get(url, timeout):
-        request = httpx.Request("GET", url)
-        if ":8001" in url:
-            return httpx.Response(200, json={"service": "identity"}, request=request)
-        if ":8002" in url:
-            return httpx.Response(503, request=request)
-        raise httpx.ConnectError("refused", request=request)
-
-    monkeypatch.setattr(httpx, "get", fake_get)
-
-    health = client.get("/api/v1/admin/health").json()["aggregated"]
-
-    assert health["identity"] == {"status": "ok", "info": {"service": "identity"}}
-    assert health["screening"] == {"status": "error", "code": 503}
-    assert health["corporate"]["status"] == "unreachable"
+def test_health(client):
+    assert client.get("/health").json() == {"status": "ok"}
 
 
 def test_api_root():

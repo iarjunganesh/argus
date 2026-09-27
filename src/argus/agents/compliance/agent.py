@@ -6,9 +6,6 @@ holds the case whatever the score, and a case whose sanctions screening did not 
 as incomplete. A PEP match requires enhanced due diligence whatever the tier.
 """
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-
 from argus.agents.compliance.tools.explain_decision import explain_decision
 from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.regulations_rag import regulations_rag
@@ -16,7 +13,6 @@ from argus.agents.compliance.tools.risk_scorer import risk_scorer, score_tier
 from argus.agents.provenance import provenance
 from argus.utils.structured_logger import get_logger
 
-app = FastAPI(title="ARGUS Compliance & Risk Agent")
 logger = get_logger("agent.compliance")
 
 # What sanctions screening established for the case (`risk_summary.sanctions_screening`).
@@ -25,17 +21,8 @@ NO_MATCH = "no_match"
 NOT_RUN = "not_run"
 
 
-class A2AMessage(BaseModel):
-    a2a_version: str
-    source_agent: str
-    target_agent: str
-    task_id: str
-    payload: dict
-
-
-@app.post("/a2a/invoke")
-async def invoke(message: A2AMessage):
-    p = message.payload
+async def assess(request: dict, task_id: str) -> dict:
+    p = request
     jurisdiction = p.get("jurisdiction", "")
     entity_type = p.get("entity_type", "corporate")
     upstream = p.get("upstream_results", {})
@@ -45,7 +32,7 @@ async def invoke(message: A2AMessage):
     corporate = upstream.get("corporate", {}).get("result") or {}
     transaction = upstream.get("transaction", {}).get("result") or {}
 
-    logger.info("invoke", extra={"task_id": message.task_id, "jurisdiction": jurisdiction})
+    logger.info("assess", extra={"task_id": task_id, "jurisdiction": jurisdiction})
     sanctions = sanctions_screening(upstream.get("screening", {}))
 
     # Build risk indicator list from upstream findings
@@ -119,7 +106,7 @@ async def invoke(message: A2AMessage):
 
     return {
         "agent": "compliance",
-        "task_id": message.task_id,
+        "task_id": task_id,
         "status": "completed",
         **provenance(regulations_rag=regulations),
         "result": {
@@ -134,11 +121,6 @@ async def invoke(message: A2AMessage):
             "retrieval_queries": int(regulations.get("source") != "fallback"),
         },
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "compliance", "version": "0.1.0"}
 
 
 def sanctions_screening(screening_response: dict) -> str:

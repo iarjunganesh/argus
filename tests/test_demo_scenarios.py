@@ -5,6 +5,7 @@ once when a potential sanctions match began to hold the case: only Cayman Synth 
 (HIGH to CRITICAL, with the hold's finding and actions; no score moved). Re-recorded again when a
 PEP match began to require enhanced due diligence: the two PEP scenarios gain `edd_required` and a
 monitoring action, and Synthetic Holdings B.V. gets the EDD recommendation; no tier or score moved.
+Unchanged when the five agent services became one in-process Agent Framework workflow.
 A change that moves a tier, a score, a finding or a recommended action shows up here. Regulatory
 triggers are checked for citations only: they come from knowledge-base retrieval, which the
 refactor made real.
@@ -23,25 +24,10 @@ SCENARIOS = json.loads(
 AGENTS = ("identity", "screening", "corporate", "transaction", "compliance")
 
 
-async def _in_process(agent_name: str, payload: dict, task_id: str) -> dict:
-    """Call an agent's handler directly instead of over HTTP."""
-    module = __import__(f"argus.agents.{agent_name}.agent", fromlist=["invoke"])
-    message = module.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent=agent_name,
-        task_id=task_id,
-        payload=payload,
-    )
-    return await module.invoke(message)
-
-
 @pytest.mark.parametrize(
     "scenario", SCENARIOS, ids=[s["request"]["entity_name"] for s in SCENARIOS]
 )
-async def test_demo_scenario_outcome_is_unchanged(monkeypatch, scenario):
-    monkeypatch.setattr(orchestrator, "call_agent", _in_process)
-
+async def test_demo_scenario_outcome_is_unchanged(scenario):
     report = await orchestrator.run_kyc_assessment(scenario["request"])
 
     for key in ("risk_summary", "dimension_scores", "key_findings", "recommended_actions"):

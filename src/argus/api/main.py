@@ -1,6 +1,7 @@
 """
-ARGUS API Gateway — FastAPI
-Accepts KYC requests and routes to the Orchestrator.
+ARGUS API — FastAPI
+Accepts KYC requests and runs each assessment in this process, through the orchestrator's
+Agent Framework workflow.
 """
 
 import os
@@ -49,6 +50,12 @@ def root():
     return {"service": "ARGUS", "status": "running", "version": "0.1.0"}
 
 
+@app.get("/health")
+def health():
+    """Liveness: the process is up. The whole assessment workflow runs inside it."""
+    return {"status": "ok"}
+
+
 @app.post("/api/v1/kyc/assess", response_model=dict)
 async def assess(request: KYCRequest, background_tasks: BackgroundTasks):
     """Submit a KYC request. Returns report_id immediately; assessment runs async."""
@@ -76,55 +83,6 @@ async def get_report(report_id: str):
 async def get_status(report_id: str):
     status = await get_data_plane().reports.status(report_id)
     return StatusResponse(report_id=report_id, status=status or "not_found")
-
-
-@app.get("/api/v1/admin/agents")
-def list_agents():
-    """List all registered A2A sub-agents and their health."""
-    import os
-
-    agents = ["identity", "screening", "corporate", "compliance", "transaction"]
-    return {
-        "agents": [
-            {
-                "name": a,
-                "endpoint": os.getenv(f"{a.upper()}_AGENT_URL", f"http://localhost:800{i + 1}"),
-                "status": "registered",
-            }
-            for i, a in enumerate(agents)
-        ]
-    }
-
-
-@app.get("/api/v1/admin/health")
-def aggregated_health():
-    """Call each agent's /health endpoint and return an aggregated view.
-
-    This is a lightweight, best-effort endpoint for local demos. It will
-    attempt to GET /health on the default agent ports and report back.
-    """
-    import httpx
-
-    agents = [
-        ("identity", "http://127.0.0.1:8001/health"),
-        ("screening", "http://127.0.0.1:8002/health"),
-        ("corporate", "http://127.0.0.1:8003/health"),
-        ("compliance", "http://127.0.0.1:8005/health"),
-        ("transaction", "http://127.0.0.1:8004/health"),
-    ]
-    results = {}
-    for name, url in agents:
-        try:
-            r = httpx.get(url, timeout=2.0)
-            if r.status_code == 200:
-                results[name] = {"status": "ok", "info": r.json()}
-            else:
-                results[name] = {"status": "error", "code": r.status_code}
-        except httpx.HTTPError as e:
-            results[name] = {"status": "unreachable", "error": str(e)}
-
-    logger.info("health.aggregated", extra={"agents": list(results.keys())})
-    return {"aggregated": results}
 
 
 async def _run_assessment(report_id: str, kyc_request: dict):

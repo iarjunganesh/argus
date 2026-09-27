@@ -1,21 +1,8 @@
 """Corporate agent scoring and its registry and ownership tools."""
 
-from fastapi.testclient import TestClient
-
 import argus.agents.corporate.agent as corp
 import argus.agents.corporate.tools.registry_lookup as reg
 import argus.agents.corporate.tools.ubo_resolver as ubo
-
-
-def _msg(payload: dict) -> corp.A2AMessage:
-    return corp.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent="corporate",
-        task_id="t-corp",
-        payload=payload,
-    )
-
 
 # ── agent ─────────────────────────────────────────────────────────────────────
 
@@ -35,22 +22,10 @@ async def test_deep_chain_without_high_risk_nodes(monkeypatch):
     monkeypatch.setattr(corp, "jurisdiction_mapper", jurisdictions)
 
     payload = {"entity_name": "Deep Holdings", "entity_type": "corporate", "jurisdiction": "NL"}
-    result = (await corp.invoke(_msg(payload)))["result"]
+    result = (await corp.assess(payload, "t"))["result"]
 
     assert result["risk_flags"] == []
     assert result["corporate_score"] == 90  # only the depth penalty applies
-
-
-async def test_demo_profile_short_circuits_the_tools():
-    payload = {"entity_name": "Cayman Synth Capital", "entity_type": "corporate"}
-    response = await corp.invoke(_msg({**payload, "jurisdiction": "KY"}))
-
-    assert response["status"] == "completed"
-    assert response["result"]["risk_flags"]
-
-
-def test_health():
-    assert TestClient(corp.app).get("/health").json()["service"] == "corporate"
 
 
 # ── tools ─────────────────────────────────────────────────────────────────────
@@ -109,8 +84,6 @@ async def test_corporate_agent_invoke(monkeypatch):
     import argus.agents.corporate.agent as corp
 
     # Patch dependent functions
-    monkeypatch.setattr(corp, "get_demo_profile", lambda name, etype, j: None)
-
     async def fake_registry(name, rn):
         return {"found": True}
 
@@ -125,14 +98,8 @@ async def test_corporate_agent_invoke(monkeypatch):
 
     monkeypatch.setattr(corp, "jurisdiction_mapper", fake_jmap)
 
-    msg = corp.A2AMessage(
-        a2a_version="1.0",
-        source_agent="x",
-        target_agent="y",
-        task_id="t1",
-        payload={"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "GB"},
-    )
-    res = await corp.invoke(msg)
+    payload = {"entity_name": "Acme", "entity_type": "corporate", "jurisdiction": "GB"}
+    res = await corp.assess(payload, "t1")
     assert res["result"]["corporate_score"] <= 100
 
 
@@ -169,14 +136,9 @@ async def test_jurisdiction_unknown_when_missing_code():
     assert result["special_measures"] == []
 
 
-def test_corporate_agent_skips_individual(a2a_request):
-    from argus.agents.corporate.agent import app
-
-    client = TestClient(app)
-    payload = {**a2a_request, "payload": {**a2a_request["payload"], "entity_type": "individual"}}
-    resp = client.post("/a2a/invoke", json=payload)
-    assert resp.status_code == 200
-    assert resp.json()["result"].get("skipped") is True
+async def test_corporate_agent_skips_individual(kyc_request):
+    response = await corp.assess({**kyc_request, "entity_type": "individual"}, "t")
+    assert response["result"].get("skipped") is True
 
 
 async def test_registry_lookup_reads_the_local_registry():
@@ -194,12 +156,12 @@ async def test_registry_and_ubo_fall_back_when_the_store_is_down(use_plane, unav
 
 async def test_agent_reports_its_provenance(use_plane, unavailable):
     payload = {"entity_name": "Harbor Test Holdings", "entity_type": "corporate"}
-    response = await corp.invoke(_msg({**payload, "jurisdiction": "KY"}))
+    response = await corp.assess({**payload, "jurisdiction": "KY"}, "t")
     assert response["source"] == "computed"
     assert response["result"]["risk_flags"] == [
         "High-risk jurisdiction node: Offshore Test SPC (PA)"
     ]
 
     use_plane(entities=unavailable)
-    response = await corp.invoke(_msg({**payload, "jurisdiction": "KY"}))
+    response = await corp.assess({**payload, "jurisdiction": "KY"}, "t")
     assert response["fallbacks"] == ["registry_lookup", "ubo_resolver"]

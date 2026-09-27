@@ -1,50 +1,19 @@
-"""Run ARGUS demo in-process by invoking agent `invoke` functions directly.
-This avoids network A2A calls and allows a quick end-to-end smoke test.
+"""Run one ARGUS assessment in this process and print the report.
+
+A quick end-to-end smoke test: no API server or UI needed.
 """
 
 import asyncio
+import json
 
 from argus.agents.orchestrator import agent as orchestrator
 
 
-async def call_agent_local(agent_name: str, payload: dict, task_id: str) -> dict:
-    # Map agent_name to module
-    mapping = {
-        "identity": "argus.agents.identity.agent",
-        "screening": "argus.agents.screening.agent",
-        "corporate": "argus.agents.corporate.agent",
-        "transaction": "argus.agents.transaction.agent",
-        "compliance": "argus.agents.compliance.agent",
-    }
-    mod_name = mapping.get(agent_name)
-    if not mod_name:
-        return {"agent": agent_name, "status": "error", "result": None}
-
-    mod = __import__(mod_name, fromlist=["app", "invoke"])
-    # Build A2A message using the module's A2AMessage model
-    A2A = mod.A2AMessage
-    msg = A2A(
-        a2a_version="1.0",
-        source_agent="argus-demo",
-        target_agent=f"argus-{agent_name}",
-        task_id=task_id,
-        payload=payload,
-    )
-
-    # The agent's full response, as the HTTP call would return it (including its `source`).
-    return await mod.invoke(msg)
-
-
 async def main():
-    # Monkeypatch orchestrator.call_agent in this process
-    orchestrator.call_agent = call_agent_local
-
     # Example KYC request — canonical demo profile key
     kyc = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
     print("Running in-process KYC assessment for:", kyc)
     report = await orchestrator.run_kyc_assessment(kyc)
-    import json
-
     print(json.dumps(report, indent=2))
 
 

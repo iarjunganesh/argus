@@ -142,13 +142,6 @@ COSMOS_DATABASE=argus-db
 DOC_INTELLIGENCE_ENDPOINT=$docAiEndpoint
 DOC_INTELLIGENCE_KEY=$docAiKey
 
-# ── Agent A2A Endpoints ───────────────────────
-IDENTITY_AGENT_URL=http://localhost:8001
-SCREENING_AGENT_URL=http://localhost:8002
-CORPORATE_AGENT_URL=http://localhost:8003
-TRANSACTION_AGENT_URL=http://localhost:8004
-COMPLIANCE_AGENT_URL=http://localhost:8005
-
 # ── API ───────────────────────────────────────
 API_HOST=0.0.0.0
 API_PORT=8000

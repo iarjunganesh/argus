@@ -1,21 +1,10 @@
 """Screening agent scoring and its three data-plane tools."""
 
 import pytest
-from fastapi.testclient import TestClient
 
 import argus.agents.screening.agent as screening
 import argus.agents.screening.tools.adverse_media_scanner as am
 import argus.agents.screening.tools.sanctions_checker as sc
-
-
-def _msg(payload: dict) -> screening.A2AMessage:
-    return screening.A2AMessage(
-        a2a_version="1.0",
-        source_agent="test",
-        target_agent="screening",
-        task_id="t-scr",
-        payload=payload,
-    )
 
 
 def _tool(hit: bool, kind: str):
@@ -30,24 +19,11 @@ async def test_all_hits_are_scored_and_capped(monkeypatch):
     monkeypatch.setattr(screening, "adverse_media_scanner", _tool(True, "adverse_media"))
     monkeypatch.setattr(screening, "pep_checker", _tool(True, "pep"))
 
-    result = (await screening.invoke(_msg({"entity_name": "Nobody Known"})))["result"]
+    result = (await screening.assess({"entity_name": "Nobody Known"}, "t"))["result"]
 
     assert result["screening_risk_score"] == 100
     assert [f["type"] for f in result["findings"]] == ["sanctions", "adverse_media", "pep"]
     assert result["sanctions_hit"] and result["adverse_media_hit"] and result["pep_hit"]
-
-
-async def test_demo_profile_short_circuits_the_tools(monkeypatch):
-    monkeypatch.setattr(screening, "sanctions_checker", None)  # would fail if called
-
-    payload = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
-    response = await screening.invoke(_msg(payload))
-
-    assert response["result"]["adverse_media_hit"] is True
-
-
-def test_health():
-    assert TestClient(screening.app).get("/health").json()["service"] == "screening"
 
 
 # ── tools ─────────────────────────────────────────────────────────────────────
@@ -125,33 +101,20 @@ async def test_pep_checker_falls_back_when_the_store_is_down(use_plane, unavaila
 
 
 async def test_agent_counts_only_searches_that_answered(use_plane, unavailable):
-    response = await screening.invoke(_msg({"entity_name": "Viktor Testovich"}))
+    response = await screening.assess({"entity_name": "Viktor Testovich"}, "t")
     assert response["source"] == "computed"
     assert response["result"]["retrieval_queries"] == 2
     assert response["result"]["sanctions_hit"] is True
 
     use_plane(retriever=unavailable)
-    response = await screening.invoke(_msg({"entity_name": "Viktor Testovich"}))
+    response = await screening.assess({"entity_name": "Viktor Testovich"}, "t")
     assert response["source"] == "fallback"
     assert response["fallbacks"] == ["adverse_media_scanner", "sanctions_checker"]
     assert response["result"]["retrieval_queries"] == 0
 
 
-async def test_demo_profile_is_labelled():
-    payload = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
-
-    assert (await screening.invoke(_msg(payload)))["source"] == "demo_profile"
-
-
-def test_screening_agent_invoke(a2a_request):
-    from argus.agents.screening.agent import app
-
-    client = TestClient(app)
-    resp = client.post(
-        "/a2a/invoke", json={**a2a_request, "target_agent": "argus-screening-agent-v1"}
-    )
-    assert resp.status_code == 200
-    data = resp.json()
+async def test_screening_agent_invoke(kyc_request):
+    data = await screening.assess(kyc_request, "t")
     assert data["agent"] == "screening"
     assert data["status"] == "completed"
     assert "screening_risk_score" in data["result"]
