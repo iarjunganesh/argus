@@ -41,15 +41,17 @@ def test_cosmos_uses_entra_id_without_key(monkeypatch):
     assert isinstance(client.kwargs["credential"], Recorder)
 
 
-def test_search_client(monkeypatch):
-    monkeypatch.setattr("azure.search.documents.SearchClient", Recorder)
+def test_knowledge_base_client(monkeypatch):
+    monkeypatch.setattr(
+        "azure.search.documents.knowledgebases.KnowledgeBaseRetrievalClient", Recorder
+    )
     monkeypatch.setenv("AZURE_SEARCH_ENDPOINT", "https://search.example")
     monkeypatch.setenv("AZURE_SEARCH_API_KEY", "search-test")
 
-    client = config.get_search_client("idx")
+    client = config.get_knowledge_base_client("kb")
 
     assert client.kwargs["endpoint"] == "https://search.example"
-    assert client.kwargs["index_name"] == "idx"
+    assert client.kwargs["knowledge_base_name"] == "kb"
     assert client.kwargs["credential"].key == "search-test"
 
 

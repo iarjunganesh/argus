@@ -43,14 +43,15 @@ def get_cosmos_database():
 # ── Azure AI Search ───────────────────────────────────────────────────────────
 
 
-def get_search_client(index_name: str):
+def get_knowledge_base_client(knowledge_base_name: str):
+    """A Foundry IQ knowledge base on the search service (the stable 2026-04-01 retrieve API)."""
     endpoint = _require_env("AZURE_SEARCH_ENDPOINT")
     key = _require_env("AZURE_SEARCH_API_KEY")
     from azure.core.credentials import AzureKeyCredential
-    from azure.search.documents import SearchClient
+    from azure.search.documents.knowledgebases import KnowledgeBaseRetrievalClient
 
-    return SearchClient(
+    return KnowledgeBaseRetrievalClient(
         endpoint=endpoint,
-        index_name=index_name,
+        knowledge_base_name=knowledge_base_name,
         credential=AzureKeyCredential(key),
     )

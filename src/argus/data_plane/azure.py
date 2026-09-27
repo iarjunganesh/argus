@@ -1,4 +1,4 @@
-"""Azure data plane: AI Search, Cosmos DB and Document Intelligence.
+"""Azure data plane: Foundry IQ knowledge bases on AI Search, Cosmos DB and Document Intelligence.
 
 Each call runs the synchronous Azure SDK in a worker thread. Any failure (missing settings,
 network, service errors) becomes `DataPlaneUnavailable`, so the calling tool falls back and says so.
@@ -12,15 +12,24 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from argus.config import get_cosmos_database, get_search_client
+from argus.config import get_cosmos_database, get_knowledge_base_client
 from argus.data_plane.base import DataPlaneUnavailable, KnowledgeBase, Passage
 
-# Index names match what `infra/foundry_iq/create_search_indexes.py` creates.
-INDEX_NAMES: dict[KnowledgeBase, str] = {
+# Each knowledge base reads one search index through one knowledge source. The knowledge base
+# and its index share a name; `infra/foundry_iq/create_knowledge_bases.py` creates all three.
+KNOWLEDGE_BASE_NAMES: dict[KnowledgeBase, str] = {
     "regulations": os.getenv("FOUNDRY_IQ_KB_REGULATIONS", "argus-kb-regulations"),
     "sanctions": os.getenv("FOUNDRY_IQ_KB_SANCTIONS", "argus-kb-sanctions"),
     "adverse_media": os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia"),
 }
+
+
+def knowledge_source_name(knowledge_base: KnowledgeBase) -> str:
+    return f"{KNOWLEDGE_BASE_NAMES[knowledge_base]}-source"
+
+
+# The index fields a knowledge source returns with each reference: everything a Passage needs.
+SOURCE_DATA_FIELDS = ("id", "title", "content", "source_doc", "metadata_json")
 
 REPORTS_CONTAINER = "kyc_reports"
 _RERANKER_MAX = 4.0  # semantic ranker scores run from 0 to 4
@@ -33,27 +42,54 @@ async def _call[T](what: str, fn: Callable[[], T]) -> T:
         raise DataPlaneUnavailable(f"{what}: {exc}") from exc
 
 
-class AzureSearchRetriever:
+class FoundryIQRetriever:
+    """Searches a Foundry IQ knowledge base with the retrieve action.
+
+    The stable API (2026-04-01) runs the query as a semantic intent, without a model: retrieval is
+    minimal and extractive, and each reference carries the index fields in SOURCE_DATA_FIELDS and
+    its semantic reranker score.
+    """
+
     async def search(
         self, knowledge_base: KnowledgeBase, query: str, top: int = 5
     ) -> list[Passage]:
         def run() -> list[dict]:
-            client = get_search_client(INDEX_NAMES[knowledge_base])
-            results = client.search(
-                search_text=query,
-                top=top,
-                query_type="semantic",
-                semantic_configuration_name="default",
+            from azure.search.documents.knowledgebases.models import (
+                KnowledgeBaseRetrievalRequest,
+                KnowledgeRetrievalSemanticIntent,
+                SearchIndexKnowledgeSourceParams,
             )
-            return [dict(r) for r in results]
 
-        rows = await _call(f"AI Search {knowledge_base}", run)
-        return [_passage(row) for row in rows]
+            client = get_knowledge_base_client(KNOWLEDGE_BASE_NAMES[knowledge_base])
+            request = KnowledgeBaseRetrievalRequest(
+                intents=[KnowledgeRetrievalSemanticIntent(search=query)],
+                knowledge_source_params=[
+                    SearchIndexKnowledgeSourceParams(
+                        knowledge_source_name=knowledge_source_name(knowledge_base),
+                        include_references=True,
+                        include_reference_source_data=True,
+                    )
+                ],
+            )
+            response = client.retrieve(request)
+            return [
+                {
+                    **(ref.source_data or {}),
+                    "id": (ref.source_data or {}).get("id") or ref.doc_key,
+                    "@search.reranker_score": ref.reranker_score,
+                }
+                for ref in response.references or []
+                if ref.type == "searchIndex"
+            ]
+
+        rows = await _call(f"Foundry IQ {knowledge_base}", run)
+        passages = sorted((_passage(row) for row in rows), key=lambda p: p.score, reverse=True)
+        return passages[:top]
 
 
 def _passage(row: dict[str, Any]) -> Passage:
     reranker = row.get("@search.reranker_score")
-    score = reranker / _RERANKER_MAX if reranker is not None else row.get("@search.score", 0)
+    score = reranker / _RERANKER_MAX if reranker is not None else 0.0
     try:
         metadata = json.loads(row.get("metadata_json") or "{}")
     except json.JSONDecodeError:

@@ -32,7 +32,7 @@ def test_azure_backend_builds_the_azure_parts(monkeypatch):
     plane = dp.build_data_plane()
 
     assert plane.backend == "azure"
-    assert type(plane.retriever).__name__ == "AzureSearchRetriever"
+    assert type(plane.retriever).__name__ == "FoundryIQRetriever"
     assert type(plane.reports).__name__ == "CosmosReportStore"
 
 

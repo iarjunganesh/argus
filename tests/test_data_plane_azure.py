@@ -7,59 +7,90 @@ import pytest
 import argus.data_plane.azure as az
 from argus.data_plane import DataPlaneUnavailable
 
-# ── AI Search ─────────────────────────────────────────────────────────────────
+# ── Foundry IQ knowledge bases ────────────────────────────────────────────────
 
 
-class SearchClient:
-    def __init__(self, rows):
-        self.rows = rows
-        self.calls = []
+class KnowledgeBaseClient:
+    def __init__(self, references):
+        self.references = references
+        self.requests = []
 
-    def search(self, **kwargs):
-        self.calls.append(kwargs)
-        return iter(self.rows)
+    def retrieve(self, request):
+        self.requests.append(request)
+        return SimpleNamespace(references=self.references)
 
 
-async def test_search_uses_the_semantic_ranker_and_normalises_scores(monkeypatch):
-    client = SearchClient(
+def _reference(source_data, score, doc_key="k", kind="searchIndex"):
+    return SimpleNamespace(
+        type=kind, source_data=source_data, reranker_score=score, doc_key=doc_key
+    )
+
+
+async def test_retrieval_asks_the_knowledge_base_and_ranks_its_references(monkeypatch):
+    client = KnowledgeBaseClient(
         [
-            {
-                "id": "a",
-                "title": "T",
-                "content": "C",
-                "source_doc": "doc.pdf",
-                "@search.reranker_score": 3.0,
-                "metadata_json": '{"program": "EU"}',
-            },
-            {"id": "b", "@search.score": 7.5, "metadata_json": "{not json"},
+            _reference({"id": "b", "metadata_json": "{not json"}, None, doc_key="b"),
+            _reference(
+                {
+                    "id": "a",
+                    "title": "T",
+                    "content": "C",
+                    "source_doc": "doc.pdf",
+                    "metadata_json": '{"program": "EU"}',
+                },
+                3.0,
+            ),
+            _reference(None, 2.0, doc_key="key-only"),
+            _reference({"id": "w"}, 4.0, kind="web"),
         ]
     )
-    indexes = []
-    monkeypatch.setattr(az, "get_search_client", lambda name: indexes.append(name) or client)
+    names = []
+    monkeypatch.setattr(az, "get_knowledge_base_client", lambda n: names.append(n) or client)
 
-    first, second = await az.AzureSearchRetriever().search("sanctions", "Viktor", top=3)
+    passages = await az.FoundryIQRetriever().search("sanctions", "Viktor", top=3)
 
-    assert indexes == ["argus-kb-sanctions"]
-    assert client.calls == [
+    assert names == ["argus-kb-sanctions"]
+    request = client.requests[0].as_dict()
+    assert request["intents"] == [{"type": "semantic", "search": "Viktor"}]
+    assert request["knowledgeSourceParams"] == [
         {
-            "search_text": "Viktor",
-            "top": 3,
-            "query_type": "semantic",
-            "semantic_configuration_name": "default",
+            "kind": "searchIndex",
+            "knowledgeSourceName": "argus-kb-sanctions-source",
+            "includeReferences": True,
+            "includeReferenceSourceData": True,
         }
     ]
+    assert [p.id for p in passages] == ["a", "key-only", "b"]  # by reranker score; web skipped
+    first, second, third = passages
     assert (first.score, first.metadata, first.source_doc) == (0.75, {"program": "EU"}, "doc.pdf")
-    assert (second.score, second.metadata, second.title) == (1.0, {}, "")
+    assert (second.score, second.title) == (0.5, "")
+    assert (third.score, third.metadata) == (0.0, {})
 
 
-async def test_any_search_failure_is_reported_as_unavailable(monkeypatch):
+async def test_retrieval_keeps_only_the_top_passages(monkeypatch):
+    refs = [_reference({"id": str(i)}, float(i)) for i in range(4)]
+    monkeypatch.setattr(az, "get_knowledge_base_client", lambda n: KnowledgeBaseClient(refs))
+
+    passages = await az.FoundryIQRetriever().search("regulations", "q", top=2)
+
+    assert [p.id for p in passages] == ["3", "2"]
+
+
+async def test_a_knowledge_base_without_references_finds_nothing(monkeypatch):
+    client = SimpleNamespace(retrieve=lambda request: SimpleNamespace(references=None))
+    monkeypatch.setattr(az, "get_knowledge_base_client", lambda n: client)
+
+    assert await az.FoundryIQRetriever().search("adverse_media", "q") == []
+
+
+async def test_any_retrieval_failure_is_reported_as_unavailable(monkeypatch):
     def broken(name):
         raise RuntimeError("AZURE_SEARCH_ENDPOINT is not set")
 
-    monkeypatch.setattr(az, "get_search_client", broken)
+    monkeypatch.setattr(az, "get_knowledge_base_client", broken)
 
-    with pytest.raises(DataPlaneUnavailable, match="AI Search regulations"):
-        await az.AzureSearchRetriever().search("regulations", "q")
+    with pytest.raises(DataPlaneUnavailable, match="Foundry IQ regulations"):
+        await az.FoundryIQRetriever().search("regulations", "q")
 
 
 # ── Cosmos DB ─────────────────────────────────────────────────────────────────
