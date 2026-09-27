@@ -157,6 +157,7 @@ jobs:
           add-paths: |
             pyproject.toml
             uv.lock
+            Dockerfile
             .github/workflows
             docs/DEPENDENCY-REFRESH.md
       - name: Fail visibly if any refresh gate failed
@@ -199,4 +200,5 @@ jobs:
             .python-version
             pyproject.toml
             uv.lock
+            Dockerfile
             README.md

@@ -131,11 +131,9 @@ def test_action_pin_disagreement_and_python_literal(repo):
     assert any("Python 3.13" in e for e in errors)
 
 
-@pytest.mark.parametrize("path", ["Dockerfile", "web/package.json"])
-def test_future_surfaces_cannot_silently_escape_inventory(repo, path):
-    target = repo / path
-    target.parent.mkdir(exist_ok=True)
-    target.touch()
+def test_the_web_surface_cannot_silently_escape_inventory(repo):
+    (repo / "web").mkdir()
+    (repo / "web/package.json").touch()
     assert any("Extend the version inventory" in e for e in versions.check(repo))
 
 
@@ -276,7 +274,8 @@ def test_upstream_inventory_major_bumps_and_python_gate(repo, monkeypatch, ready
 
     monkeypatch.setattr(versions, "fetch", fake_fetch)
     monkeypatch.setattr(versions, "action_release", lambda _: ("v2.0.0", "b" * 40))
-    rows, actions, candidate = versions.upstream(repo)
+    rows, actions, images, candidate = versions.upstream(repo)
+    assert images == {}  # no Dockerfile
     assert "MAJOR" in "\n".join(rows)
     assert actions["owner/action"] == ("v2.0.0", "b" * 40)
     assert candidate == ("3.15" if ready else None)
@@ -358,3 +357,214 @@ def test_refresh_rejects_untrusted_tag(repo):
 def test_refresh_commands_include_quality_gates():
     labels = {label for label, _ in refresh.commands("python")}
     assert {"Lint", "Format", "Types", "Tests", "Docs", "Versions", "Assets", "Audit"} <= labels
+
+
+# ── Container base images ────────────────────────────────────────────────────
+
+UV_DIGEST = "sha256:" + "1" * 64
+PY_DIGEST = "sha256:" + "2" * 64
+UV_PIN = f"ghcr.io/astral-sh/uv:0.12.19@{UV_DIGEST}"
+PY_PIN = f"python:3.14.7-slim-trixie@{PY_DIGEST}"
+
+
+def dockerfile(repo, text=None):
+    text = text or (
+        f"FROM {UV_PIN} AS uv\n"
+        f"FROM {PY_PIN} AS build\n"
+        "COPY --from=uv /uv /usr/local/bin/uv\n"
+        f"from --platform=linux/amd64 {PY_PIN} as runtime\n"
+        "FROM build AS test\n"
+    )
+    (repo / "Dockerfile").write_text(text)
+    return repo / "Dockerfile"
+
+
+def test_pinned_base_images_pass_and_stage_references_are_not_images(repo):
+    dockerfile(repo)
+
+    assert versions.check(repo) == []
+    assert versions.image_refs(repo) == [UV_PIN, PY_PIN, PY_PIN]
+
+
+@pytest.mark.parametrize(
+    "line,expected",
+    [
+        ("FROM python:3.14.7-slim-trixie", "needs a version tag and a sha256 digest"),
+        ("FROM python:latest@" + PY_DIGEST, "needs a version tag"),
+        ("FROM debian:13@" + PY_DIGEST, "extend the image inventory for debian"),
+        ("FROM python:3.14.8-slim-trixie@" + PY_DIGEST, "inconsistent image pins"),
+        ("FROM python:3.13.9-slim@" + PY_DIGEST, "disagrees with 3.14"),
+    ],
+)
+def test_image_pins_are_checked(repo, line, expected):
+    dockerfile(repo, f"FROM {PY_PIN}\n{line}\n")
+
+    assert any(expected in error for error in versions.check(repo))
+
+
+def fake_releases(url):
+    if "cpython" in url:
+        return [{"ref": f"refs/tags/v{v}"} for v in ("3.14.7", "3.14.8", "3.15.0", "3.15.1rc1")]
+    return {"tag_name": "0.13.0"}
+
+
+@pytest.mark.parametrize(
+    "digests,expected_rows,expected_updates",
+    [
+        (
+            {"0.13.0": "sha256:" + "3" * 64, "3.14.8-slim-trixie": "sha256:" + "4" * 64},
+            ["| 0.12.19 | 0.13.0 | update |", "| 3.14.7-slim-trixie | 3.14.8 | update |"],
+            {
+                UV_PIN: "ghcr.io/astral-sh/uv:0.13.0@sha256:" + "3" * 64,
+                PY_PIN: "python:3.14.8-slim-trixie@sha256:" + "4" * 64,
+            },
+        ),
+        ({}, ["not published yet"] * 2, {}),
+    ],
+)
+def test_upstream_reports_and_resolves_image_updates(
+    repo, monkeypatch, digests, expected_rows, expected_updates
+):
+    dockerfile(repo)
+    monkeypatch.setattr(versions, "fetch", fake_releases)
+    monkeypatch.setattr(versions, "registry_digest", lambda image, tag: digests.get(tag))
+
+    rows, updates = versions._image_rows(repo)
+
+    assert len(rows) == 2  # one row per image, however many stages use it
+    assert all(expected in row for expected, row in zip(expected_rows, rows, strict=True))
+    assert updates == expected_updates
+
+
+def test_same_tag_with_a_new_digest_is_a_rebuild_and_a_matching_one_is_current(repo, monkeypatch):
+    dockerfile(repo, f"FROM {UV_PIN}\nFROM python:3.14.8-slim-trixie@{PY_DIGEST}\n")
+    monkeypatch.setattr(versions, "fetch", lambda url: {"tag_name": "v0.12.19"})
+    monkeypatch.setattr(versions, "cpython_releases", lambda: [versions.Version("3.14.8")])
+    new = "sha256:" + "5" * 64
+    monkeypatch.setattr(
+        versions, "registry_digest", lambda image, tag: new if image == "python" else UV_DIGEST
+    )
+
+    rows, updates = versions._image_rows(repo)
+
+    assert rows[0].endswith("| current |") and rows[1].endswith("| rebuilt |")
+    assert updates == {f"python:3.14.8-slim-trixie@{PY_DIGEST}": f"python:3.14.8-slim-trixie@{new}"}
+
+
+def test_a_major_image_release_is_flagged():
+    assert (
+        versions._image_status(versions.Version("1.0"), versions.Version("0.12"), True) == "MAJOR"
+    )
+
+
+def test_an_unpinned_image_stops_the_upstream_inventory(repo):
+    dockerfile(repo, "FROM python:3.14\n")
+
+    with pytest.raises(ValueError, match="not an inventoried, pinned image"):
+        versions._image_rows(repo)
+
+
+def test_write_images_replaces_every_stage_that_uses_a_pin(repo):
+    path = dockerfile(repo)
+    versions.write_images(repo, {})  # nothing to do, nothing written
+    versions.write_images(repo, {PY_PIN: "python:3.14.8-slim-trixie@" + PY_DIGEST})
+
+    assert path.read_text().count("3.14.8-slim-trixie") == 2
+    assert UV_PIN in path.read_text()
+
+
+def test_write_python_moves_the_python_image_to_the_new_minor(repo, monkeypatch):
+    path = dockerfile(repo)
+    monkeypatch.setattr(versions, "fetch", fake_releases)
+    new = "sha256:" + "6" * 64
+    monkeypatch.setattr(versions, "registry_digest", lambda image, tag: new)
+
+    versions.write_python(repo, "3.15")
+
+    assert f"python:3.15.0-slim-trixie@{new}" in path.read_text()
+    assert not [e for e in versions.check(repo) if "Dockerfile" in e]  # `uv lock` does the rest
+
+
+def test_write_python_stops_if_the_new_python_image_is_not_published(repo, monkeypatch):
+    dockerfile(repo)
+    monkeypatch.setattr(versions, "fetch", fake_releases)
+    monkeypatch.setattr(versions, "registry_digest", lambda image, tag: None)
+
+    with pytest.raises(ValueError, match="not published yet"):
+        versions.write_python(repo, "3.15")
+
+
+def test_write_python_without_a_python_image_leaves_the_dockerfile_alone(repo):
+    path = dockerfile(repo, f"FROM {UV_PIN}\n")
+
+    versions.write_python(repo, "3.15")
+
+    assert path.read_text() == f"FROM {UV_PIN}\n"
+
+
+class Response:
+    def __init__(self, digest):
+        self.headers = {"Docker-Content-Digest": digest}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def test_registry_digest_asks_for_an_anonymous_token_then_the_manifest(monkeypatch):
+    tokens, requests = [], []
+    monkeypatch.setattr(versions, "fetch", lambda url: tokens.append(url) or {"token": "t"})
+
+    def fake_open(request, timeout):
+        requests.append(request)
+        return Response(PY_DIGEST)
+
+    monkeypatch.setattr(versions, "urlopen", fake_open)
+
+    assert versions.registry_digest("python", "3.14.7-slim-trixie") == PY_DIGEST
+    assert versions.registry_digest("ghcr.io/astral-sh/uv", "0.12.19") == PY_DIGEST
+    assert tokens == [
+        "https://auth.docker.io/token?service=registry.docker.io"
+        "&scope=repository%3Alibrary%2Fpython%3Apull",
+        "https://ghcr.io/token?scope=repository%3Aastral-sh%2Fuv%3Apull",
+    ]
+    docker, ghcr = requests
+    assert docker.full_url == (
+        "https://registry-1.docker.io/v2/library/python/manifests/3.14.7-slim-trixie"
+    )
+    assert docker.get_method() == "HEAD"
+    assert docker.get_header("Authorization") == "Bearer t"
+    assert "image.index" in docker.get_header("Accept")
+    assert ghcr.full_url == "https://ghcr.io/v2/astral-sh/uv/manifests/0.12.19"
+
+
+def test_registry_digest_of_an_unpublished_tag_is_none_and_other_errors_raise(monkeypatch):
+    from urllib.error import HTTPError
+
+    monkeypatch.setattr(versions, "fetch", lambda url: {"token": "t"})
+    codes = iter([404, 500])
+
+    def fail(request, timeout):
+        raise HTTPError(request.full_url, next(codes), "error", {}, None)
+
+    monkeypatch.setattr(versions, "urlopen", fail)
+
+    assert versions.registry_digest("python", "3.99.0") is None
+    with pytest.raises(HTTPError):
+        versions.registry_digest("python", "3.99.0")
+
+
+def test_registry_digest_rejects_a_missing_digest(monkeypatch):
+    monkeypatch.setattr(versions, "fetch", lambda url: {"token": "t"})
+    monkeypatch.setattr(versions, "urlopen", lambda request, timeout: Response(""))
+
+    with pytest.raises(ValueError, match="no valid digest"):
+        versions.registry_digest("python", "3.14.7")
+
+
+def test_api_url_encodes_query_values():
+    assert versions.api_url("ghcr", "token", query={"scope": "a b/c"}) == (
+        "https://ghcr.io/token?scope=a%20b%2Fc"
+    )

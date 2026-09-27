@@ -1,7 +1,7 @@
-"""Inventory the current Python/action surfaces; check offline or refresh from upstream.
+"""Inventory the Python, action and container-image surfaces; check offline or refresh upstream.
 
-Network failures are errors, never evidence that a dependency is current. Web/container
-support must be added with those Phase 5 surfaces; encountering either fails closed.
+Network failures are errors, never evidence that a dependency is current. Web support must be
+added with that Phase 5 surface; encountering it fails closed, as does an unknown base image.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import sys
 import tomllib
 from functools import cache
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
@@ -29,6 +30,24 @@ ACTION = re.compile(
     r"(?:\s+#\s*(?P<tag>v[\w.-]+))?"
 )
 DEPENDENCY = re.compile(r'(?P<quote>["\'])(?P<req>[A-Za-z0-9][^"\'\n]*)(?P=quote)')
+FROM_LINE = re.compile(
+    r"^FROM\s+(?:--platform=\S+\s+)?(?P<ref>\S+)(?:\s+AS\s+(?P<stage>\S+))?\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+IMAGE_PIN = re.compile(
+    r"(?P<image>[a-z0-9][\w./-]*):(?P<tag>(?P<version>\d+(?:\.\d+)*)(?P<suffix>[\w.-]*))"
+    r"@(?P<digest>sha256:[0-9a-f]{64})"
+)
+# Every base image the Dockerfile may use: where its registry keeps it, and where its releases
+# are read (`cpython` = CPython's tags; otherwise a GitHub repository's latest release).
+IMAGES = {
+    "python": {"registry": "docker.io", "repository": "library/python", "releases": "cpython"},
+    "ghcr.io/astral-sh/uv": {
+        "registry": "ghcr.io",
+        "repository": "astral-sh/uv",
+        "releases": "astral-sh/uv",
+    },
+}
 
 
 def read_toml(path: Path) -> dict:
@@ -64,9 +83,42 @@ def check(root: Path) -> list[str]:
         *_python_target_problems(project, locked, pinned),
         *_requirement_problems(root, project, locked),
         *_workflow_problems(root, pinned),
+        *_image_problems(root, pinned),
     ]
-    if (root / "web/package.json").exists() or (root / "Dockerfile").exists():
-        problems.append("Extend the version inventory for web/container surfaces before Phase 5")
+    if (root / "web/package.json").exists():
+        problems.append("Extend the version inventory for the web surface before Phase 5")
+    return problems
+
+
+def image_refs(root: Path) -> list[str]:
+    """The Dockerfile's base images, in order, without references to its own stages."""
+    path = root / "Dockerfile"
+    if not path.exists():
+        return []
+    refs, stages = [], set()
+    for match in FROM_LINE.finditer(path.read_text("utf-8")):
+        if match["ref"].lower() not in stages:
+            refs.append(match["ref"])
+        if match["stage"]:
+            stages.add(match["stage"].lower())
+    return refs
+
+
+def _image_problems(root: Path, pinned: str) -> list[str]:
+    problems = []
+    seen: dict[str, str] = {}
+    for ref in image_refs(root):
+        pin = IMAGE_PIN.fullmatch(ref)
+        if not pin:
+            problems.append(f"Dockerfile: {ref} needs a version tag and a sha256 digest")
+            continue
+        image = pin["image"]
+        if image not in IMAGES:
+            problems.append(f"Dockerfile: extend the image inventory for {image}")
+        if seen.setdefault(image, ref) != ref:
+            problems.append(f"Dockerfile: {image}: inconsistent image pins")
+        if image == "python" and not pin["version"].startswith(pinned + "."):
+            problems.append(f"Dockerfile: python:{pin['tag']} disagrees with {pinned}")
     return problems
 
 
@@ -125,19 +177,48 @@ def _workflow_problems(root: Path, pinned: str) -> list[str]:
 
 # The only hosts the inventory reads from. Every path segment taken from repository files (package
 # names, action repositories, tags) is percent-encoded by `api_url`, so none can change the path.
-API_HOSTS = {"pypi": "pypi.org", "github": "api.github.com"}
+API_HOSTS = {
+    "pypi": "pypi.org",
+    "github": "api.github.com",
+    "docker-auth": "auth.docker.io",
+    "docker-registry": "registry-1.docker.io",
+    "ghcr": "ghcr.io",
+}
+# For each registry: the host that issues anonymous pull tokens, the token path and fixed query,
+# and the host that serves manifests.
+REGISTRIES = {
+    "docker.io": ("docker-auth", ("token",), {"service": "registry.docker.io"}, "docker-registry"),
+    "ghcr.io": ("ghcr", ("token",), {}, "ghcr"),
+}
+MANIFEST_TYPES = ", ".join(
+    [
+        "application/vnd.oci.image.index.v1+json",
+        "application/vnd.docker.distribution.manifest.list.v2+json",
+        "application/vnd.oci.image.manifest.v1+json",
+        "application/vnd.docker.distribution.manifest.v2+json",
+    ]
+)
+USER_AGENT = "ARGUS-dependency-inventory"
 
 
-def api_url(host: str, *segments: str) -> str:
-    return f"https://{API_HOSTS[host]}/" + "/".join(quote(part, safe="") for part in segments)
+def api_url(host: str, *segments: str, query: dict[str, str] | None = None) -> str:
+    url = f"https://{API_HOSTS[host]}/" + "/".join(quote(part, safe="") for part in segments)
+    if query:
+        url += "?" + "&".join(f"{key}={quote(value, safe='')}" for key, value in query.items())
+    return url
+
+
+def _checked(url: str) -> str:
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.netloc not in API_HOSTS.values():
+        raise ValueError(f"Refusing a URL outside the inventory's hosts: {url}")
+    return url
 
 
 @cache
 def fetch(url: str):
-    parts = urlsplit(url)
-    if parts.scheme != "https" or parts.netloc not in API_HOSTS.values():
-        raise ValueError(f"Refusing a URL outside the inventory's hosts: {url}")
-    headers = {"User-Agent": "ARGUS-dependency-inventory"}
+    _checked(url)
+    headers = {"User-Agent": USER_AGENT}
     if url.startswith("https://api.github.com/") and os.environ.get("GH_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["GH_TOKEN"]
     request = Request(url, headers=headers)  # noqa: S310 - https only, checked above
@@ -179,6 +260,53 @@ def action_release(repo: str) -> tuple[str, str]:
     raise ValueError(f"{repo}: could not resolve release to a commit")
 
 
+def registry_digest(image: str, tag: str) -> str | None:
+    """The digest the registry serves for `image:tag`, or None if that tag is not published."""
+    config = IMAGES[image]
+    auth_host, auth_path, auth_query, manifest_host = REGISTRIES[config["registry"]]
+    repository = config["repository"]
+    scope = {**auth_query, "scope": f"repository:{repository}:pull"}
+    token = fetch(api_url(auth_host, *auth_path, query=scope))["token"]
+    url = _checked(api_url(manifest_host, "v2", *repository.split("/"), "manifests", tag))
+    headers = {
+        "Accept": MANIFEST_TYPES,
+        "Authorization": f"Bearer {token}",
+        "User-Agent": USER_AGENT,
+    }
+    request = Request(url, method="HEAD", headers=headers)  # noqa: S310 - https only, checked
+    try:
+        with urlopen(request, timeout=30) as response:  # noqa: S310 - https only, checked above
+            digest = response.headers.get("Docker-Content-Digest", "")
+    except HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+        raise ValueError(f"{image}:{tag}: the registry returned no valid digest")
+    return digest
+
+
+def cpython_releases() -> list[Version]:
+    refs = fetch(
+        api_url("github", "repos", "python", "cpython", "git", "matching-refs", "tags", "v3.")
+    )
+    return [
+        Version(ref["ref"].rsplit("/", 1)[1][1:])
+        for ref in refs
+        if re.fullmatch(r"refs/tags/v3\.\d+\.\d+", ref["ref"])
+    ]
+
+
+def latest_image_release(image: str, current: Version) -> Version:
+    """The newest release for an image: for Python, the newest patch of the same minor."""
+    source = IMAGES[image]["releases"]
+    if source == "cpython":
+        return max(v for v in cpython_releases() if v.release[:2] == current.release[:2])
+    owner, name = source.split("/", 1)
+    tag = fetch(api_url("github", "repos", owner, name, "releases", "latest"))["tag_name"]
+    return Version(tag.removeprefix("v"))
+
+
 def wheel_ready(files: list[dict], minor: str) -> bool:
     version = tuple(int(part) for part in minor.split("."))
     platforms = [
@@ -208,7 +336,10 @@ def wheel_ready(files: list[dict], minor: str) -> bool:
     return True
 
 
-def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | None]:
+def upstream(
+    root: Path,
+) -> tuple[list[str], dict[str, tuple[str, str]], dict[str, str], str | None]:
+    """Report rows, action pins to write, image pins to write (old -> new), Python candidate."""
     inventory = packages(root)
     rows = ["| Surface | Locked | Latest | Status |", "| --- | --- | --- | --- |"]
     metadata = {name: fetch(api_url("pypi", "pypi", name, "json")) for name in sorted(inventory)}
@@ -216,9 +347,11 @@ def upstream(root: Path) -> tuple[list[str], dict[str, tuple[str, str]], str | N
     rows += _build_rows(root)
     action_rows, actions = _action_rows(root)
     rows += action_rows
+    image_rows, images = _image_rows(root)
+    rows += image_rows
     python_row, candidate = _python_row(root, inventory, metadata)
     rows.append(python_row)
-    return rows, actions, candidate
+    return rows, actions, images, candidate
 
 
 def _package_rows(inventory: dict[str, list[str]], metadata: dict) -> list[str]:
@@ -263,19 +396,41 @@ def _action_rows(root: Path) -> tuple[list[str], dict[str, tuple[str, str]]]:
     return rows, actions
 
 
+def _image_rows(root: Path) -> tuple[list[str], dict[str, str]]:
+    """One row per base image, and the new pin wherever its tag or its digest moved."""
+    rows = []
+    updates: dict[str, str] = {}
+    for ref in dict.fromkeys(image_refs(root)):
+        pin = IMAGE_PIN.fullmatch(ref)
+        if not pin or pin["image"] not in IMAGES:
+            raise ValueError(f"Dockerfile: {ref} is not an inventoried, pinned image")
+        image, current = pin["image"], Version(pin["version"])
+        latest = latest_image_release(image, current)
+        tag = f"{max(latest, current)}{pin['suffix']}"
+        digest = registry_digest(image, tag)
+        if digest is None:
+            status = "not published yet"
+        elif digest == pin["digest"]:
+            status = "current"
+        else:
+            status = _image_status(latest, current, tag != pin["tag"])
+            updates[ref] = f"{image}:{tag}@{digest}"
+        rows.append(f"| Image: {image} | {pin['tag']} | {latest} | {status} |")
+    return rows, updates
+
+
+def _image_status(latest: Version, current: Version, new_tag: bool) -> str:
+    if latest.major > current.major:
+        return "MAJOR"
+    # A rebuilt image keeps its tag and gets a new digest, usually for base-OS security fixes.
+    return "update" if new_tag else "rebuilt"
+
+
 def _python_row(
     root: Path, inventory: dict[str, list[str]], metadata: dict
 ) -> tuple[str, str | None]:
     """The CPython row, and the next minor version if every locked package is ready for it."""
-    refs = fetch(
-        api_url("github", "repos", "python", "cpython", "git", "matching-refs", "tags", "v3.")
-    )
-    stable = [
-        Version(ref["ref"].rsplit("/", 1)[1][1:])
-        for ref in refs
-        if re.fullmatch(r"refs/tags/v3\.\d+\.\d+", ref["ref"])
-    ]
-    latest_python = max(stable)
+    latest_python = max(cpython_releases())
     candidate = f"{latest_python.major}.{latest_python.minor}"
     current_python = (root / ".python-version").read_text("utf-8").strip()
     if Version(candidate) > Version(current_python):
@@ -334,6 +489,30 @@ def write_actions(root: Path, actions: dict[str, tuple[str, str]]) -> None:
         )
 
 
+def write_images(root: Path, updates: dict[str, str]) -> None:
+    if not updates:
+        return
+    path = root / "Dockerfile"
+    text = path.read_text("utf-8")
+    for old, new in updates.items():
+        text = text.replace(old, new)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def _python_image_update(root: Path, minor: str) -> dict[str, str]:
+    """Move the Dockerfile's Python image to the newest published patch of `minor`."""
+    pins = [p for p in map(IMAGE_PIN.fullmatch, image_refs(root)) if p and p["image"] == "python"]
+    if not pins:
+        return {}
+    pin = pins[0]
+    latest = max(v for v in cpython_releases() if f"{v.major}.{v.minor}" == minor)
+    tag = f"{latest}{pin['suffix']}"
+    digest = registry_digest("python", tag)
+    if digest is None:
+        raise ValueError(f"python:{tag} is not published yet")
+    return {pin[0]: f"python:{tag}@{digest}"}
+
+
 def write_backend(root: Path) -> None:
     path = root / "pyproject.toml"
     project = read_toml(path)
@@ -355,6 +534,7 @@ def write_python(root: Path, minor: str) -> None:
     old = (root / ".python-version").read_text("utf-8").strip()
     if Version(minor) <= Version(old):
         raise ValueError("Interpreter updates must increase the minor version")
+    write_images(root, _python_image_update(root, minor))
     path = root / "pyproject.toml"
     text = path.read_text("utf-8").replace(
         f'requires-python = ">={old}"', f'requires-python = ">={minor}"'
@@ -412,7 +592,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.write_minimums:
             write_minimums(ROOT)
             return 0
-        rows, actions, candidate = upstream(ROOT)
+        rows, actions, images, candidate = upstream(ROOT)
         report = "\n".join(rows) + "\n"
         print(report)
         if args.report:
@@ -424,6 +604,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.write:
             write_backend(ROOT)
             write_actions(ROOT, actions)
+            write_images(ROOT, images)
             write_minimums(ROOT)
         return 0
     except (OSError, ValueError, KeyError) as exc:
