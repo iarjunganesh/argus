@@ -2,7 +2,14 @@
 
 import pytest
 
-from argus.models import GITHUB_MODELS_ENDPOINT, ModelUnavailable, get_chat_model
+from argus.models import (
+    GITHUB_MODELS_ENDPOINT,
+    REASONING_COMPLETION_TOKENS,
+    ChatModel,
+    ModelUnavailable,
+    get_chat_model,
+    is_reasoning_model,
+)
 
 
 def test_no_provider_means_no_model():
@@ -26,6 +33,7 @@ def test_azure_openai_uses_the_v1_endpoint_and_deployment(monkeypatch):
     chat = get_chat_model()
 
     assert chat.provider == "azure-openai" and chat.model == "gpt-5.4-mini"
+    assert chat.reasoning is True
     assert str(chat.client.base_url) == "https://aoai.example/openai/v1/"
     assert chat.client.api_key == "aoai-test"
 
@@ -50,3 +58,42 @@ def test_github_models(monkeypatch):
 
     assert str(chat.client.base_url).startswith(GITHUB_MODELS_ENDPOINT)
     assert chat.client.api_key == "gh-test"
+
+
+@pytest.mark.parametrize(
+    ("model", "expected"),
+    [
+        ("gpt-5.4-mini", True),
+        ("GPT-5", True),
+        ("openai/gpt-5-mini", True),
+        ("o4-mini", True),
+        ("o3", True),
+        ("gpt-4.1-mini", False),
+        ("openai/gpt-4o", False),
+        ("my-deployment", False),
+    ],
+)
+def test_reasoning_models_are_recognised_by_name(model, expected):
+    assert is_reasoning_model(model) is expected
+
+
+def test_the_reasoning_setting_overrides_the_name(monkeypatch):
+    monkeypatch.setenv("ARGUS_MODEL_REASONING", "True")
+    assert is_reasoning_model("my-deployment") is True
+
+    monkeypatch.setenv("ARGUS_MODEL_REASONING", "false")
+    assert is_reasoning_model("gpt-5.4-mini") is False
+
+    monkeypatch.setenv("ARGUS_MODEL_REASONING", "maybe")
+    with pytest.raises(ModelUnavailable, match="maybe"):
+        is_reasoning_model("gpt-5.4-mini")
+
+
+def test_limits_follow_the_kind_of_model():
+    chat = ChatModel("openai", "gpt-4.1-mini", client=None)  # type: ignore[arg-type]
+    reasoning = ChatModel("openai", "gpt-5", client=None, reasoning=True)  # type: ignore[arg-type]
+
+    assert chat.limits(max_tokens=250, temperature=0.2) == {"max_tokens": 250, "temperature": 0.2}
+    assert reasoning.limits(max_tokens=250, temperature=0.2) == {
+        "max_completion_tokens": REASONING_COMPLETION_TOKENS
+    }
