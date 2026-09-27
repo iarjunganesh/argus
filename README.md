@@ -189,6 +189,14 @@ uv run python -m argus.ui.gradio_app    # then open http://localhost:7860
 
 Or run one assessment without either: `uv run python scripts/dev/run_demo_inprocess.py`.
 
+Or run the API in a container (no UI; the local backend with the public demo data only):
+
+```bash
+docker build -t argus .
+docker run --rm -p 8000:8000 argus
+python scripts/ci/smoke_api.py    # one demo assessment against http://127.0.0.1:8000
+```
+
 Run the same checks as CI:
 
 ```bash

@@ -40,6 +40,21 @@ run as a step of the orchestrator's workflow inside the API process.
 `scripts/dev/start_demo.ps1` starts both on Windows and `scripts/dev/end_demo.ps1` stops them.
 `uv run python scripts/dev/run_demo_inprocess.py` runs one assessment without either.
 
+## Container image
+
+The root `Dockerfile` builds the API alone (the Gradio UI is not in it): a multi-stage `uv` build
+on the Python image of the `.python-version` minor, installing the runtime dependencies only (no
+dependency groups: no dev tools, Gradio, data generators or Tesseract). It runs as a non-root user
+(uid 10001), listens on port 8000, and its `HEALTHCHECK` calls `/health`. Both base images are
+pinned by tag and digest, checked by `scripts/ci/check_versions.py` and moved by the post-release
+refresh. `.dockerignore` is an allow-list, so `.env` and other local files never reach the build.
+
+With no settings the container runs on the local backend, which in the image has only the public
+demo data (`data/public/`): synthetic data is generated, never baked in, so entity lookups find
+nothing and say so, and the six demo scenarios work. Deployments set `ARGUS_DATA_BACKEND=azure`.
+CI builds the image and runs one demo assessment through it (`scripts/ci/smoke_api.py`), then
+waits for the health check to pass.
+
 ## Request flow
 
 1. The UI posts to `POST /api/v1/kyc/assess`. The API returns a `report_id` immediately and runs

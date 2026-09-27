@@ -1,0 +1,11 @@
+# An allow-list: the image is built from these files only. Everything else stays out of the build
+# context, including .env and other secrets, .venv, .local, .tmp, tests, archive and the data
+# generators.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+!data/public/adverse_media_public.jsonl
+**/__pycache__
