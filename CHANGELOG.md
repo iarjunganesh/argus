@@ -15,6 +15,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **A container image for the API.** The root `Dockerfile` builds a multi-stage `uv` image on the
+  pinned Python 3.14 image: runtime dependencies only, a non-root user, and a `HEALTHCHECK` on
+  `/health`. `.dockerignore` is an allow-list, so `.env` never reaches the build. Checked: a new
+  CI job builds the image, runs one demo assessment through it (`scripts/ci/smoke_api.py`: stream,
+  report, tier and sources) and waits for the health check; the same passed locally.
+- **The version inventory covers the container base images.** `check_versions.py` requires tag
+  and digest pins, reports newer releases and rebuilt images from Docker Hub and GitHub Container
+  Registry, and the post-release refresh moves them. Checked by offline tests and one live run.
+
 - **An assessment can be followed as it runs.** `GET /api/v1/kyc/stream/{id}` sends server-sent
   events: each agent's start and finish (with its `source` and any fallbacks), then the final
   status. Events are kept in the report store, so a late or reconnecting client (`Last-Event-ID`)
@@ -109,6 +118,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   `.python-version` (3.14). CI, local runs and the Windows demo script use the same lock.
 
 ### Changed
+
+- **Runtime dependencies are only what the API imports:** `faker` moved to the `data` group and
+  `httpx` to the `ui` and `dev` groups. `uv sync` still installs every group.
 
 - **One process runs the whole assessment, as a Microsoft Agent Framework workflow.** The
   orchestrator builds a fixed graph with `WorkflowBuilder` (`agent-framework-core` pinned to

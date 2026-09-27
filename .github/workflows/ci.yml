@@ -113,6 +113,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  container:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build --tag argus:ci .
+      # One demo assessment end to end through the image, with no cloud credentials.
+      - name: Smoke assessment
+        run: |
+          docker run --detach --name argus --publish 8000:8000 argus:ci
+          python3 scripts/ci/smoke_api.py http://127.0.0.1:8000
+      - name: The health check passes
+        run: timeout 90 sh -c 'until [ "$(docker inspect --format "{{.State.Health.Status}}" argus)" = healthy ]; do sleep 2; done'
+      - name: Container log
+        if: always()
+        run: docker logs argus || true
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
