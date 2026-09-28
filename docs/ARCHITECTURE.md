@@ -1,6 +1,6 @@
 # ARGUS architecture (current runtime)
 
-This page describes how ARGUS runs **today**, as checked against the code on 2026-09-27. The planned
+This page describes how ARGUS runs **today**, as checked against the code on 2026-09-28. The planned
 v2 runtime is described in [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original hackathon design spec
 is archived in [`archive/hackathon-2026/docs/`](../archive/hackathon-2026/docs/ARGUS_Architecture.md)
 and is no longer maintained.
@@ -9,7 +9,7 @@ and is no longer maintained.
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../assets/architecture/system-overview-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="../assets/architecture/system-overview-light.svg">
-    <img width="100%" src="../assets/architecture/system-overview-light.svg" alt="The current ARGUS runtime: the Gradio UI calls one API process, which runs the orchestrator's Agent Framework workflow (four agents in parallel, then compliance) and reads data through one data plane with an Azure and a local implementation."/>
+    <img width="100%" src="../assets/architecture/system-overview-light.svg" alt="The current ARGUS runtime: the Next.js web UI calls one API process from the browser, which runs the orchestrator's Agent Framework workflow (four agents in parallel, then compliance) and reads data through one data plane with an Azure and a local implementation."/>
   </picture>
 </p>
 
@@ -24,7 +24,7 @@ A local run is two processes:
 | Process | Entry point | Port | Role |
 | --- | --- | --- | --- |
 | API | `src/argus/api/main.py` | 8000 | Accepts KYC requests, runs each assessment's workflow in this process, streams its progress, serves reports |
-| UI | `src/argus/ui/gradio_app.py` | 7860 | Gradio front end that calls the API |
+| Web UI | `web/` (Next.js) | 3000 | The browser front end: submits assessments, follows their progress stream, shows the report |
 
 The five agents are not services: each is a module with one `assess(request, task_id)` function,
 run as a step of the orchestrator's workflow inside the API process.
@@ -40,11 +40,24 @@ run as a step of the orchestrator's workflow inside the API process.
 `scripts/dev/start_demo.ps1` starts both on Windows and `scripts/dev/end_demo.ps1` stops them.
 `uv run python scripts/dev/run_demo_inprocess.py` runs one assessment without either.
 
+## Web UI
+
+`web/` is a Next.js (App Router) site in TypeScript with shadcn/ui components. It has no server
+logic of its own: the browser calls the API at `NEXT_PUBLIC_API_URL` (set at build time), so the
+API must list the site's origin in `ARGUS_CORS_ORIGINS` (empty by default, which blocks every
+browser origin). The start page submits an assessment; `/assessments/{id}` opens the progress
+stream with `EventSource`, draws the workflow's fan-out and fan-in with each agent's state, time
+and `source`, and when the stream's `status` event arrives fetches the report. If the stream
+closes at its time limit while the assessment is still running, the browser reconnects with
+`Last-Event-ID` and resumes. Its colours are the audited palette in
+`src/argus/accessibility/wcag.py`, checked for WCAG AA in both themes by
+`scripts/ci/render_assets.py --check`. See [`web/README.md`](../web/README.md).
+
 ## Container image
 
-The root `Dockerfile` builds the API alone (the Gradio UI is not in it): a multi-stage `uv` build
+The root `Dockerfile` builds the API alone (the web UI is not in it): a multi-stage `uv` build
 on the Python image of the `.python-version` minor, installing the runtime dependencies only (no
-dependency groups: no dev tools, Gradio, data generators or Tesseract), from wheels only
+dependency groups: no dev tools, data generators or Tesseract), from wheels only
 (`--no-build`, so no package's build script runs). It runs as a non-root user
 (uid 10001), listens on port 8000, and its `HEALTHCHECK` calls `/health`. Both base images are
 pinned by tag and digest, checked by `scripts/ci/check_versions.py` and moved by the post-release
@@ -73,9 +86,10 @@ waits for the health check to pass.
    what was recorded before the client connected; a client that reconnects with `Last-Event-ID`
    resumes after the last event it received.
 4. The API stores the report through the `ReportStore`: in memory with the local backend (lost
-   when the API restarts), in Cosmos DB (`kyc_reports`) with the Azure backend. The UI polls
-   `GET /api/v1/kyc/status/{id}` and `GET /api/v1/kyc/report/{id}`. `GET /health` answers while
-   the process is up.
+   when the API restarts), in Cosmos DB (`kyc_reports`) with the Azure backend. The UI follows
+   the stream, then fetches `GET /api/v1/kyc/report/{id}`; it asks
+   `GET /api/v1/kyc/status/{id}` only when the stream is refused, to tell an unknown ID from an
+   API it cannot reach. `GET /health` answers while the process is up.
 
 The API's shape is pinned by `tests/test_api_contract.py`: the reviewed OpenAPI document in
 `tests/fixtures/openapi.json`, and the fields of the report and of the progress events.
@@ -228,4 +242,7 @@ populates the search indexes.
 `tests/fixtures/data/`, and Azure SDKs are replaced by stand-ins. Run
 `uv run pytest --cov` from the repository root. CI (`.github/workflows/ci.yml`) also runs ruff,
 mypy, a dependency audit, a secret scan, the documentation checks, and a check that the
-diagram variants match their SVG masters and pass WCAG AA contrast.
+diagram variants match their SVG masters and pass WCAG AA contrast. It builds the container and
+runs one demo assessment through it. The Web UI job lints, type-checks, unit-tests and builds
+`web/`, then runs its Playwright tests against the API container: the six demo scenarios in light,
+dark and phone layouts, each page checked with axe.

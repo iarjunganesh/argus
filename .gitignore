@@ -73,9 +73,6 @@ outputs/
 reports/
 data/*.jsonl
 
-# Gradio local artifacts
-.gradio/
-
 
 # Disposable scratch (safe to empty at any time) — never commit
 .tmp/

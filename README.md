@@ -34,7 +34,7 @@
 [![Azure OpenAI GPT-4o](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 [![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-Vector-0078D4?logo=microsoftazure&logoColor=white)](https://learn.microsoft.com/azure/search/)
 [![Cosmos DB](https://img.shields.io/badge/Cosmos_DB-NoSQL-0078D4?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cosmos-db)
-[![Gradio](https://img.shields.io/badge/UI-Gradio-F97316?logo=gradio&logoColor=white)](https://gradio.app/)
+[![Next.js](https://img.shields.io/badge/UI-Next.js-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 
 ---
 
@@ -79,7 +79,7 @@ ARGUS is being rebuilt after the hackathon. This table is the honest state of th
 | **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ Built and tested against stand-ins for the Azure SDKs; **not yet run against live services**. That happens with the deployment work. |
 | OCR without Azure | ✅ Tesseract reads the synthetic identity documents (PNG and PDF) when it is installed (the `ocr` dependency group and the Tesseract program); without it, documents are reported as unread, labelled `fallback`. ⚠️ The API does not accept documents yet: OCR runs when the Identity agent is called directly. |
 | The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
-| Gradio UI | ✅ Works |
+| Web UI ([`web/`](web/): Next.js, TypeScript, shadcn/ui) | ✅ Works locally: submit an entity or a demo case, follow each agent live, read the report. Tested end to end with Playwright and axe. Not deployed yet. |
 
 Every agent result says where it came from: `computed`, `fallback` (a service was unavailable and a result that asserts nothing was used instead), or `demo_profile`. The report's audit trace lists them, names any tool that fell back, and says whether a model or the template wrote the explanation.
 
@@ -97,7 +97,7 @@ ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents L
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/system-overview-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/architecture/system-overview-light.svg">
-    <img width="100%" src="assets/architecture/system-overview-light.svg" alt="The current runtime: the Gradio UI calls one FastAPI process, which runs the orchestrator's Agent Framework workflow (four agents in parallel, then compliance) and reads data through one data plane: local synthetic data by default, or Foundry IQ knowledge bases, Cosmos DB and Document Intelligence."/>
+    <img width="100%" src="assets/architecture/system-overview-light.svg" alt="The current runtime: the Next.js web UI calls one FastAPI process from the browser, which runs the orchestrator's Agent Framework workflow (four agents in parallel, then compliance) and reads data through one data plane: local synthetic data by default, or Foundry IQ knowledge bases, Cosmos DB and Document Intelligence."/>
   </picture>
 </p>
 
@@ -129,13 +129,13 @@ The next version is planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
 In short:
 
 - **A focused experiment first.** Can ARGUS produce simpler explanations while preserving evidence, uncertainty, and the need for human review? It will be measured on a fixed evaluation set and written up, including failures.
-- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services. Next: one container, and a Next.js UI replacing Gradio.
+- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Next: deploying them (Azure Container Apps and Vercel).
 - **All three Microsoft IQs.** Foundry IQ for cited regulatory knowledge, Fabric IQ for evaluation data and corporate-ownership relationships, and Work IQ for case-handover context.
 - **Neutral where it's cheap.** The model provider, the container host, the tools (MCP) and telemetry can be swapped by configuration. The data plane stays Azure, with a local implementation for tests and self-hosting.
 
 Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
 
-- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. Report risk labels use that shared palette as white-on-color badges, checked by the palette and rendered-HTML tests. This is not a full UI accessibility audit.
+- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
 - [`community/`](src/argus/community/) holds a design and configuration sketch; it doesn't run yet.
 
@@ -156,12 +156,13 @@ These use recorded demo profiles for the parallel agents (see the status table a
 
 ### What a report shows
 
-- **Decision card** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, whether enhanced due diligence is required, top three drivers
-- **Risk dimensions** — score and tier for Identity, Screening, Corporate, Regulatory and Transaction
-- **Investigation timeline** — completion time for each agent and total latency
+- **Investigation** — each agent's progress as it runs (four in parallel, then compliance), its time and where its result came from
+- **Recommendation** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, whether enhanced due diligence is required, the recommendation and the findings behind it
+- **Risk dimensions** — weight, score and tier for Identity, Screening, Corporate, Regulatory and Transaction
+- **Explanation** — the analyst explanation, and whether a model or the template wrote it
 - **Citations** — the knowledge base, source document and article behind each regulatory trigger
 - **Recommended actions** — driven by risk indicators and compliance gaps
-- **Audit trace** — task ID, agents invoked, the data backend, knowledge-base searches that answered, and where each agent's result came from
+- **Audit trail** — report and task IDs, each agent's status, where its result came from and which tools fell back, the timeline, and the full report as JSON
 
 ---
 
@@ -180,12 +181,14 @@ cp .env.example .env    # optional: choose a model provider or the Azure backend
 
 For a populated local data set, generate the synthetic data once: `uv run python data/synthetic/generate_entities.py`, and the other `generate_*.py` scripts in that folder.
 
-Start ARGUS: the API (which runs every agent in-process) and the UI. On Windows, `scripts/dev/start_demo.ps1` starts both and `scripts/dev/end_demo.ps1` stops them. Elsewhere, start each in its own terminal:
+Start ARGUS: the API (which runs every agent in-process) and the web UI, which needs [Node.js](https://nodejs.org/) 24. Install the web UI once with `npm ci --prefix web`. On Windows, `scripts/dev/start_demo.ps1` starts both and `scripts/dev/end_demo.ps1` stops them. Elsewhere, start each in its own terminal:
 
 ```bash
-uv run uvicorn argus.api.main:app --port 8000
-uv run python -m argus.ui.gradio_app    # then open http://localhost:7860
+ARGUS_CORS_ORIGINS=http://localhost:3000 uv run uvicorn argus.api.main:app --port 8000
+npm --prefix web run dev    # then open http://localhost:3000
 ```
+
+The browser calls the API directly, so `ARGUS_CORS_ORIGINS` must list the web UI's origin. More in [`web/README.md`](web/README.md).
 
 Or run one assessment without either: `uv run python scripts/dev/run_demo_inprocess.py`.
 
@@ -206,6 +209,7 @@ uv run pytest --cov
 uv run python scripts/ci/check_docs.py
 uv run python scripts/ci/check_versions.py --check
 uv run python scripts/ci/render_assets.py --check
+npm --prefix web run lint && npm --prefix web run typecheck && npm --prefix web test
 ```
 
 To use Azure instead, provision the services (`infra/`), upload the synthetic data (`data/synthetic/upload_to_cosmos.py`), index the knowledge bases (`infra/foundry_iq/`) and set `ARGUS_DATA_BACKEND=azure`.
@@ -216,7 +220,7 @@ To use Azure instead, provision the services (`infra/`), upload the synthetic da
 
 ARGUS is going through a cleanup before the v2 work starts, so the structure is still moving. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
 
-1. Accessibility improvements beyond the tested risk palette: screen-reader announcements and keyboard navigation (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
+1. Accessibility review of the web UI with real assistive technology: axe finds no WCAG 2.2 AA violations, but that is not a full audit (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
 2. Translations of explanation output — the people who need plain language most often aren't reading in English
 
 ---

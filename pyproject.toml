@@ -30,10 +30,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.16.9",
 ]
-ui = [
-    "gradio>=6.28.0",
-    "httpx>=0.28.1",
-]
 # Local OCR. Also needs the Tesseract program itself (https://tesseract-ocr.github.io/).
 ocr = [
     "pillow>=12.3.0",
@@ -55,7 +51,7 @@ build-backend = "uv_build"
 [tool.uv]
 # The application is the installable package `argus` in src/ (the standard "src layout"):
 # `uv sync` installs it in editable mode, so every entry point imports `argus.*` directly.
-default-groups = ["dev", "ui", "data", "ocr"]
+default-groups = ["dev", "data", "ocr"]
 
 [tool.ruff]
 line-length = 100
@@ -79,11 +75,9 @@ max-complexity = 10
 # - explain_decision.py holds the prompt text that the v2 experiment uses as its baseline;
 #   re-wrapping it would change what the model receives.
 # - demo_profiles.py and the data generators are data tables.
-# - gradio_app.py is HTML/CSS in strings and is due to be replaced by the web UI.
 # - infra/ holds operator scripts with long schema and query literals.
 "src/argus/agents/compliance/tools/explain_decision.py" = ["E501"]
 "src/argus/utils/demo_profiles.py" = ["E501"]
-"src/argus/ui/gradio_app.py" = ["E501"]
 # Tests use `assert` by design.
 "tests/**" = ["S101"]
 # The data generators draw synthetic records from `random` on purpose: nothing they produce is a

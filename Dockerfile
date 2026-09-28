@@ -14,7 +14,7 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
     UV_PROJECT_ENVIRONMENT=/app/.venv
 WORKDIR /src
-# Runtime dependencies only: no dependency groups (dev tools, Gradio, data generators, Tesseract).
+# Runtime dependencies only: no dependency groups (dev tools, data generators, Tesseract).
 # --no-build: wheels only, so no package's build script runs (the project itself still builds).
 COPY pyproject.toml uv.lock README.md LICENSE ./
 RUN uv sync --locked --no-default-groups --no-install-project --no-editable --no-build

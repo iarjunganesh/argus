@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test docs assets check generate-data generate-ocr-docs upload-data index-knowledge-bases run-api run-ui
+.PHONY: install lint format typecheck test docs assets check generate-data generate-ocr-docs upload-data index-knowledge-bases run-api run-web
 
 # Thin wrappers around uv for macOS/Linux. On Windows, run the same `uv run ...` commands directly.
 
@@ -53,5 +53,7 @@ index-knowledge-bases:
 run-api:
 	uv run uvicorn argus.api.main:app --host 127.0.0.1 --port 8000
 
-run-ui:
-	uv run python -m argus.ui.gradio_app
+# The web UI (http://localhost:3000). Run `npm ci --prefix web` once first; the API must allow
+# the origin: ARGUS_CORS_ORIGINS=http://localhost:3000 make run-api.
+run-web:
+	npm --prefix web run dev
