@@ -515,3 +515,29 @@ async def test_compliance_agent_handles_none_upstream_results():
     assert "risk_summary" in data["result"]
     assert "explanation" in data["result"]
     assert data["result"]["explanation_source"] == "fallback"
+
+
+# ── regulatory triggers ──────────────────────────────────────────────────────
+
+
+def test_a_trigger_states_the_passages_first_sentence_whole():
+    passage = "FATF Recommendation 12: apply EDD to PEPs (Rec. 12). Senior approval is required."
+    assert comp.rule_statement(passage) == "FATF Recommendation 12: apply EDD to PEPs (Rec. 12)."
+    assert comp.rule_statement("  One sentence without an end  ") == "One sentence without an end"
+    assert comp.rule_statement("") == ""
+
+
+def test_a_long_first_sentence_is_cut_at_a_word_and_marked():
+    sentence = "Article 2 lists offences: " + "; ".join(["fraud", "forgery", "piracy"] * 30) + "."
+    rule = comp.rule_statement(sentence, limit=60)
+    assert rule == "Article 2 lists offences: fraud; forgery; piracy; fraud…"
+    assert len(rule) <= 61
+
+
+async def test_every_regulation_in_the_corpus_gives_a_whole_rule():
+    from argus.data_plane.corpus import REGULATION_DOCUMENTS
+
+    for document in REGULATION_DOCUMENTS:
+        rule = comp.rule_statement(document["content"])
+        assert rule.endswith((".", "…")), rule
+        assert len(rule) <= comp.RULE_MAX_CHARS + 1

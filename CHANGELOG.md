@@ -248,6 +248,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **A cited regulation states its whole rule.** Each regulatory trigger was the retrieved
+  passage cut at 120 characters, often mid-word ("…whose s"). It is now the passage's first
+  sentence, where each passage states its rule, cut at a word and marked with "…" only past 300
+  characters; the citation still names the document and article. Checked: tests for the
+  sentence split and the cut, every passage in the regulations corpus gives a whole rule, and
+  the end-to-end tests check each rule the web UI shows.
+
 - **Explanations work with GPT-5 and o-series models.** They reject `max_tokens` and
   `temperature`, so every explanation from the planned `gpt-5.4-mini` deployment would have
   fallen back to the template. Reasoning models now get `max_completion_tokens` only;
@@ -346,8 +353,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   called directly with `documents`, as the tests do.
 - **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
-- **A cited regulation's text is cut at 120 characters**, often mid-word, in the report and so in
-  the web UI; the citation names the document and article to read in full.
 - **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
   every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
   in lower-risk relationships.
