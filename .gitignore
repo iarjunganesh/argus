@@ -45,10 +45,9 @@ azd-env/
 .DS_Store
 Thumbs.db
 
-# Node (diagram tooling now, web/ UI later)
+# Node. web/ has its own .gitignore and a committed package-lock.json.
 node_modules/
-web/.next/
-package-lock.json
+/package-lock.json
 
 # Test / coverage / tool caches
 .pytest_cache/

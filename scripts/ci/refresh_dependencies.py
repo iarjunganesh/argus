@@ -37,6 +37,9 @@ def commands(python: str) -> list[tuple[str, list[str]]]:
             ],
         ),
         ("Synchronize", ["uv", "sync", "--locked"]),
+        # The web UI: relock after the pins moved, then move its transitive dependencies too.
+        ("Web install", ["npm", "--prefix", "web", "install", "--no-fund"]),
+        ("Web update", ["npm", "--prefix", "web", "update", "--no-fund"]),
         ("Lint", ["uv", "run", "--locked", "ruff", "check", "."]),
         ("Format", ["uv", "run", "--locked", "ruff", "format", "--check", "."]),
         ("Types", ["uv", "run", "--locked", "mypy"]),
@@ -44,6 +47,12 @@ def commands(python: str) -> list[tuple[str, list[str]]]:
         ("Docs", ["uv", "run", "--locked", "python", "scripts/ci/check_docs.py"]),
         ("Versions", [python, "scripts/ci/check_versions.py", "--check"]),
         ("Assets", ["uv", "run", "--locked", "python", "scripts/ci/render_assets.py", "--check"]),
+        ("Web lint", ["npm", "--prefix", "web", "run", "lint"]),
+        ("Web format", ["npm", "--prefix", "web", "run", "format:check"]),
+        ("Web types", ["npm", "--prefix", "web", "run", "typecheck"]),
+        ("Web tests", ["npm", "--prefix", "web", "test"]),
+        ("Web build", ["npm", "--prefix", "web", "run", "build"]),
+        ("Web audit", ["npm", "--prefix", "web", "audit"]),
         (
             "Audit export",
             [
@@ -113,7 +122,8 @@ def run(root: Path, tag: str, steps: list[tuple[str, list[str]]]) -> int:
         "",
         "Agent Framework is pinned exactly; the orchestrator and API contract tests (Tests) run",
         "the workflow on the refreshed version. Container base images are refreshed by tag and",
-        "digest. The web inventory starts when that surface exists in Phase 5.",
+        "digest. The web UI's npm packages move to the newest release of their major version;",
+        "a MAJOR row needs a manual update. The end-to-end tests run in this PR's CI.",
         "",
     ]
     (root / "docs/DEPENDENCY-REFRESH.md").write_text("\n".join(body), encoding="utf-8")

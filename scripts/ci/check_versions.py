@@ -1,7 +1,9 @@
-"""Inventory the Python, action and container-image surfaces; check offline or refresh upstream.
+"""Inventory the Python, action, image and web surfaces; check offline or refresh upstream.
 
-Network failures are errors, never evidence that a dependency is current. Web support must be
-added with that Phase 5 surface; encountering it fails closed, as does an unknown base image.
+Network failures are errors, never evidence that a dependency is current. An unknown base image
+fails closed. The web UI's npm packages are pinned exactly; the refresh moves each one to the
+newest release of its major version and reports a new major for review, because npm peer ranges
+(ESLint plugins, typescript-eslint) often lag a major release.
 """
 
 from __future__ import annotations
@@ -85,8 +87,76 @@ def check(root: Path) -> list[str]:
         *_workflow_problems(root, pinned),
         *_image_problems(root, pinned),
     ]
-    if (root / "web/package.json").exists():
-        problems.append("Extend the version inventory for the web surface before Phase 5")
+    problems += _web_problems(root)
+    return problems
+
+
+# ── web (npm) ────────────────────────────────────────────────────────────────
+
+WEB = "web"
+NPM_SECTIONS = ("dependencies", "devDependencies")
+SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
+
+
+def web_manifest(root: Path) -> dict | None:
+    path = root / WEB / "package.json"
+    return json.loads(path.read_text("utf-8")) if path.exists() else None
+
+
+def web_pins(manifest: dict) -> dict[str, str]:
+    return {
+        name: spec for section in NPM_SECTIONS for name, spec in manifest.get(section, {}).items()
+    }
+
+
+def node_major(root: Path) -> str:
+    path = root / WEB / ".nvmrc"
+    return path.read_text("utf-8").strip() if path.exists() else ""
+
+
+def semver(version: str) -> tuple[int, int, int] | None:
+    """A stable `major.minor.patch` version; None for ranges, tags and prereleases."""
+    match = SEMVER.fullmatch(version)
+    return (int(match[1]), int(match[2]), int(match[3])) if match else None
+
+
+def _web_problems(root: Path) -> list[str]:
+    manifest = web_manifest(root)
+    if manifest is None:
+        return []
+    lock_path = root / WEB / "package-lock.json"
+    if not lock_path.exists():
+        return ["web: package-lock.json is missing"]
+    installed = json.loads(lock_path.read_text("utf-8")).get("packages", {})
+    problems = [
+        f"web: package-lock.json {section} disagree with package.json"
+        for section in NPM_SECTIONS
+        if installed.get("", {}).get(section, {}) != manifest.get(section, {})
+    ]
+    for name, spec in web_pins(manifest).items():
+        if semver(spec) is None:
+            problems.append(f"web: {name} needs an exact version, not {spec}")
+        elif installed.get(f"node_modules/{name}", {}).get("version") != spec:
+            problems.append(f"web: {name} {spec} disagrees with package-lock.json")
+    return problems + _node_problems(root, manifest)
+
+
+def _node_problems(root: Path, manifest: dict) -> list[str]:
+    node = node_major(root)
+    if not node.isdigit():
+        return ["web: .nvmrc must name a Node.js major version"]
+    problems = []
+    if manifest.get("engines", {}).get("node") != f">={node}":
+        problems.append(f"web: engines.node disagrees with .nvmrc ({node})")
+    types = semver(web_pins(manifest).get("@types/node", ""))
+    if types and str(types[0]) != node:
+        problems.append(f"web: @types/node disagrees with Node.js {node}")
+    for path in workflows(root):
+        problems.extend(
+            f"{path.name}: Node.js {value} disagrees with {node}"
+            for value in re.findall(r"node-version:\s*['\"]?(\d+)", path.read_text("utf-8"))
+            if value != node
+        )
     return problems
 
 
@@ -183,6 +253,8 @@ API_HOSTS = {
     "docker-auth": "auth.docker.io",
     "docker-registry": "registry-1.docker.io",
     "ghcr": "ghcr.io",
+    "npm": "registry.npmjs.org",
+    "node": "nodejs.org",
 }
 # For each registry: the host that issues anonymous pull tokens, the token path and fixed query,
 # and the host that serves manifests.
@@ -221,6 +293,9 @@ def fetch(url: str):
     headers = {"User-Agent": USER_AGENT}
     if url.startswith("https://api.github.com/") and os.environ.get("GH_TOKEN"):
         headers["Authorization"] = "Bearer " + os.environ["GH_TOKEN"]
+    if url.startswith("https://registry.npmjs.org/"):
+        # The abbreviated package document: versions and dist-tags, without the READMEs.
+        headers["Accept"] = "application/vnd.npm.install-v1+json"
     request = Request(url, headers=headers)  # noqa: S310 - https only, checked above
     with urlopen(request, timeout=30) as response:  # noqa: S310 - https only, checked above
         return json.load(response)
@@ -338,8 +413,8 @@ def wheel_ready(files: list[dict], minor: str) -> bool:
 
 def upstream(
     root: Path,
-) -> tuple[list[str], dict[str, tuple[str, str]], dict[str, str], str | None]:
-    """Report rows, action pins to write, image pins to write (old -> new), Python candidate."""
+) -> tuple[list[str], dict[str, tuple[str, str]], dict[str, str], dict[str, str], str | None]:
+    """Report rows; action, image (old -> new) and npm pins to write; the Python candidate."""
     inventory = packages(root)
     rows = ["| Surface | Locked | Latest | Status |", "| --- | --- | --- | --- |"]
     metadata = {name: fetch(api_url("pypi", "pypi", name, "json")) for name in sorted(inventory)}
@@ -349,9 +424,11 @@ def upstream(
     rows += action_rows
     image_rows, images = _image_rows(root)
     rows += image_rows
+    npm_rows, npm = _npm_rows(root)
+    rows += npm_rows
     python_row, candidate = _python_row(root, inventory, metadata)
     rows.append(python_row)
-    return rows, actions, images, candidate
+    return rows, actions, images, npm, candidate
 
 
 def _package_rows(inventory: dict[str, list[str]], metadata: dict) -> list[str]:
@@ -424,6 +501,67 @@ def _image_status(latest: Version, current: Version, new_tag: bool) -> str:
         return "MAJOR"
     # A rebuilt image keeps its tag and gets a new digest, usually for base-OS security fixes.
     return "update" if new_tag else "rebuilt"
+
+
+def npm_release(name: str, major: int) -> tuple[str, str]:
+    """The newest stable release of `name`, and the newest one within `major`."""
+    data = fetch(api_url("npm", name))
+    latest = data.get("dist-tags", {}).get("latest", "")
+    in_major = [v for v in map(semver, data.get("versions", {})) if v and v[0] == major]
+    if semver(latest) is None or not in_major:
+        raise ValueError(f"{name}: no stable npm release for major {major}")
+    return latest, ".".join(map(str, max(in_major)))
+
+
+def latest_node_lts(major: int) -> tuple[int, str]:
+    """The newest LTS major of Node.js, and the newest release of `major`."""
+    releases = [r for r in fetch(api_url("node", "dist", "index.json")) if r.get("lts")]
+    versions = [v for v in (semver(r["version"].removeprefix("v")) for r in releases) if v]
+    in_major = [v for v in versions if v[0] == major]
+    if not in_major:
+        raise ValueError(f"Node.js {major} is not an LTS release")
+    return max(versions)[0], ".".join(map(str, max(in_major)))
+
+
+def _npm_rows(root: Path) -> tuple[list[str], dict[str, str]]:
+    """One row per npm package and one for Node.js, and the pins that move within their major."""
+    manifest = web_manifest(root)
+    if manifest is None:
+        return [], {}
+    node = int(node_major(root))
+    rows, updates = [], {}
+    for name, spec in sorted(web_pins(manifest).items()):
+        current = semver(spec)
+        if current is None:
+            raise ValueError(f"web: {name} is not pinned exactly")
+        # @types/node follows the Node.js major the site runs on, not the newest Node.js.
+        major = node if name == "@types/node" else current[0]
+        latest, target = npm_release(name, major)
+        if name == "@types/node":
+            latest = target
+        status = "current" if latest == spec else "update"
+        if int(latest.split(".")[0]) > current[0]:
+            status = "MAJOR"
+        if target != spec:
+            updates[name] = target
+        rows.append(f"| npm: {name} | {spec} | {latest} | {status} |")
+    lts, newest = latest_node_lts(node)
+    state = f"new LTS {lts}: move web/.nvmrc by hand" if lts > node else "current LTS"
+    rows.append(f"| Node.js | {node} | {newest} | {state} |")
+    return rows, updates
+
+
+def write_npm(root: Path, updates: dict[str, str]) -> None:
+    """Move npm pins in web/package.json; `npm install` then relocks."""
+    if not updates:
+        return
+    path = root / WEB / "package.json"
+    manifest = json.loads(path.read_text("utf-8"))
+    for section in NPM_SECTIONS:
+        for name in manifest.get(section, {}):
+            if name in updates:
+                manifest[section][name] = updates[name]
+    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def _python_row(
@@ -592,7 +730,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.write_minimums:
             write_minimums(ROOT)
             return 0
-        rows, actions, images, candidate = upstream(ROOT)
+        rows, actions, images, npm, candidate = upstream(ROOT)
         report = "\n".join(rows) + "\n"
         print(report)
         if args.report:
@@ -605,6 +743,7 @@ def main(argv: list[str] | None = None) -> int:
             write_backend(ROOT)
             write_actions(ROOT, actions)
             write_images(ROOT, images)
+            write_npm(ROOT, npm)
             write_minimums(ROOT)
         return 0
     except (OSError, ValueError, KeyError) as exc:

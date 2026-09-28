@@ -11,4 +11,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 0
-    # Add npm when web/package.json exists in Phase 5.
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

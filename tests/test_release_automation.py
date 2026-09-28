@@ -4,6 +4,7 @@ import importlib.util
 import json
 import subprocess
 from pathlib import Path
+from urllib.parse import unquote
 
 import pytest
 
@@ -131,10 +132,164 @@ def test_action_pin_disagreement_and_python_literal(repo):
     assert any("Python 3.13" in e for e in errors)
 
 
-def test_the_web_surface_cannot_silently_escape_inventory(repo):
-    (repo / "web").mkdir()
-    (repo / "web/package.json").touch()
-    assert any("Extend the version inventory" in e for e in versions.check(repo))
+# ── Web UI (npm) ─────────────────────────────────────────────────────────────
+
+
+def web(repo, dependencies=None, dev=None, installed=None, node="24"):
+    """A web/ folder: package.json, its lock and .nvmrc, consistent unless told otherwise."""
+    dependencies = {"next": "16.3.6"} if dependencies is None else dependencies
+    dev = {"@types/node": "24.19.0", "eslint": "9.39.5"} if dev is None else dev
+    pins = {**dependencies, **dev}
+    installed = pins if installed is None else installed
+    (repo / "web").mkdir(exist_ok=True)
+    manifest = {
+        "name": "argus-web",
+        "engines": {"node": ">=24"},
+        "dependencies": dependencies,
+        "devDependencies": dev,
+    }
+    (repo / "web/package.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    lock = {
+        "lockfileVersion": 3,
+        "packages": {
+            "": {"dependencies": dependencies, "devDependencies": dev},
+            **{f"node_modules/{name}": {"version": v} for name, v in installed.items()},
+        },
+    }
+    (repo / "web/package-lock.json").write_text(json.dumps(lock))
+    (repo / "web/.nvmrc").write_text(node + "\n")
+    return repo / "web"
+
+
+def test_a_consistent_web_surface_passes(repo):
+    web(repo)
+    (repo / ".github/workflows/web.yml").write_text("node-version-file: web/.nvmrc\n")
+    assert versions.check(repo) == []
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected"),
+    [
+        ({"dependencies": {"next": "^16.3.6"}}, "next needs an exact version, not ^16.3.6"),
+        ({"installed": {"next": "16.3.5"}}, "next 16.3.6 disagrees with package-lock.json"),
+        ({"node": "lts/*"}, ".nvmrc must name a Node.js major version"),
+        ({"node": "26"}, "engines.node disagrees with .nvmrc (26)"),
+        ({"dev": {"@types/node": "26.6.3"}}, "@types/node disagrees with Node.js 24"),
+    ],
+)
+def test_web_pins_are_checked(repo, kwargs, expected):
+    web(repo, **kwargs)
+    assert any(expected in error for error in versions.check(repo)), versions.check(repo)
+
+
+def test_the_lock_must_exist_and_record_the_same_dependencies(repo):
+    folder = web(repo)
+    lock = json.loads((folder / "package-lock.json").read_text())
+    lock["packages"][""]["devDependencies"] = {}
+    (folder / "package-lock.json").write_text(json.dumps(lock))
+    assert "web: package-lock.json devDependencies disagree with package.json" in (
+        versions.check(repo)
+    )
+    (folder / "package-lock.json").unlink()
+    assert "web: package-lock.json is missing" in versions.check(repo)
+
+
+def test_workflows_use_the_node_version_of_the_site(repo):
+    web(repo)
+    (repo / ".github/workflows/web.yml").write_text("with:\n  node-version: '22'\n")
+    assert "web.yml: Node.js 22 disagrees with 24" in versions.check(repo)
+
+
+def npm_document(latest, *versions_):
+    return {"dist-tags": {"latest": latest}, "versions": {v: {} for v in versions_}}
+
+
+NPM = {
+    # Current.
+    "next": npm_document("16.3.6", "16.3.5", "16.3.6", "16.4.0-canary.1"),
+    # A new major: the pin moves to the newest 9.x only.
+    "eslint": npm_document("10.1.0", "9.39.5", "9.40.1", "10.1.0"),
+    # @types/node follows web/.nvmrc (24), not the newest Node.js.
+    "@types/node": npm_document("26.6.3", "24.19.0", "24.20.1", "26.6.3"),
+}
+NODE = [
+    {"version": "v26.10.0", "lts": False},
+    {"version": "v24.21.0", "lts": "Krypton"},
+    {"version": "v24.20.0", "lts": "Krypton"},
+    {"version": "v22.22.0", "lts": "Jod"},
+]
+
+
+def fake_npm(url):
+    if url.startswith("https://nodejs.org/"):
+        return NODE
+    name = unquote(url.removeprefix("https://registry.npmjs.org/"))
+    return NPM[name]
+
+
+def test_upstream_npm_rows_move_pins_within_their_major(repo, monkeypatch):
+    web(repo)
+    monkeypatch.setattr(versions, "fetch", fake_npm)
+
+    rows, updates = versions._npm_rows(repo)
+
+    assert rows == [
+        "| npm: @types/node | 24.19.0 | 24.20.1 | update |",
+        "| npm: eslint | 9.39.5 | 10.1.0 | MAJOR |",
+        "| npm: next | 16.3.6 | 16.3.6 | current |",
+        "| Node.js | 24 | 24.21.0 | current LTS |",
+    ]
+    assert updates == {"@types/node": "24.20.1", "eslint": "9.40.1"}
+
+    versions.write_npm(repo, updates)
+    manifest = json.loads((repo / "web/package.json").read_text())
+    assert manifest["devDependencies"] == {"@types/node": "24.20.1", "eslint": "9.40.1"}
+    assert manifest["dependencies"] == {"next": "16.3.6"}
+
+
+def test_a_new_node_lts_is_reported_for_a_manual_move(repo, monkeypatch):
+    web(repo, dependencies={}, dev={})
+    monkeypatch.setattr(versions, "fetch", lambda url: [*NODE, {"version": "v26.11.0", "lts": "X"}])
+    rows, updates = versions._npm_rows(repo)
+    assert rows == ["| Node.js | 24 | 24.21.0 | new LTS 26: move web/.nvmrc by hand |"]
+    assert updates == {}
+    versions.write_npm(repo, updates)  # nothing to write
+
+
+@pytest.mark.parametrize(
+    "document",
+    [npm_document("latest-is-not-a-version", "16.3.6"), npm_document("17.0.0", "17.0.0")],
+)
+def test_npm_release_fails_closed(monkeypatch, document):
+    monkeypatch.setattr(versions, "fetch", lambda url: document)
+    with pytest.raises(ValueError, match="no stable npm release"):
+        versions.npm_release("next", 16)
+
+
+def test_upstream_needs_exact_npm_pins_and_an_lts_node(repo, monkeypatch):
+    monkeypatch.setattr(versions, "fetch", fake_npm)
+    assert versions._npm_rows(repo) == ([], {})  # no web UI
+    web(repo, dependencies={"next": "latest"}, dev={})
+    with pytest.raises(ValueError, match="not pinned exactly"):
+        versions._npm_rows(repo)
+    web(repo, dependencies={}, dev={}, node="25")
+    with pytest.raises(ValueError, match=r"Node.js 25 is not an LTS release"):
+        versions._npm_rows(repo)
+
+
+def test_npm_documents_are_requested_abbreviated(monkeypatch):
+    import io
+
+    calls = []
+
+    def fake_open(request, timeout):
+        calls.append(request)
+        return io.BytesIO(b"{}")
+
+    monkeypatch.setattr(versions, "urlopen", fake_open)
+    versions.fetch(versions.api_url("npm", "@types/node"))
+    assert calls[0].full_url == "https://registry.npmjs.org/%40types%2Fnode"
+    assert calls[0].get_header("Accept") == "application/vnd.npm.install-v1+json"
 
 
 def test_agent_framework_requires_exact_pin(repo):
@@ -274,8 +429,8 @@ def test_upstream_inventory_major_bumps_and_python_gate(repo, monkeypatch, ready
 
     monkeypatch.setattr(versions, "fetch", fake_fetch)
     monkeypatch.setattr(versions, "action_release", lambda _: ("v2.0.0", "b" * 40))
-    rows, actions, images, candidate = versions.upstream(repo)
-    assert images == {}  # no Dockerfile
+    rows, actions, images, npm, candidate = versions.upstream(repo)
+    assert images == {} and npm == {}  # no Dockerfile, no web UI
     assert "MAJOR" in "\n".join(rows)
     assert actions["owner/action"] == ("v2.0.0", "b" * 40)
     assert candidate == ("3.15" if ready else None)
@@ -357,6 +512,7 @@ def test_refresh_rejects_untrusted_tag(repo):
 def test_refresh_commands_include_quality_gates():
     labels = {label for label, _ in refresh.commands("python")}
     assert {"Lint", "Format", "Types", "Tests", "Docs", "Versions", "Assets", "Audit"} <= labels
+    assert {"Web install", "Web lint", "Web types", "Web tests", "Web build", "Web audit"} <= labels
 
 
 # ── Container base images ────────────────────────────────────────────────────
