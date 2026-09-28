@@ -34,5 +34,5 @@ jobs:
           npm ci --prefix web --ignore-scripts --no-fund
       - name: Confirm the checks can run
         run: |
-          uv run --no-sync pytest --collect-only -q
+          uv run --no-sync --no-build pytest --collect-only -q
           npm --prefix web test
