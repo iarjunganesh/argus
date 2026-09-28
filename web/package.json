@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "e2e:browsers": "playwright install chromium"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

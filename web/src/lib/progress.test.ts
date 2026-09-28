@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { applyEvent, durationSeconds, finishedCount, initialProgress } from "./progress";
+import {
+  MAX_UNANSWERED,
+  afterStreamError,
+  applyEvent,
+  durationSeconds,
+  finishedCount,
+  initialProgress,
+} from "./progress";
 
 const at = "2026-09-28T18:18:53.429162+00:00";
 const later = "2026-09-28T18:18:54.729162+00:00";
@@ -59,5 +66,24 @@ describe("durationSeconds", () => {
     expect(durationSeconds(later, at)).toBe(0);
     expect(durationSeconds(at)).toBeUndefined();
     expect(durationSeconds("not a time", at)).toBeUndefined();
+  });
+});
+
+describe("afterStreamError", () => {
+  it("keeps waiting while the API answers that the assessment is still running", () => {
+    expect(afterStreamError("processing", false, 0)).toBe("wait");
+  });
+
+  it("stops waiting once the API has not answered several times in a row", () => {
+    expect(afterStreamError(undefined, false, 1)).toBe("wait");
+    expect(afterStreamError(undefined, false, MAX_UNANSWERED)).toBe("unreachable");
+    expect(afterStreamError(undefined, true, 1)).toBe("unreachable");
+  });
+
+  it("reports an unknown ID, a finished assessment, and a stream the browser gave up on", () => {
+    expect(afterStreamError("not_found", false, 0)).toBe("not_found");
+    expect(afterStreamError("completed", false, 0)).toBe("finish");
+    expect(afterStreamError("failed", true, 0)).toBe("finish");
+    expect(afterStreamError("processing", true, 0)).toBe("unreachable");
   });
 });

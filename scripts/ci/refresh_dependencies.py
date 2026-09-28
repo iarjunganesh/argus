@@ -38,8 +38,8 @@ def commands(python: str) -> list[tuple[str, list[str]]]:
         ),
         ("Synchronize", ["uv", "sync", "--locked"]),
         # The web UI: relock after the pins moved, then move its transitive dependencies too.
-        ("Web install", ["npm", "--prefix", "web", "install", "--no-fund"]),
-        ("Web update", ["npm", "--prefix", "web", "update", "--no-fund"]),
+        ("Web install", ["npm", "--prefix", "web", "install", "--ignore-scripts", "--no-fund"]),
+        ("Web update", ["npm", "--prefix", "web", "update", "--ignore-scripts", "--no-fund"]),
         ("Lint", ["uv", "run", "--locked", "ruff", "check", "."]),
         ("Format", ["uv", "run", "--locked", "ruff", "format", "--check", "."]),
         ("Types", ["uv", "run", "--locked", "mypy"]),

@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError, normaliseRequest, submitAssessment, type AssessmentRequest } from "@/lib/api";
 import { DEMO_CASES } from "@/lib/demo";
-
-export function assessmentPath(reportId: string, entityName: string): string {
-  return `/assessments/${encodeURIComponent(reportId)}?entity=${encodeURIComponent(entityName)}`;
-}
+import { rememberEntityName } from "@/lib/session";
 
 export function AssessmentForm() {
   const router = useRouter();
@@ -23,7 +20,8 @@ export function AssessmentForm() {
     setPending(request.entity_name);
     try {
       const reportId = await submitAssessment(request);
-      router.push(assessmentPath(reportId, request.entity_name));
+      rememberEntityName(reportId, request.entity_name);
+      router.push(`/assessments/${encodeURIComponent(reportId)}`);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "The assessment could not start.");
       setPending(undefined);

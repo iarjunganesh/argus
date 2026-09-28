@@ -307,10 +307,9 @@ def web_problems(*, check: bool) -> list[str]:
     if not WEB_CSS.exists():
         return []
     problems = contrast_problems(WEB_CSS.read_text(encoding="utf-8"), "web/src/app/globals.css")
-    mark = MARK.read_text(encoding="utf-8")
     if not check:
-        WEB_ICON.write_text(mark, encoding="utf-8", newline="\n")
-    elif (WEB_ICON.read_text(encoding="utf-8") if WEB_ICON.exists() else "") != mark:
+        shutil.copyfile(MARK, WEB_ICON)  # a byte copy: .gitattributes keeps the mark in LF
+    elif not WEB_ICON.exists() or WEB_ICON.read_bytes() != MARK.read_bytes():
         problems.append("web/src/app/icon.svg is stale")
     return problems
 

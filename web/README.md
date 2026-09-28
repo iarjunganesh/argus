@@ -40,7 +40,7 @@ npm run test:e2e       # Playwright: needs `npm run build` and the API running a
 The end-to-end tests run the six demo scenarios through the site and compare each report with
 the recorded outcomes in [`tests/fixtures/demo_scenarios.json`](../tests/fixtures/demo_scenarios.json),
 in light, dark and phone layouts, and check every page with axe (WCAG 2.2 AA rules). The first
-run needs a browser: `npx playwright install chromium`. CI runs them against the API container.
+run needs a browser: `npm run e2e:browsers`. CI runs them against the API container.
 
 ## Where things are
 
