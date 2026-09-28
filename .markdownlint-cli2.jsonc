@@ -10,7 +10,11 @@
   },
   "ignores": [
     ".venv/**",
-    "node_modules/**",
+    "**/node_modules/**",
+    // Build and test output of the web UI.
+    "web/.next/**",
+    "web/playwright-report/**",
+    "web/test-results/**",
     ".tmp/**",
     ".local/**",
     "HANDOFF.md",

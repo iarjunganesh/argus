@@ -99,6 +99,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      # No npm cache: this job holds a token that can open pull requests.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: web/.nvmrc
+          package-manager-cache: false
       # `uv run --locked` installs the locked environment itself, so a broken lock fails inside
       # this continue-on-error step and still ends in a labelled review PR.
       - name: Refresh and run the Python gates
@@ -158,6 +163,8 @@ jobs:
             pyproject.toml
             uv.lock
             Dockerfile
+            web/package.json
+            web/package-lock.json
             .github/workflows
             docs/DEPENDENCY-REFRESH.md
       - name: Fail visibly if any refresh gate failed

@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* The theme follows the operating system's light or dark setting. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-public-sans);
+  --font-heading: var(--font-public-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-risk-low: var(--risk-low);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-high: var(--risk-high);
+  --color-risk-critical: var(--risk-critical);
+  --color-risk-unknown: var(--risk-unknown);
+  --color-risk-foreground: var(--risk-foreground);
+  --color-grounded: var(--grounded);
+  --color-grounded-foreground: var(--grounded-foreground);
+  --color-caution: var(--caution);
+  --color-caution-foreground: var(--caution-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/*
+ * The palette. The same sentinels as the SVG masters in assets/: `render_assets.py --check`
+ * checks every CONTRAST pair below against WCAG AA in both themes, and a test checks that the
+ * risk colours are the audited ARGUS_PALETTE in src/argus/accessibility/wcag.py. Risk badges are
+ * white text on the risk colour in both themes, and always carry the tier as text.
+ */
+/* PALETTE:LIGHT */
+:root {
+  --background: #f4f6fa;
+  --foreground: #0b1633;
+  --card: #ffffff;
+  --card-foreground: #0b1633;
+  --popover: #ffffff;
+  --popover-foreground: #0b1633;
+  --primary: #1c3f8c;
+  --primary-foreground: #ffffff;
+  --secondary: #e6ebf3;
+  --secondary-foreground: #0b1633;
+  --muted: #e6ebf3;
+  --muted-foreground: #475569;
+  --accent: #e6ebf3;
+  --accent-foreground: #0b1633;
+  --destructive: #b42318;
+  --border: #cbd3e1;
+  --input: #64748b;
+  --ring: #1c3f8c;
+  --risk-low: #1e8449;
+  --risk-medium: #a16207;
+  --risk-high: #c0392b;
+  --risk-critical: #8e1a0e;
+  --risk-unknown: #64748b;
+  --risk-foreground: #ffffff;
+  --grounded: #dcfce7;
+  --grounded-foreground: #166534;
+  --caution: #fef3c7;
+  --caution-foreground: #92400e;
+  --radius: 0.5rem;
+}
+/* /PALETTE:LIGHT */
+/* PALETTE:DARK */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1220;
+    --foreground: #e8eefa;
+    --card: #121b2e;
+    --card-foreground: #e8eefa;
+    --popover: #121b2e;
+    --popover-foreground: #e8eefa;
+    --primary: #67d5ff;
+    --primary-foreground: #0b1633;
+    --secondary: #1b2740;
+    --secondary-foreground: #e8eefa;
+    --muted: #1b2740;
+    --muted-foreground: #a3b1c8;
+    --accent: #1b2740;
+    --accent-foreground: #e8eefa;
+    --destructive: #fca5a5;
+    --border: #2a3752;
+    --input: #6b7a96;
+    --ring: #67d5ff;
+    --risk-low: #1e8449;
+    --risk-medium: #a16207;
+    --risk-high: #c0392b;
+    --risk-critical: #8e1a0e;
+    --risk-unknown: #64748b;
+    --risk-foreground: #ffffff;
+    --grounded: #0f2e1c;
+    --grounded-foreground: #86efac;
+    --caution: #3a2a0a;
+    --caution-foreground: #fcd34d;
+  }
+}
+/* /PALETTE:DARK */
+/* CONTRAST foreground:background card-foreground:card muted-foreground:background
+   muted-foreground:card muted-foreground:muted secondary-foreground:secondary
+   primary-foreground:primary primary:card destructive:card risk-foreground:risk-low
+   risk-foreground:risk-medium risk-foreground:risk-high risk-foreground:risk-critical
+   risk-foreground:risk-unknown grounded-foreground:grounded caution-foreground:caution */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

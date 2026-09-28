@@ -59,6 +59,14 @@ uv run pytest --cov                                   # tests, 100% line + branc
 uv run python scripts/ci/check_docs.py                   # docs agree with the repository
 uv run python scripts/ci/check_versions.py --check        # version pins agree (offline)
 uv run python scripts/ci/render_assets.py --check        # image variants current, WCAG AA contrast
+
+npm ci --prefix web                                   # the web UI (Node.js 24): locked packages
+npm --prefix web run lint
+npm --prefix web run format:check
+npm --prefix web run typecheck
+npm --prefix web test                                 # unit tests
+npm --prefix web run build
+npm --prefix web run test:e2e                         # Playwright; needs the API (web/README.md)
 ```
 
 `uv run python scripts/ci/render_assets.py` regenerates the image variants and PNG/GIF exports after
@@ -102,6 +110,7 @@ then run every command above.
 | Path | What it holds |
 | --- | --- |
 | `src/` | The application: the installable package `argus` (see below) |
+| `web/` | The web UI: Next.js, TypeScript and shadcn/ui, with unit and Playwright tests |
 | `data/` | Synthetic data generators and public-source demo data |
 | `infra/` | Bicep template, Azure setup scripts, and `foundry_iq/` (create and fill the knowledge bases) |
 | `tests/` | The test suite (hermetic; no cloud access) |

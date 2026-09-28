@@ -4,6 +4,9 @@ WCAG 2.1 AA compliance tests for the ARGUS palette.
 These run in CI to catch any color changes that break contrast requirements.
 """
 
+import importlib.util
+from pathlib import Path
+
 import pytest
 
 from argus.accessibility.wcag import (
@@ -77,3 +80,37 @@ def test_assert_contrast_ratio_returns_ratio_or_explains_failure():
 
     with pytest.raises(AssertionError, match=r"WCAG AAA failure \(muted\): #777777"):
         assert_contrast_ratio("#777777", "#ffffff", WCAGLevel.AAA, label="muted")
+
+
+# ── the web UI's palette ─────────────────────────────────────────────────────
+
+ROOT = Path(__file__).resolve().parents[1]
+WEB_CSS = ROOT / "web" / "src" / "app" / "globals.css"
+
+
+def _render_assets():
+    spec = importlib.util.spec_from_file_location(
+        "render_assets", ROOT / "scripts/ci/render_assets.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_web_risk_badges_use_the_audited_palette(theme):
+    """The web UI's risk badges are ARGUS_PALETTE's pairs, in both themes."""
+    assets = _render_assets()
+    light, dark = assets.palettes(WEB_CSS.read_text(encoding="utf-8"), WEB_CSS.name)
+    tokens = dict(assets.TOKEN.findall(light if theme == "light" else dark))
+
+    for tier in ("low", "medium", "high", "critical"):
+        background, foreground = ARGUS_PALETTE[f"risk_{tier}"]
+        assert tokens[f"risk-{tier}"] == background
+        assert tokens["risk-foreground"] == foreground
+    assert tokens["risk-unknown"] == ARGUS_PALETTE["subdued_text"][0]
+
+
+def test_web_text_pairs_pass_aa_in_both_themes():
+    assets = _render_assets()
+    assert assets.contrast_problems(WEB_CSS.read_text(encoding="utf-8"), WEB_CSS.name) == []

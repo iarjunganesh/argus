@@ -17,6 +17,8 @@ master. Nothing is maintained twice by hand.
 1. Every `-light.svg` / `-dark.svg` matches what its master would emit now.
 2. Every text/background pair a master declares in its `/* CONTRAST ... */` comment meets WCAG
    AA (4.5:1) in both palettes, using the project's own `accessibility/wcag.py`.
+3. The web UI's stylesheet declares its palette the same way, and its pairs pass too; its
+   favicon is a copy of the brand mark.
 
 **Rasters are not checked.** PNG stills and GIFs need a Chromium browser and ffmpeg, which CI
 does not have, and two renders are not byte-identical. The SVG variants are the source; the
@@ -45,6 +47,10 @@ ROOT = Path(__file__).resolve().parents[2]
 from argus.accessibility.wcag import WCAGLevel, contrast_ratio  # noqa: E402
 
 SOURCES = (ROOT / "assets" / "brand", ROOT / "assets" / "architecture")
+# The web UI: its palette (checked like a master's) and its favicon (copied from the mark).
+WEB_CSS = ROOT / "web" / "src" / "app" / "globals.css"
+WEB_ICON = ROOT / "web" / "src" / "app" / "icon.svg"
+MARK = ROOT / "assets" / "brand" / "logo-mark.svg"
 
 LIGHT_BLOCK = re.compile(r"/\* PALETTE:LIGHT \*/(.*?)/\* /PALETTE:LIGHT \*/", re.DOTALL)
 DARK_BLOCK = re.compile(r"/\* PALETTE:DARK \*/(.*?)/\* /PALETTE:DARK \*/", re.DOTALL)
@@ -259,6 +265,7 @@ def main() -> int:
         return 1
 
     problems, variants = write_variants(found, check=args.check)
+    problems += web_problems(check=args.check)
     if problems:
         for problem in problems:
             print(f"::error::{problem}")
@@ -293,6 +300,19 @@ def write_variants(
             elif (target.read_text(encoding="utf-8") if target.exists() else "") != expected:
                 problems.append(f"{target.relative_to(ROOT).as_posix()} is stale")
     return problems, variants
+
+
+def web_problems(*, check: bool) -> list[str]:
+    """The web UI's palette contrast, and whether its favicon is the current brand mark."""
+    if not WEB_CSS.exists():
+        return []
+    problems = contrast_problems(WEB_CSS.read_text(encoding="utf-8"), "web/src/app/globals.css")
+    mark = MARK.read_text(encoding="utf-8")
+    if not check:
+        WEB_ICON.write_text(mark, encoding="utf-8", newline="\n")
+    elif (WEB_ICON.read_text(encoding="utf-8") if WEB_ICON.exists() else "") != mark:
+        problems.append("web/src/app/icon.svg is stale")
+    return problems
 
 
 def export_rasters(variants: list[tuple[Path, Path, str]], only: str | None) -> None:
