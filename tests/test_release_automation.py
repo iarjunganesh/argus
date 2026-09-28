@@ -158,6 +158,8 @@ def web(repo, dependencies=None, dev=None, installed=None, node="24"):
     }
     (repo / "web/package-lock.json").write_text(json.dumps(lock))
     (repo / "web/.nvmrc").write_text(node + "\n")
+    badges = [f"badge/Node.js-{node}-", "badge/Next.js-16.3-", "badge/TypeScript-6.0-"]
+    (repo / "README.md").write_text("badge/Python-3.14-blue\n" + "\n".join(badges) + "\n")
     return repo / "web"
 
 
@@ -192,6 +194,40 @@ def test_the_lock_must_exist_and_record_the_same_dependencies(repo):
     )
     (folder / "package-lock.json").unlink()
     assert "web: package-lock.json is missing" in versions.check(repo)
+
+
+def test_version_badges_must_show_the_pins(repo):
+    web(repo, dev={"typescript": "6.0.3"})
+    change(repo / "pyproject.toml", "sample[extra]>=1.0", "agent-framework-core==1.19.0")
+    change(
+        repo / "uv.lock",
+        'name = "sample"\nversion = "1.1"',
+        'name = "agent-framework-core"\nversion = "1.19.0"',
+    )
+    # A package's badge shows its major.minor, followed by any words; Agent Framework, pinned
+    # exactly, shows the whole version.
+    change(repo / "pyproject.toml", "checker>=2.0", "pytest>=2.0")
+    change(repo / "uv.lock", 'name = "checker"', 'name = "pytest"')
+    readme = repo / "README.md"
+    readme.write_text(
+        readme.read_text()
+        + "badge/Agent_Framework-1.18.0-0078D4\nbadge/pytest-1.9_passing-0A9EDC\n"
+    )
+    change(readme, "badge/Next.js-16.3-", "")
+
+    assert versions.check(repo) == [
+        "README: the Agent_Framework badge shows 1.18.0, pinned 1.19.0",
+        "README: the pytest badge shows 1.9, pinned 2.0",
+        "README: no Next.js badge (pinned 16.3)",
+    ]
+
+    readme.write_text(readme.read_text() + "badge/Next.js-16.0-000000\n")
+    versions.write_badges(repo)
+    assert versions.check(repo) == []
+    text = readme.read_text()
+    assert "badge/Next.js-16.3-000000" in text
+    assert "badge/Agent_Framework-1.19.0-0078D4" in text
+    assert "badge/pytest-2.0_passing-0A9EDC" in text
 
 
 def test_workflows_use_the_node_version_of_the_site(repo):

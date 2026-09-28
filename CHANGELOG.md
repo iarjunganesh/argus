@@ -152,6 +152,29 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The README badges say what the code does today, in six labelled rows:** repository state
+  (CI, the SonarQube Cloud quality gate, Codecov, the latest release, licence, demo video); the
+  Microsoft framework and every Azure service ARGUS uses, each with its job (Agent Framework,
+  Azure OpenAI for the explanation only, Foundry IQ, AI Search, Cosmos DB, Document Intelligence,
+  Container Apps for the API, Azure Monitor for its logs); the web UI (Next.js, React,
+  TypeScript, Node.js, Tailwind CSS, shadcn/ui, Playwright, axe, Vercel Hobby); the backend
+  (Python, FastAPI, Pydantic, uv, Ruff, Mypy, pytest, Docker, Tesseract); the tier decision D1
+  chose for each Azure service (Azure OpenAI Data Zone Standard, the free agentic retrieval
+  allowance, AI Search Free, the Cosmos DB free tier, Document Intelligence F0, the Container Apps
+  consumption plan, Log Analytics with a daily cap), each opening its pricing page; and live
+  hosting, marked not deployed yet, with the web UI's planned address `argus.arjunganesh.dev`
+  (also recorded in the hosting decision). Gone: the Gradio badge, "Azure OpenAI GPT-4o" (no model is the
+  default, and GPT-4o was the hackathon's), "Azure AI Search Vector" (retrieval goes through
+  Foundry IQ knowledge bases), and two logos shields.io no longer draws. Each badge opens the
+  component's own page: an Azure product page, a project site or repository (only the licence
+  badge opens `LICENSE`). `check_docs.py` fails on a badge that links to a file here or to a
+  documentation article, and `check_versions.py --check` on a version badge that disagrees with
+  its pin (Agent Framework exactly; Next.js, React, TypeScript, Tailwind CSS, Playwright, axe,
+  FastAPI, Pydantic and pytest at major.minor, so a patch or security update never has to touch
+  the README; Node.js at `web/.nvmrc`); the post-release refresh moves version badges with the
+  pins. Checked: tests for a wrong, a missing
+  and a rewritten badge; every badge renders and every badge link answers.
+
 - **Runtime dependencies are only what the API imports:** `faker` moved to the `data` group and
   `httpx` to the `ui` and `dev` groups. `uv sync` still installs every group.
 
@@ -254,6 +277,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   characters; the citation still names the document and article. Checked: tests for the
   sentence split and the cut, every passage in the regulations corpus gives a whole rule, and
   the end-to-end tests check each rule the web UI shows.
+- **The v2 diagram says what is built.** It was labelled "planned, not built" although the Agent
+  Framework workflow, the container, the data plane, the model setting and the web UI exist.
+  Built parts are now drawn solid and planned ones dashed, under "partly built, not deployed".
 
 - **Explanations work with GPT-5 and o-series models.** They reject `max_tokens` and
   `temperature`, so every explanation from the planned `gpt-5.4-mini` deployment would have

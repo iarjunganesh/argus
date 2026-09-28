@@ -88,7 +88,77 @@ def check(root: Path) -> list[str]:
         *_image_problems(root, pinned),
     ]
     problems += _web_problems(root)
+    problems += _badge_problems(root)
     return problems
+
+
+# ── README badges that show a pinned version ─────────────────────────────────
+# (The Python badge follows .python-version: check_docs.py checks it, write_python moves it.)
+
+
+# Badge label -> the npm package in web/ it shows. Badges show major.minor, so a patch release
+# (a security update, say) never has to touch the README.
+WEB_BADGES = {
+    "Next.js": "next",
+    "React": "react",
+    "TypeScript": "typescript",
+    "Tailwind_CSS": "tailwindcss",
+    "Playwright": "@playwright/test",
+    "axe": "@axe-core/playwright",
+}
+# Badge label -> the locked Python package it shows.
+LOCK_BADGES = {"FastAPI": "fastapi", "Pydantic": "pydantic", "pytest": "pytest"}
+
+
+def badge_versions(root: Path) -> dict[str, str]:
+    """Each version badge's label in the README, and the version pinned for it."""
+    versions = {}
+    for req in requirements(read_toml(root / "pyproject.toml")):
+        if canonicalize_name(req.name) == "agent-framework-core":
+            versions["Agent_Framework"] = str(req.specifier).removeprefix("==")
+    locked = packages(root)
+    for label, name in LOCK_BADGES.items():
+        if name in locked:
+            versions[label] = _minor(locked[name][0])
+    manifest = web_manifest(root)
+    if manifest is not None:
+        pins = web_pins(manifest)
+        versions["Node.js"] = node_major(root)
+        versions.update({label: _minor(pins.get(name, "")) for label, name in WEB_BADGES.items()})
+    return {label: version for label, version in versions.items() if version}
+
+
+def _minor(version: str) -> str:
+    return ".".join(version.split(".")[:2])
+
+
+def _badge_pattern(label: str) -> re.Pattern[str]:
+    # The version is the leading number of the badge's message: `Pydantic-2.13_contracts`.
+    return re.compile(rf"(badge/{re.escape(label)}-)(\d[\d.]*)")
+
+
+def _badge_problems(root: Path) -> list[str]:
+    readme = (root / "README.md").read_text("utf-8")
+    problems = []
+    for label, version in badge_versions(root).items():
+        shown = [match[2] for match in _badge_pattern(label).finditer(readme)]
+        if not shown:
+            problems.append(f"README: no {label} badge (pinned {version})")
+        problems.extend(
+            f"README: the {label} badge shows {value}, pinned {version}"
+            for value in shown
+            if value != version
+        )
+    return problems
+
+
+def write_badges(root: Path) -> None:
+    """Move the README's version badges to the pins."""
+    path = root / "README.md"
+    text = path.read_text("utf-8")
+    for label, version in badge_versions(root).items():
+        text = _badge_pattern(label).sub(rf"\g<1>{version}", text)
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 # ── web (npm) ────────────────────────────────────────────────────────────────
@@ -745,6 +815,7 @@ def main(argv: list[str] | None = None) -> int:
             write_images(ROOT, images)
             write_npm(ROOT, npm)
             write_minimums(ROOT)
+            write_badges(ROOT)
         return 0
     except (OSError, ValueError, KeyError) as exc:
         print(f"Version inventory failed: {exc}", file=sys.stderr)
