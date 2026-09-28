@@ -62,6 +62,11 @@ for (const scenario of scenarios) {
 
     await expect(page.getByRole("heading", { name: "Regulations cited" })).toBeVisible();
     await expect(page.getByText(/^Document:/).first()).toBeVisible();
+    // Each cited rule is a whole sentence, or marked where a long one was cut.
+    const rules = page.getByRole("region", { name: "Regulations cited" }).getByRole("listitem");
+    for (const rule of await rules.all()) {
+      await expect(rule.locator("p").first()).toHaveText(/[.…]$/);
+    }
     await expectNoAxeViolations(page);
   });
 }

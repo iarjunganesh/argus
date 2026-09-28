@@ -6,6 +6,8 @@ holds the case whatever the score, and a case whose sanctions screening did not 
 as incomplete. A PEP match requires enhanced due diligence whatever the tier.
 """
 
+import re
+
 from argus.agents.compliance.tools.explain_decision import explain_decision
 from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.regulations_rag import regulations_rag
@@ -19,6 +21,19 @@ logger = get_logger("agent.compliance")
 POTENTIAL_MATCH = "potential_match"
 NO_MATCH = "no_match"
 NOT_RUN = "not_run"
+
+# A regulatory trigger states its rule as the retrieved passage's first sentence, which is where
+# each passage states its rule. The citation names the document and article to read in full.
+RULE_MAX_CHARS = 300
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+def rule_statement(text: str, limit: int = RULE_MAX_CHARS) -> str:
+    """The passage's first sentence; if longer than `limit`, cut at a word and marked with …"""
+    sentence = _SENTENCE_END.split(text.strip(), maxsplit=1)[0]
+    if len(sentence) <= limit:
+        return sentence
+    return sentence[:limit].rsplit(" ", 1)[0].rstrip(",;:") + "…"
 
 
 async def assess(request: dict, task_id: str) -> dict:
@@ -73,7 +88,7 @@ async def assess(request: dict, task_id: str) -> dict:
 
     regulatory_triggers = [
         {
-            "rule": r.get("text", "")[:120],
+            "rule": rule_statement(r.get("text", "")),
             "citation": r.get("citation"),
         }
         for r in regulations.get("regulations", [])[:4]
