@@ -1,4 +1,4 @@
-"""The API's public contract: what a client (the Gradio UI today, the web UI next) relies on.
+"""The API's public contract: what a client (the web UI in web/) relies on.
 
 `tests/fixtures/openapi.json` is the reviewed OpenAPI document. A change to a path, method,
 parameter or schema fails here until the fixture is regenerated on purpose:

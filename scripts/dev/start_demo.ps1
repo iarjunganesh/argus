@@ -1,4 +1,4 @@
-# Start the ARGUS demo (the API, which runs every agent in-process, and the Gradio UI).
+# Start the ARGUS demo: the API, which runs every agent in-process, and the web UI.
 # Usage: Open PowerShell in repo root and run: .\scripts\dev\start_demo.ps1
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -11,8 +11,12 @@ if (-not (Test-Path $pythonExe)) {
 	Write-Error "No .venv found. Run uv sync in the repository root first."
 	exit 1
 }
+if (-not (Test-Path (Join-Path $repoRoot.Path "web/node_modules"))) {
+	Write-Error "The web UI is not installed. Run npm ci --prefix web in the repository root first."
+	exit 1
+}
 
-$ports = @(8000, 7860)
+$ports = @(8000, 3000)
 $procIds = @()
 
 foreach ($port in $ports) {
@@ -46,11 +50,13 @@ if ($procIds.Count -gt 0) {
 	Write-Host "No existing listeners on ARGUS ports."
 }
 
+# The web UI calls the API from the browser, so the API must allow its origin.
+$env:ARGUS_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 Write-Host "Starting ARGUS API (uvicorn) on port 8000..."
 Start-Process -FilePath $pythonExe -ArgumentList "-m uvicorn argus.api.main:app --host 127.0.0.1 --port 8000" -WorkingDirectory $repoRoot.Path -NoNewWindow
 
 Start-Sleep -Seconds 2
-Write-Host "Starting Gradio UI (argus.ui.gradio_app)..."
-Start-Process -FilePath $pythonExe -ArgumentList "-m argus.ui.gradio_app" -WorkingDirectory $repoRoot.Path -NoNewWindow
+Write-Host "Starting the web UI (Next.js) on port 3000..."
+Start-Process -FilePath "npm.cmd" -ArgumentList "--prefix web run dev" -WorkingDirectory $repoRoot.Path -NoNewWindow
 
-Write-Host "Started the ARGUS API and UI. Open http://localhost:7860 for Gradio."
+Write-Host "Started the ARGUS API and web UI. Open http://localhost:3000."

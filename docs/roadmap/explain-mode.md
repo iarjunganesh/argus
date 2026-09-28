@@ -45,10 +45,10 @@ graph LR
     CRA[Compliance Agent] -->|analyst_report| ORC
     CRA -->|explain_decision tool| EXP[Explain Mode Output]
     ORC -->|both outputs| API
-    API -->|?mode=explain| UI[Gradio UI]
+    API -->|?mode=explain| UI[Web UI]
 ```
 
-The Gradio UI gains a toggle:
+The web UI's Explanation section gains a toggle:
 
 - "Analyst Report" (default) — current output
 - "Plain Language" — Explain Mode output
@@ -85,6 +85,6 @@ Explain Mode is the natural first step for i18n — the plain language version i
 
 - [ ] Wire `explain_decision` into compliance agent as a parallel tool call
 - [ ] Add `?mode=explain` query param to `/api/v1/kyc/report/{id}` endpoint
-- [ ] Add toggle to Gradio UI (screen-reader accessible — `aria-pressed` toggle button)
+- [ ] Add toggle to the web UI (screen-reader accessible — `aria-pressed` toggle button)
 - [ ] Add Flesch-Kincaid grade level assertion to Explain Mode tests
 - [ ] Add localization scaffold (i18n strings in `explain_mode/locales/`)

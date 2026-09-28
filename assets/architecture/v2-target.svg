@@ -86,7 +86,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <rect class="box" x="60" y="180" width="480" height="130" rx="14"/>
   <text class="tag" x="84" y="214">WEB UI</text>
   <text class="label" x="84" y="252">Next.js on Vercel</text>
-  <text class="body" x="84" y="284">replaces Gradio · live investigation view</text>
+  <text class="body" x="84" y="284">live investigation view</text>
 
   <path class="edge" d="M540 245 H594" marker-end="url(#arrow)"/>
 

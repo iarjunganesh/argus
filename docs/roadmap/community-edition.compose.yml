@@ -2,19 +2,19 @@ version: "3.9"
 
 # SKETCH ONLY: this does not run. It is the intended shape of the Community Edition stack
 # described in community-edition.md; the community Dockerfile (the root Dockerfile builds the API
-# only) and the SQLite and Qdrant backends it expects don't exist yet. Local OCR through
-# Tesseract does exist (argus.data_plane.tesseract).
+# only), a web/Dockerfile, and the SQLite and Qdrant backends it expects don't exist yet. Local
+# OCR through Tesseract does exist (argus.data_plane.tesseract), and so does the web UI (web/).
 #
 # ARGUS Community Edition — one command, no Azure subscription required.
 #
 # Services:
 #   argus-api         FastAPI backend (all 5 agents run in-process for simplicity)
-#   argus-ui          Gradio demo UI
+#   argus-ui          The web UI (web/), built with NEXT_PUBLIC_API_URL=http://localhost:8000
 #   qdrant            Local vector DB replacing Azure AI Search
 #
 # Usage:
 #   docker compose -f docs/roadmap/community-edition.compose.yml up   (once it exists)
-#   Then open: http://localhost:7860
+#   Then open: http://localhost:3000
 
 services:
 
@@ -38,6 +38,7 @@ services:
       - "8000:8000"
     environment:
       - ARGUS_EDITION=community
+      - ARGUS_CORS_ORIGINS=http://localhost:3000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=gpt-4o-mini
       - VECTOR_BACKEND=qdrant
@@ -60,14 +61,13 @@ services:
 
   argus-ui:
     build:
-      context: ..
-      dockerfile: community/Dockerfile
-    command: python ui/gradio_app.py
+      context: ../web
+      dockerfile: Dockerfile
+      args:
+        # The browser calls the API, so this is the address as the browser sees it.
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
-      - "7860:7860"
-    environment:
-      - API_BASE=http://argus-api:8000
-      - ARGUS_EDITION=community
+      - "3000:3000"
     depends_on:
       argus-api:
         condition: service_healthy

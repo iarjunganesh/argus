@@ -6,8 +6,8 @@ and [`CONTRIBUTING.md`](CONTRIBUTING.md) is its short version for first-time con
 
 ## What ARGUS is
 
-ARGUS is a multi-agent KYC (know-your-customer) risk screening system in Python: a FastAPI API
-that runs five agents as one in-process Microsoft Agent Framework workflow, and a Gradio UI. Fixed
+ARGUS is a multi-agent KYC (know-your-customer) risk screening system: a FastAPI API in Python
+that runs five agents as one in-process Microsoft Agent Framework workflow, and a Next.js web UI. Fixed
 rules compute the risk score and tier; a language model only writes the explanation. It won a Hack
 for Good award in the Microsoft Agents League 2026 and is now being cleaned up before the v2 work
 in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
@@ -125,7 +125,6 @@ Inside `src/argus/`:
 | --- | --- |
 | `agents/` | The orchestrator (the Agent Framework workflow) and the five agents, each with its `tools/` |
 | `api/` | The FastAPI API (submit, status, report, progress stream) and its request schemas |
-| `ui/` | The Gradio UI (to be replaced by a web UI in v2) |
 | `data_plane/` | The four data interfaces (retriever, entity store, report store, OCR), each with a local and an Azure implementation |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
 | `accessibility/` | WCAG contrast utilities, also used to check the images |

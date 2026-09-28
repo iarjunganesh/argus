@@ -15,6 +15,27 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **A web UI that follows each assessment as it runs** (`web/`: Next.js, TypeScript,
+  shadcn/ui). Submit an entity or one of the six demo cases; the assessment page draws the
+  workflow's fan-out and fan-in from the progress stream, with each agent's state, time and where
+  its result came from, then shows the report: tier, score, what set the tier, sanctions
+  screening, enhanced due diligence, recommendation and findings; the evidence line (knowledge
+  bases answered, or which tools fell back); risk dimensions; the analyst explanation and who
+  wrote it; cited regulations; actions; the audit trail and the raw JSON. The browser calls the
+  API, which must list the site in `ARGUS_CORS_ORIGINS`. Light and dark themes, landmarks, a live
+  region for progress, visible focus, reduced motion respected. Checked: unit tests for the API
+  client, the report's wording and the progress reducer; Playwright runs the six demo scenarios
+  through the site against the API container in CI and compares each report with the recorded
+  outcomes, in light, dark and phone layouts, and axe finds no WCAG 2.2 AA violations on any
+  page. The site's colour pairs pass WCAG AA in both themes (`render_assets.py --check`) and its
+  risk colours are the audited palette (`test_accessibility.py`). Not deployed yet.
+- **The version inventory covers the web UI's npm packages and Node.js.** `check_versions.py
+  --check` requires exact pins that match `package-lock.json`, and one Node.js major
+  (`web/.nvmrc`) across `engines`, `@types/node` and the workflows. The post-release refresh moves
+  each package to the newest release of its major, relocks, and runs the web checks; a new major
+  is reported for a manual update. Dependabot watches `web/` for security updates. Checked by
+  offline tests and one live run against the npm registry and nodejs.org.
+
 - **Local OCR through Tesseract.** With the local backend, identity documents (PNG, or PDF,
   whose pages are rendered first) are read by Tesseract and their `Label: value` lines become the
   same fields Document Intelligence gives (name, date of birth, document number, and so on), each
@@ -289,6 +310,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **The Gradio UI** (`src/argus/ui/`, the `ui` dependency group and the 29 packages only it
+  needed), replaced by the web UI, which shows everything it did plus live progress. Its static
+  "OCR visibility" box is gone: it described document uploads the API does not accept. Checked:
+  the web UI's end-to-end tests cover the six demo scenarios the Gradio page offered.
+
 - **The five per-agent FastAPI services and their custom `/a2a/invoke` JSON envelope** (never the
   A2A protocol), the `*_AGENT_URL` settings, and the admin endpoints that listed and polled the
   services (`/api/v1/admin/agents`, `/api/v1/admin/health`).
@@ -320,6 +346,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   called directly with `documents`, as the tests do.
 - **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
+- **A cited regulation's text is cut at 120 characters**, often mid-word, in the report and so in
+  the web UI; the citation names the document and article to read in full.
 - **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
   every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
   in lower-risk relationships.

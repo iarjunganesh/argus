@@ -34,8 +34,8 @@ app = FastAPI(
 def cors_origins() -> list[str]:
     """Browser origins allowed to call the API, from `ARGUS_CORS_ORIGINS` (comma-separated).
 
-    Empty by default: the Gradio UI calls the API from its own server, so no browser origin needs
-    access until a web UI is deployed.
+    Empty by default, which blocks every browser origin. The web UI calls the API from the
+    browser, so its origin must be listed (for example `http://localhost:3000` locally).
     """
     raw = os.getenv("ARGUS_CORS_ORIGINS", "")
     return [origin.strip() for origin in raw.split(",") if origin.strip()]

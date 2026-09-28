@@ -18,16 +18,17 @@ A compliance tool that is inaccessible is itself a compliance risk.
 
 ---
 
-## Current state (v1)
+## Current state (the web UI in `web/`)
 
-- ✅ Light/dark surfaces use Gradio theme variables; risk and status badges use explicit audited color pairs
-- ✅ Risk tier text always paired with color (never color alone)
-- ✅ Semantic heading structure (h2 → h3 → content)
-- ❌ No ARIA labels on interactive elements
-- ❌ No ARIA live region for async report loading
-- ❌ No keyboard navigation for report sections
-- ✅ Shared palette and rendered risk/status badge contrast verified in CI; other UI surfaces still need an accessibility audit
-- ❌ No `prefers-reduced-motion` handling
+- ✅ Light and dark themes follow the system setting; every declared text/background colour pair passes WCAG AA in both, checked in CI
+- ✅ Risk badges use the audited palette, and the tier is always written out (never colour alone)
+- ✅ Landmarks, a skip link, one `h1` per page and a heading for every report section
+- ✅ Labelled form fields; form errors in an alert region
+- ✅ A polite live region announces progress while the agents run
+- ✅ Visible keyboard focus; wide tables scroll from the keyboard
+- ✅ `prefers-reduced-motion` stops the spinner and transitions
+- ✅ axe finds no WCAG 2.2 AA violations on any page, in light, dark and phone layouts (end-to-end tests)
+- ❌ No review yet with screen readers or other assistive technology, and no full audit
 - ❌ No high-contrast mode toggle
 
 ---
@@ -106,4 +107,5 @@ def test_argus_palette_aa_compliance():
 
 - `src/argus/accessibility/wcag.py` — contrast ratio checker, palette auditor
 - `src/argus/accessibility/aria.py` — centralized ARIA label strings
-- `tests/test_accessibility.py` and `tests/test_gradio_ui.py` — CI-enforced palette and rendered-badge contrast checks
+- `tests/test_accessibility.py` — CI-enforced palette checks, including the web UI's risk colours
+- `web/e2e/` — axe checks of every page in the end-to-end tests

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080"
      role="img" aria-labelledby="title desc">
   <title id="title">ARGUS system overview: the current runtime</title>
-  <desc id="desc">An analyst uses the Gradio UI, which posts to the FastAPI API and can follow the
-  assessment as server-sent events. The API runs the orchestrator as a background task, in the same
+  <desc id="desc">An analyst uses the Next.js web UI, whose browser code posts to the FastAPI API and
+  follows the assessment as server-sent events. The API runs the orchestrator as a background task, in the same
   process: one Microsoft Agent Framework workflow fans out to the Identity, Screening, Corporate and
   Transaction agents, which run concurrently, and fans their results in to the Compliance and Risk
   agent, which computes a deterministic score, tier and gaps and asks a language model for the
@@ -93,12 +93,12 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <path class="edge" d="M230 216 V259" marker-end="url(#arrow)"/>
 
   <rect class="box" x="60" y="265" width="340" height="130" rx="14"/>
-  <text class="label" x="230" y="316">Gradio UI</text>
-  <text class="sub" x="230" y="348">port 7860</text>
-  <text class="sub" x="230" y="376">to be replaced by a web UI</text>
+  <text class="label" x="230" y="316">Web UI</text>
+  <text class="sub" x="230" y="348">Next.js · port 3000</text>
+  <text class="sub" x="230" y="376">calls the API from the browser</text>
 
   <path class="edge" d="M230 395 V454" marker-end="url(#arrow)"/>
-  <text class="note" x="244" y="431">submit · poll · stream</text>
+  <text class="note" x="244" y="431">submit · stream</text>
 
   <rect class="box" x="60" y="460" width="340" height="150" rx="14"/>
   <text class="label" x="230" y="514">API</text>
