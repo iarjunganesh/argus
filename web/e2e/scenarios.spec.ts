@@ -36,6 +36,15 @@ test("an unknown assessment ID says so", async ({ page }) => {
   await expect(page.getByRole("status")).toHaveText("No assessment has this ID.");
 });
 
+test("an API that stops answering is reported, not waited on forever", async ({ page }) => {
+  // The browser keeps reconnecting to a stream that fails at the network level.
+  await page.route("**/api/v1/kyc/**", (route) => route.abort("connectionrefused"));
+  await page.goto("/assessments/argus-rpt-000000000000");
+  await expect(page.getByRole("status")).toHaveText("The ARGUS API could not be reached.", {
+    timeout: 20_000,
+  });
+});
+
 for (const scenario of scenarios) {
   const { entity_name: name } = scenario.request;
   const summary = scenario.risk_summary;
@@ -43,7 +52,8 @@ for (const scenario of scenarios) {
   test(`${name}: ${summary.overall_risk_tier}`, async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: `Run the assessment of ${name}` }).click();
-    await expect(page).toHaveURL(/\/assessments\/argus-rpt-/);
+    // The URL holds the report ID only: never the entity's name.
+    await expect(page).toHaveURL(/\/assessments\/argus-rpt-[\w-]+$/);
     await expect(page.getByRole("status")).toHaveText("Assessment complete. The report follows.");
 
     await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();

@@ -30,9 +30,9 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install the locked environment
         run: |
-          uv sync --locked
-          npm ci --prefix web --no-fund
+          uv sync --locked --no-build
+          npm ci --prefix web --ignore-scripts --no-fund
       - name: Confirm the checks can run
         run: |
-          uv run pytest --collect-only -q
+          uv run --no-sync pytest --collect-only -q
           npm --prefix web test

@@ -22,12 +22,17 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   screening, enhanced due diligence, recommendation and findings; the evidence line (knowledge
   bases answered, or which tools fell back); risk dimensions; the analyst explanation and who
   wrote it; cited regulations; actions; the audit trail and the raw JSON. The browser calls the
-  API, which must list the site in `ARGUS_CORS_ORIGINS`. Light and dark themes, landmarks, a live
-  region for progress, visible focus, reduced motion respected. Checked: unit tests for the API
-  client, the report's wording and the progress reducer; Playwright runs the six demo scenarios
-  through the site against the API container in CI and compares each report with the recorded
-  outcomes, in light, dark and phone layouts, and axe finds no WCAG 2.2 AA violations on any
-  page. The site's colour pairs pass WCAG AA in both themes (`render_assets.py --check`) and its
+  API, which must list the site in `ARGUS_CORS_ORIGINS`. The assessment's URL holds only the
+  report ID; the entity's name stays in the browser tab (session storage), out of browser history,
+  server logs and referrers. If the API stops answering, the page says so after three
+  unanswered tries instead of waiting. Light and dark themes, landmarks, a live region for
+  progress, visible focus, reduced motion respected. No npm package's install script runs
+  (`--ignore-scripts` and `web/.npmrc`; none of the locked packages has one). Checked: unit tests
+  for the API client, the report's wording, the progress reducer, the stream-error decision and
+  the remembered name; Playwright runs the six demo scenarios through the site against the API
+  container in CI and compares each report with the recorded outcomes, checks the URL carries no
+  name and that an unreachable API is reported, in light, dark and phone layouts, and axe finds
+  no WCAG 2.2 AA violations on any page. The site's colour pairs pass WCAG AA in both themes (`render_assets.py --check`) and its
   risk colours are the audited palette (`test_accessibility.py`). Not deployed yet.
 - **The version inventory covers the web UI's npm packages and Node.js.** `check_versions.py
   --check` requires exact pins that match `package-lock.json`, and one Node.js major
@@ -86,7 +91,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   `fallback` or `demo_profile`) and names the tools that fell back; the report's audit trace
   collects them with the data backend, counts only knowledge-base searches that answered, and
   `explanation_source` says whether a model or the fixed template wrote the explanation.
-  Checked: a provenance test per agent, and the Gradio report tested in all three states.
+  Checked: a provenance test per agent; the web UI's end-to-end tests check each agent's source.
 - **One setting chooses the language model:** `ARGUS_MODEL_PROVIDER` is `none` (the default),
   `azure-openai` (through Azure OpenAI's v1 endpoint), `openai` or `github-models`, in
   `src/argus/models.py`. Checked: `tests/test_models.py`.
@@ -182,7 +187,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   orchestrator builds a fixed graph with `WorkflowBuilder` (`agent-framework-core` pinned to
   1.19.0): the Identity, Screening, Corporate and Transaction agents run concurrently, then fan in
   to Compliance. The agents are plain functions called in-process; no model routes the workflow.
-  A local run is now the API and the UI (ports 8000 and 7860) instead of seven processes. An agent
+  A local run is now the API and the web UI (ports 8000 and 3000) instead of seven processes. An agent
   that raises is reported as `unavailable` and the others continue, as before. Checked: the six
   demo scenarios give the same tiers, scores, findings and actions (unchanged fixture), and
   orchestrator tests cover fan-in, failure, demo profiles and event order.
@@ -193,8 +198,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   knowledge bases. Checked against a stand-in client with the SDK's request models; not yet
   against a live search service.
 
-- **The Gradio UI listens on this machine only by default** (it listened on all interfaces). Set
-  `GRADIO_SERVER_NAME=0.0.0.0` to expose it.
 - **A potential sanctions match holds the case at CRITICAL, whatever the weighted score.**
   Sanctions are not a weighted risk: FATF Recommendation 6 requires funds of listed persons to be
   frozen without delay, and the Wolfsberg Group's sanctions-screening guidance has a person confirm
@@ -232,9 +235,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **Diagrams and docs describe the data plane**, and the retired "mock" wording can't return:
   `scripts/ci/check_docs.py` fails if it appears in the README, `AGENTS.md`, `CONTRIBUTING.md`,
   `docs/` or the image sources (checked with a probe line).
-- **The Gradio report shows the data backend, the knowledge-base searches that answered and any
-  fallbacks.** It used to show "Foundry IQ Grounded" whenever its fixed query count was above zero,
-  including runs where every query had fallen back.
 - **Citations are `citation`** (was `foundry_iq_citation`), with the knowledge base named
   `regulations`, `sanctions` or `adverse_media`.
 - **Local working files have a durable home, separate from scratch.** The cross-tool handoff and
@@ -242,9 +242,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   disposable scratch. `AGENTS.md` and the Copilot instructions point to `.local/HANDOFF.md`.
   Checked: `check_docs.py` fails when a file under `.local/` is tracked (tested with a probe file).
 - **ARGUS is an installable package in the standard src layout.** The application
-  (`agents/`, `api/`, `ui/`, `utils/`, `accessibility/`, `community/`, `config.py`) moved to
-  `src/argus/` and installs in editable mode with `uv sync`; imports are `argus.*`. Services
-  start as `uv run uvicorn argus.api.main:app` and `uv run python -m argus.ui.gradio_app`.
+  (`agents/`, `api/`, `utils/`, `accessibility/`, `community/`, `config.py`) moved to
+  `src/argus/` and installs in editable mode with `uv sync`; imports are `argus.*`. The API
+  starts as `uv run uvicorn argus.api.main:app`.
   Checked: `uv build` produces a wheel, all 50 moves are recorded as git renames, and the suite
   passes unchanged at 100% coverage.
 - **The repository root went from 16 directories to 8.** Scripts are sorted by role
@@ -253,7 +253,6 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **Tests are organised by subject.** The catch-all `test_coverage_boost.py`, `test_tools.py`
   and `test_agents.py` were split into the per-area files; three tests that mixed several
   modules became eight single-subject tests.
-- **The Gradio UI shows the new logo** (`assets/brand/logo-light.svg`).
 - **Python 3.14 and the latest dependency releases.** This crosses majors (openai 3.x,
   azure-search-documents 12.x, azure-ai-projects 2.x). Checked: the suite passes unchanged on
   the new lock.
@@ -300,7 +299,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   `python -O`.
 - **The report no longer shows a confidence it never computed.** Every report said 83%
   (`risk_summary.confidence`), and every PEP finding said 0.92; both were fixed numbers. The
-  Gradio decision card shows what set the tier and the sanctions screening status instead.
+  report shows what set the tier and the sanctions screening status instead.
 - **The regulations knowledge base says what its sources say.** Checked against the published
   texts: FATF Recommendation 20 no longer carries two sentences that are not in it; the 6th AML
   Directive's predicate offences are cited to Article 2, not Article 3; the enhanced due diligence

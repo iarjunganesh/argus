@@ -8,6 +8,7 @@ import {
   normaliseRequest,
   streamUrl,
   submitAssessment,
+  withoutTrailingSlashes,
 } from "./api";
 
 const request = { entity_name: "Acme", entity_type: "corporate", jurisdiction: "NL" } as const;
@@ -15,6 +16,14 @@ const request = { entity_name: "Acme", entity_type: "corporate", jurisdiction: "
 function answering(status: number, body: unknown) {
   return vi.fn(async () => new Response(JSON.stringify(body), { status }));
 }
+
+describe("withoutTrailingSlashes", () => {
+  it("drops every trailing slash and nothing else", () => {
+    expect(withoutTrailingSlashes("https://api.example.org//")).toBe("https://api.example.org");
+    expect(withoutTrailingSlashes("https://api.example.org/v1")).toBe("https://api.example.org/v1");
+    expect(withoutTrailingSlashes("///")).toBe("");
+  });
+});
 
 describe("normaliseRequest", () => {
   it("trims the name and upper-cases the jurisdiction", () => {

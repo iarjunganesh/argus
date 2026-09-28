@@ -72,3 +72,25 @@ export function durationSeconds(start?: string, end?: string): number | undefine
   const ms = Date.parse(end) - Date.parse(start);
   return Number.isFinite(ms) ? Math.max(0, Math.round(ms / 100) / 10) : undefined;
 }
+
+/** Stream errors in a row, with the API not answering either, before the page stops waiting. */
+export const MAX_UNANSWERED = 3;
+
+export type StreamErrorAction = "wait" | "finish" | "not_found" | "unreachable";
+
+/**
+ * What to do after the progress stream reports an error, given the status the API gave for the
+ * assessment (undefined if the API did not answer), whether the browser has given up on the
+ * stream, and how many errors in a row the API has not answered. While the API is down the
+ * browser keeps reconnecting on its own, so an unanswered status is what shows it is down.
+ */
+export function afterStreamError(
+  status: string | undefined,
+  closed: boolean,
+  unanswered: number,
+): StreamErrorAction {
+  if (status === "not_found") return "not_found";
+  if (status === undefined) return closed || unanswered >= MAX_UNANSWERED ? "unreachable" : "wait";
+  if (status === "processing") return closed ? "unreachable" : "wait";
+  return "finish";
+}

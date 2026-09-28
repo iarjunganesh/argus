@@ -4,10 +4,15 @@
 import type { Report } from "./report";
 
 /** Set at build time. Defaults to a local API. */
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(
-  /\/+$/,
-  "",
+export const API_URL = withoutTrailingSlashes(
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000",
 );
+
+export function withoutTrailingSlashes(url: string): string {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === "/") end -= 1;
+  return url.slice(0, end);
+}
 
 export type EntityType = "individual" | "corporate";
 

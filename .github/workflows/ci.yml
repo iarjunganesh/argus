@@ -159,7 +159,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - name: Install the locked packages
-        run: npm ci --no-fund
+        run: npm ci --ignore-scripts --no-fund
       - name: Lint
         run: npm run lint
       - name: Formatting
@@ -180,7 +180,7 @@ jobs:
             --env ARGUS_CORS_ORIGINS=http://127.0.0.1:3000 argus:ci
           python3 scripts/ci/smoke_api.py 8000
       - name: Install the browser
-        run: npx playwright install --with-deps chromium
+        run: npm run e2e:browsers -- --with-deps
       # The six demo scenarios end to end in light, dark and phone layouts, with axe checks.
       - name: End-to-end tests
         run: npm run test:e2e
