@@ -165,6 +165,7 @@ jobs:
             Dockerfile
             web/package.json
             web/package-lock.json
+            README.md
             .github/workflows
             docs/DEPENDENCY-REFRESH.md
       - name: Fail visibly if any refresh gate failed

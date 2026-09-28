@@ -30,7 +30,7 @@ The GitHub social preview can't be set from the repository: upload
 | --- | --- | --- |
 | [`architecture/system-overview.svg`](architecture/system-overview.svg) | The **current** runtime: the two processes, the Agent Framework workflow and its five agents, and the data plane with its local and Azure implementations | light/dark SVG, PNG |
 | [`architecture/investigation-flow.svg`](architecture/investigation-flow.svg) | One KYC request end to end, with the scoring rules and weights as coded, and which steps are deterministic and which use a language model | light/dark SVG, PNG, GIF |
-| [`architecture/v2-target.svg`](architecture/v2-target.svg) | The **planned** v2 runtime from [`docs/ARGUS-V2-PLAN.md`](../docs/ARGUS-V2-PLAN.md), labelled as not built | light/dark SVG, PNG |
+| [`architecture/v2-target.svg`](architecture/v2-target.svg) | The v2 runtime from [`docs/ARGUS-V2-PLAN.md`](../docs/ARGUS-V2-PLAN.md): built parts drawn solid, **planned** parts dashed, nothing deployed | light/dark SVG, PNG |
 
 The architecture diagrams describe the code, not the aspiration. When the code changes a port,
 a fallback, a weight or a threshold, update the diagram in the same pull request.

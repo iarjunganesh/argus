@@ -216,7 +216,7 @@ The planned deployment keeps the idle cost near zero, within a $500 sponsorship 
 | --- | --- | --- |
 | API | Azure Container Apps, consumption plan, 0 to 1 replicas | $0 (within the monthly free grant) |
 | Container image | GitHub Container Registry | $0 |
-| Web UI | Vercel, Hobby plan | $0 |
+| Web UI | Vercel, Hobby plan, at `argus.arjunganesh.dev` | $0 |
 | Search | Azure AI Search **Free** (50 MB, 3 indexes; agentic retrieval and semantic ranker are available on Free in this region) | $0 |
 | Entities and reports | Cosmos DB free tier | $0 |
 | OCR | Document Intelligence F0 | $0 |

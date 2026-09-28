@@ -22,19 +22,68 @@
   <a href="https://globalai.community/badges/b35714f6-9372-4716-985f-ad2058722e76"><img alt="The Microsoft IQ Series: Foundry IQ badge" src="https://globalai.community/img/badge/shared/f1de85c1359e1380dcabb9901d210a3d00645ec975a640338021f91792d26ffd.png?h=500" height="120"/></a>
 </p>
 
-<!-- Row 1 — status -->
+<!-- Row 1 — repository state: these six, in this order.
+     Nothing may be inserted between the badge lines of a row: a comment breaks the paragraph
+     and drops the badge after it onto a row of its own.
+     Release opens the latest release; until v0.1.0 is tagged GitHub shows the empty list. -->
 [![CI](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml)
+[![SonarQube Cloud](https://img.shields.io/sonar/quality_gate/iarjunganesh_argus?server=https%3A%2F%2Fsonarcloud.io&logo=sonarqubecloud&label=SonarQube%20Cloud)](https://sonarcloud.io/summary/new_code?id=iarjunganesh_argus)
 [![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)
+[![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/argus/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Watch demo](https://img.shields.io/badge/▶_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
+[![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
 
-<!-- Row 2 — what the code uses today -->
+<!-- Row 2 — the Microsoft framework and every Azure service ARGUS uses, and what each does.
+     Fixed rules set the score and tier; the model only writes the explanation (no model is the
+     default: a labelled template). The Azure services are optional: the local data plane, the
+     default, needs none of them. -->
+[![Microsoft Agent Framework](https://img.shields.io/badge/Agent_Framework-1.19.0-0078D4)](https://github.com/microsoft/agent-framework)
+[![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-explanation_only-412991)](https://azure.microsoft.com/en-us/pricing/details/azure-openai/)
+[![Foundry IQ](https://img.shields.io/badge/Foundry_IQ-cited_knowledge_bases-0078D4)](https://azure.microsoft.com/en-us/products/ai-foundry/iq)
+[![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-knowledge_base_indexes-0078D4)](https://azure.microsoft.com/en-us/products/ai-services/ai-search)
+[![Cosmos DB](https://img.shields.io/badge/Cosmos_DB-entities_and_reports-0078D4)](https://azure.microsoft.com/en-us/products/cosmos-db)
+[![Document Intelligence](https://img.shields.io/badge/Document_Intelligence-document_OCR-0078D4)](https://azure.microsoft.com/en-us/products/ai-foundry/tools/document-intelligence)
+[![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-API_host-0078D4)](https://azure.microsoft.com/en-us/products/container-apps)
+[![Azure Monitor](https://img.shields.io/badge/Azure_Monitor-API_logs-0078D4)](https://azure.microsoft.com/en-us/products/monitor)
+
+<!-- Row 3 — frontend (web/). Vercel Hobby is the chosen host (decision D1); not deployed yet. -->
+[![Next.js](https://img.shields.io/badge/Next.js-16.3-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-Radix-000000?logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.63-2EAD33)](https://playwright.dev/)
+[![axe](https://img.shields.io/badge/axe-4.13_WCAG_2.2_AA-663399)](https://github.com/dequelabs/axe-core)
+[![Vercel Hobby](https://img.shields.io/badge/Vercel-Hobby-000000?logo=vercel&logoColor=white)](https://vercel.com/pricing)
+
+<!-- Row 4 — backend and toolchain. -->
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Azure OpenAI GPT-4o](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
-[![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-Vector-0078D4?logo=microsoftazure&logoColor=white)](https://learn.microsoft.com/azure/search/)
-[![Cosmos DB](https://img.shields.io/badge/Cosmos_DB-NoSQL-0078D4?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cosmos-db)
-[![Next.js](https://img.shields.io/badge/UI-Next.js-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-2.13_contracts-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![uv](https://img.shields.io/badge/uv-locked-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
+[![Ruff](https://img.shields.io/badge/Ruff-lint%20%2B%20format-D7FF64?logo=ruff&logoColor=111827)](https://docs.astral.sh/ruff/)
+[![Mypy](https://img.shields.io/badge/Mypy-type_checked-2A6DB2?logo=python&logoColor=white)](https://mypy-lang.org/)
+[![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Docker](https://img.shields.io/badge/Docker-non--root,_digest--pinned-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Tesseract](https://img.shields.io/badge/Tesseract-local_OCR-3C8DBC)](https://github.com/tesseract-ocr/tesseract)
+
+<!-- Row 5 — the tier of each Azure service in row 2, as chosen in decision D1 (docs/ARCHITECTURE.md,
+     "Hosting"). Nothing is deployed yet, and the Azure data plane has only run against SDK
+     stand-ins. Each badge opens the service's pricing page. -->
+[![Azure OpenAI tier](https://img.shields.io/badge/Azure_OpenAI-Data_Zone_Standard,_pay_per_token-412991)](https://azure.microsoft.com/en-us/pricing/details/azure-openai/)
+[![Foundry IQ tier](https://img.shields.io/badge/Foundry_IQ-free_retrieval_allowance-0078D4)](https://azure.microsoft.com/en-us/pricing/details/search/)
+[![Azure AI Search tier](https://img.shields.io/badge/Azure_AI_Search-Free-0078D4)](https://azure.microsoft.com/en-us/pricing/details/search/)
+[![Cosmos DB tier](https://img.shields.io/badge/Cosmos_DB-free_tier-0078D4)](https://azure.microsoft.com/en-us/pricing/details/cosmos-db/autoscale-provisioned/)
+[![Document Intelligence tier](https://img.shields.io/badge/Document_Intelligence-F0_free-0078D4)](https://azure.microsoft.com/en-us/pricing/details/document-intelligence/)
+[![Azure Container Apps tier](https://img.shields.io/badge/Azure_Container_Apps-Consumption,_0--1_replicas-0078D4)](https://azure.microsoft.com/en-us/pricing/details/container-apps/)
+[![Azure Monitor tier](https://img.shields.io/badge/Log_Analytics-pay_as_you_go,_daily_cap-0078D4)](https://azure.microsoft.com/en-us/pricing/details/monitor/)
+
+<!-- Row 6 — live hosting. Not deployed yet: the web UI is planned at https://argus.arjunganesh.dev.
+     When it is live these become Vercel-live_frontend-000000 and the API's own badge, each
+     linking to the running site. -->
+[![Vercel live frontend](https://img.shields.io/badge/Vercel_live_frontend-argus.arjunganesh.dev_not_deployed_yet-6B7280?logo=vercel&logoColor=white)](https://vercel.com)
+[![Azure live API](https://img.shields.io/badge/Azure_Container_Apps_live_API-not_deployed_yet-6B7280)](https://azure.microsoft.com/en-us/products/container-apps)
 
 ---
 
@@ -122,7 +171,7 @@ The next version is planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
-    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The planned v2 runtime, not built yet: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with Explain Mode and human review, one model-provider setting, Foundry IQ, Fabric IQ and Work IQ, and a data plane with Azure and local implementations."/>
+    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built and not deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with Explain Mode and human review, one model-provider setting, Foundry IQ, Fabric IQ and Work IQ, and a data plane with Azure and local implementations."/>
   </picture>
 </p>
 

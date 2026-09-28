@@ -105,6 +105,27 @@ def check_python_version() -> list[str]:
     return problems
 
 
+BADGE = re.compile(r"^\[!\[[^\]]*\]\([^)]*\)\]\(([^)]*)\)$", re.MULTILINE)
+
+
+# Documentation sites: a badge names a product, so it opens the product's own page.
+DOCS_HOSTS = ("https://learn.microsoft.com/",)
+
+
+def check_badge_links() -> list[str]:
+    """Each README badge opens the product it names: not a file here, and not a docs article.
+
+    The licence badge is the one exception: it opens LICENSE.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    return [
+        f"README badge links to {target}: link the product's own page instead"
+        for target in BADGE.findall(readme)
+        if target != "LICENSE"
+        and (not target.startswith("https://") or target.startswith(DOCS_HOSTS))
+    ]
+
+
 def check_docs_index() -> list[str]:
     index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     return [
@@ -149,6 +170,7 @@ def main() -> int:
         *check_unfinished(markdown),
         *check_retired_terms(files),
         *check_python_version(),
+        *check_badge_links(),
         *check_docs_index(),
         *check_changelog(),
         *check_repo_map(files),
