@@ -41,9 +41,9 @@ param chatModelVersion string = '2026-03-17'
 @description('Deployment type of the chat model. DataZoneStandard keeps processing in the EU data zone.')
 param chatSku string = 'DataZoneStandard'
 
-@description('Chat model capacity in thousands of tokens per minute. Pay per token; capacity only caps the rate.')
+@description('Chat model capacity in thousands of tokens per minute. Billing is per token; the capacity caps the rate, and so the most a flood of requests to the public API can spend.')
 @minValue(1)
-param chatCapacity int = 50
+param chatCapacity int = 10
 
 @description('Use the Cosmos DB free tier. Only one account per subscription can have it.')
 param cosmosFreeTier bool = true
@@ -53,6 +53,9 @@ param logDailyCapGb string = '0.1'
 
 @description('Object ID of a person or group that fills the data plane (infra/populate.py); empty for none.')
 param operatorPrincipalId string = ''
+
+@description('Tags on every resource, for cost tracking.')
+param tags object = { workload: 'argus' }
 
 var suffix = take(uniqueString(resourceGroup().id), 6)
 var databaseName = 'argus-db'
@@ -77,6 +80,7 @@ var cosmosDataContributor = '00000000-0000-0000-0000-000000000002'
 resource logs 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   name: '${prefix}-logs-${suffix}'
   location: location
+  tags: tags
   properties: {
     sku: { name: 'PerGB2018' }
     retentionInDays: 30
@@ -89,6 +93,7 @@ resource logs 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
 resource search 'Microsoft.Search/searchServices@2025-05-01' = {
   name: '${prefix}-search-${suffix}'
   location: location
+  tags: tags
   sku: { name: 'free' }
   properties: {
     replicaCount: 1
@@ -103,6 +108,7 @@ resource search 'Microsoft.Search/searchServices@2025-05-01' = {
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-04-15' = {
   name: '${prefix}-cosmos-${suffix}'
   location: location
+  tags: tags
   kind: 'GlobalDocumentDB'
   properties: {
     databaseAccountOfferType: 'Standard'
@@ -146,6 +152,7 @@ resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
 resource ai 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: '${prefix}-ai-${suffix}'
   location: location
+  tags: tags
   kind: 'AIServices'
   sku: { name: 'S0' }
   properties: {
@@ -170,6 +177,7 @@ resource chat 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
 resource ocr 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: '${prefix}-ocr-${suffix}'
   location: location
+  tags: tags
   kind: 'FormRecognizer'
   sku: { name: 'F0' }
   properties: {
@@ -184,6 +192,7 @@ resource ocr 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
 resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   name: '${prefix}-env-${suffix}'
   location: location
+  tags: tags
   properties: {
     // Every workload profiles environment has this profile; it bills per use and scales to zero.
     workloadProfiles: [{ name: 'Consumption', workloadProfileType: 'Consumption' }]
@@ -200,6 +209,7 @@ resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
 resource api 'Microsoft.App/containerApps@2025-01-01' = {
   name: '${prefix}-api'
   location: location
+  tags: tags
   identity: { type: 'SystemAssigned' }
   properties: {
     managedEnvironmentId: environment.id
@@ -241,6 +251,11 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
               httpGet: { path: '/health', port: 8000 }
               periodSeconds: 2
               failureThreshold: 30
+            }
+            {
+              type: 'Readiness'
+              httpGet: { path: '/health', port: 8000 }
+              periodSeconds: 10
             }
             {
               type: 'Liveness'

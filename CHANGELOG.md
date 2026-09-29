@@ -25,11 +25,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   template locally; the workflow itself has not run, because Azure is not set up for it yet.
 - **An Azure deployment that follows decision D1** (`infra/main.bicep`, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)),
   replacing the hackathon template (AI Search Basic, a `gpt-4o` deployment, a machine learning
-  hub). One resource group: Container Apps (consumption, 0 to 1 replicas) pulling the image from
+  hub). One resource group: Container Apps (Consumption profile, 0 to 1 replicas) pulling the image from
   GitHub Container Registry; Log Analytics with a 0.1 GB daily cap and 30-day retention; AI Search
   Free; Cosmos DB free tier, whose five containers now share the database's 1000 RU/s (the old
   setup gave each container 400 RU/s of its own, 2000 in all, more than the free tier covers); a
-  Foundry account with `gpt-5.4-mini` (Data Zone Standard, EU); Document Intelligence F0. No key
+  Foundry account with `gpt-5.4-mini` (Data Zone Standard, EU, 10k tokens a minute, which caps
+  what a flood of requests to the public API can spend); Document Intelligence F0. Every resource
+  is tagged, and the API has startup, readiness and liveness probes. No key
   is stored: the API's managed identity holds the data roles, and key authentication is off on
   Cosmos DB, the model and Document Intelligence; AI Search Free's query key reaches the API as a
   Container Apps secret. `infra/populate.py` fills the indexes, knowledge bases and containers
@@ -37,7 +39,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   resource group and purges the soft-deleted AI accounts. `upload_to_cosmos.py` signs in with
   Entra ID when no key is set. Checked: the template builds and lints clean with Bicep 0.43;
   tests for the two scripts' Azure CLI calls and their order, and that the template's partition
-  keys are fields of the synthetic records. **Not deployed yet**: that waits for approval.
+  keys are fields of the synthetic records. The design was reviewed against Microsoft's Container Apps and
+  AI workload guidance; `docs/ARCHITECTURE.md` records what was applied and what was left out on
+  purpose. **Not deployed yet**: that waits for approval.
 - **Keyless access to Azure OpenAI and Document Intelligence.** Like Cosmos DB already did, both
   now sign in with Microsoft Entra ID when no key is set: the managed identity when deployed, the
   developer's `az login` locally. `AZURE_OPENAI_API_KEY` and `DOC_INTELLIGENCE_KEY` become
