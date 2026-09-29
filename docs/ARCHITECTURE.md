@@ -257,4 +257,5 @@ mypy, a dependency audit, a secret scan, the documentation checks, and a check t
 diagram variants match their SVG masters and pass WCAG AA contrast. It builds the container and
 runs one demo assessment through it. The Web UI job lints, type-checks, unit-tests and builds
 `web/`, then runs its Playwright tests against the API container: the six demo scenarios in light,
-dark and phone layouts, each page checked with axe.
+dark and phone layouts, each page checked with axe. The infrastructure job compiles
+`infra/main.bicep` and fails on any Bicep linter warning.

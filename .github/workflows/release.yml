@@ -79,6 +79,17 @@ jobs:
           case "$RELEASE_TAG" in *-*) prerelease=(--prerelease) ;; esac
           gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag             --title "$RELEASE_TAG" --notes-file .tmp/release-notes.md "${prerelease[@]}"
 
+  # Tagging deploys the API once Azure is set up (docs/DEPLOYMENT.md); until then this is skipped.
+  deploy:
+    needs: publish
+    if: github.event_name == 'push' && vars.AZURE_RESOURCE_GROUP != ''
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    # No secrets are passed: the deploy job reads the `azure` environment's own.
+
   refresh-deps:
     needs: [validate, publish]
     if: >-

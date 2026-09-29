@@ -1,0 +1,89 @@
+name: Deploy
+
+# Builds the API image, pushes it to GitHub Container Registry, deploys infra/main.bicep with it
+# to Azure and runs one demo assessment against the deployed API. It runs by hand
+# (workflow_dispatch) or from release.yml after a release is published.
+#
+# Azure sign-in is OpenID Connect: no stored client secret. The `azure` environment holds the
+# secrets AZURE_CLIENT_ID, AZURE_TENANT_ID and AZURE_SUBSCRIPTION_ID (identifiers, kept as
+# secrets so public logs mask them) and limits which branches and tags may deploy; the
+# repository variable AZURE_RESOURCE_GROUP names the target. Setup: docs/DEPLOYMENT.md.
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build and push the image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Deploying by digest means the app runs exactly the image built here.
+      - name: Build and push
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA::12}"
+          echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker build --tag "$tag" \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" .
+          docker push "$tag"
+          docker logout ghcr.io
+          echo "image=$(docker inspect --format '{{index .RepoDigests 0}}' "$tag")" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Azure
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: azure
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # The deployment is named `argus`: infra/populate.py reads its outputs by that name.
+      - name: Deploy the template
+        id: deploy
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          test -n "$RESOURCE_GROUP" || { echo '::error::Set the AZURE_RESOURCE_GROUP variable'; exit 1; }
+          url=$(az deployment group create --resource-group "$RESOURCE_GROUP" --name argus \
+            --template-file infra/main.bicep --parameters image="$IMAGE" \
+            --query properties.outputs.apiUrl.value --output tsv --only-show-errors)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed $IMAGE to $url" >> "$GITHUB_STEP_SUMMARY"
+      # The Wirecard AG demo end to end; reports the cold start if the API was at zero replicas.
+      - name: Smoke assessment against the deployed API
+        env:
+          API_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -o pipefail
+          python3 scripts/ci/smoke_api.py "$API_URL" | tee -a "$GITHUB_STEP_SUMMARY"

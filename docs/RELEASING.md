@@ -1,7 +1,8 @@
 # Releases and dependency refreshes
 
 Release automation is prepared for `v0.1.0`. No release has been published by this change.
-Only an explicitly approved tag push publishes a release. Production deployment is Phase 5 work.
+Only an explicitly approved tag push publishes a release. Once Azure is set up for GitHub
+([DEPLOYMENT.md](DEPLOYMENT.md)), the same tag also deploys the API.
 
 ## Before the first tag
 
@@ -12,7 +13,7 @@ Only an explicitly approved tag push publishes a release. Production deployment 
    Regenerate it before it expires and update the secret; an expired token fails only the
    refresh, which can then be retried (see below).
 3. Create the `deps-broken` label. These are repository setup actions requiring the maintainer's
-   approval. Branch protection also needs separate approval: require the six CI jobs and a PR,
+   approval. Branch protection also needs separate approval: require every CI job and a PR,
    and prohibit force pushes to `main`.
 4. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    (the date you tag), add a new empty `## [Unreleased]` above it, set `version` in
@@ -29,6 +30,10 @@ Only an explicitly approved tag push publishes a release. Production deployment 
 the package version and exactly one nonempty changelog section before publishing that section
 as the GitHub Release notes. Tags use `vX.Y.Z`; prereleases use `vX.Y.Z-alpha.N`, `-beta.N` or
 `-rc.N` (PEP 440 package versions use `aN`, `bN` or `rcN`).
+
+After publication, `deploy` runs [`deploy.yml`](../.github/workflows/deploy.yml) when the
+repository variable `AZURE_RESOURCE_GROUP` is set: it pushes the tagged image and deploys it (see
+[DEPLOYMENT.md](DEPLOYMENT.md)). Without the variable the job is skipped.
 
 After publication, `refresh-deps` checks out `main`, inventories upstream versions, upgrades
 the lock, raises direct dependency minimums, refreshes action SHAs, and runs the Python gates,
@@ -67,15 +72,12 @@ existing published tag. Manual dispatch retries the refresh without republishing
 - **Agent Framework** is pinned exactly, and `--write` keeps it exact. The orchestrator and API
   contract tests run the workflow on the refreshed version.
 
-The web manifest is absent today; the inventory fails closed if `web/package.json` appears
-without extending it (Phase 5).
 The build backend is reported separately because it is outside the lock; the refresh raises
 its minimum to the latest release and retains an upper bound at the next minor.
 
 Dependabot schedules weekly checks with version PRs disabled (`open-pull-requests-limit: 0`),
-leaving security PRs enabled for uv and GitHub Actions. Enable Dependabot security updates in
-repository settings if they are not already enabled. Add grouped npm security updates when
-`web/package.json` exists.
+leaving security PRs enabled for uv, GitHub Actions and the web UI's npm packages. Enable
+Dependabot security updates in repository settings if they are not already enabled.
 
 GitHub behavior follows the upstream documentation for
 [reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows),
