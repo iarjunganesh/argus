@@ -120,7 +120,7 @@ def _query(container: str, sql: str, **params: str | int) -> Callable[[], list[d
 
 
 class CosmosEntityStore:
-    """Queries the containers that `infra/create_cosmos_db.py` creates."""
+    """Queries the containers that `infra/main.bicep` creates."""
 
     async def find_entity(self, name: str, entity_type: str | None = None) -> dict | None:
         sql = "SELECT * FROM c WHERE LOWER(c.name) = LOWER(@name)"

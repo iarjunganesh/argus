@@ -261,7 +261,7 @@ uv run python scripts/ci/render_assets.py --check
 npm --prefix web run lint && npm --prefix web run typecheck && npm --prefix web test
 ```
 
-To use Azure instead, provision the services (`infra/`), upload the synthetic data (`data/synthetic/upload_to_cosmos.py`), index the knowledge bases (`infra/foundry_iq/`) and set `ARGUS_DATA_BACKEND=azure`.
+To run on Azure instead, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) deploys the API with its data plane (`infra/main.bicep`), fills it (`infra/populate.py`) and removes it again (`infra/teardown.py`).
 
 ---
 

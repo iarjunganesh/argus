@@ -262,19 +262,17 @@ async def test_ocr_without_settings_is_unavailable():
 
 
 def test_every_cosmos_container_is_partitioned_on_a_field_its_records_have():
-    """`infra/create_cosmos_db.py` partition keys match what `upload_to_cosmos.py` uploads."""
-    import ast
+    """`infra/main.bicep` partition keys match what `upload_to_cosmos.py` uploads."""
     import json
+    import re
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    tree = ast.parse((root / "infra" / "create_cosmos_db.py").read_text(encoding="utf-8"))
-    containers = next(
-        ast.literal_eval(node.value)
-        for node in tree.body
-        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "CONTAINERS"
-    )
-    keys = {c["id"]: c["partition_key"].lstrip("/") for c in containers}
+    bicep = (root / "infra" / "main.bicep").read_text(encoding="utf-8")
+    pattern = r"\{ name: '(\w+)', partitionKey: '/(\w+)' \}"
+    keys = dict(re.findall(pattern, bicep))
+    assert set(keys) == {"entities", "corporate_graph", "transactions", "pep_list", "kyc_reports"}
+    assert keys["kyc_reports"] == "report_id"  # CosmosReportStore partitions by report ID
     synthetic = root / "tests" / "fixtures" / "data" / "synthetic"
     for container in ("entities", "corporate_graph", "transactions"):
         lines = (synthetic / f"{container}.jsonl").read_text(encoding="utf-8").splitlines()
