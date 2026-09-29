@@ -248,6 +248,42 @@ soft-deleted. Both call the Azure CLI through `infra/azcli.py`, asking only for 
 need. `infra/create_typology_index.py` is a hackathon leftover that nothing calls; it would need a
 fourth index, which the Free tier does not allow.
 
+### Design review
+
+The template was checked against Microsoft's service guide for Container Apps and its guidance
+for AI workloads (2026-09-29). This records what was applied and what was left out on purpose; it
+is a review of a demo deployment, not a claim of production readiness.
+
+Applied:
+
+- **Identity and secrets.** Managed identity for every service that supports it, key
+  authentication off on those, and least-privilege data roles (the Cosmos DB role is scoped to the
+  one database). The one secret is a read-only query key. The deploy workflow signs in with OpenID
+  Connect from a protected GitHub environment, which [DEPLOYMENT.md](DEPLOYMENT.md) limits to
+  `main` and release tags.
+- **Health.** Startup, readiness and liveness probes on `/health`; HTTPS only (`allowInsecure`
+  off); the container runs as a non-root user from a digest-pinned base image.
+- **Cost.** Scale to zero, one replica at most, 0.5 vCPU; a daily cap on log ingestion; free
+  tiers for search, database and OCR; tags on every resource; a budget alert on the subscription.
+  The model is billed per token and its capacity (10k tokens a minute) caps what a flood of
+  requests to the public API can spend. Cosmos DB's 1000 RU/s is a ceiling too: beyond it
+  requests are throttled, not billed.
+- **Operations.** Everything is in Bicep, linted in CI; deployments are by image digest; a
+  teardown script removes everything, including soft-deleted accounts; a smoke test runs after
+  each deployment.
+- **AI.** The model writes only the explanation; scores, tiers and findings come from fixed rules,
+  and a failed model call falls back to a labelled template. Processing stays in the EU data zone,
+  and the default content filter applies. Explanations keep their findings, evidence, uncertainty
+  and human-review status.
+
+Left out on purpose, for cost or because the demo does not need it: availability zones, several
+replicas and minimum replicas (cold starts are accepted), a second region, a virtual network,
+private endpoints, a web application firewall and premium ingress, Key Vault (there is one secret,
+held by Container Apps), Defender for Containers, sign-in on the API (it is a public demo of
+synthetic data; CORS limits which sites may call it from a browser), Azure Policy, and load or
+chaos testing. Tracing with OpenTelemetry and an evaluation of the explanations are v2 work
+([ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md)).
+
 ## Tests
 
 `tests/` runs without any cloud credentials: the local data plane reads the small data set in

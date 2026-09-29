@@ -16,7 +16,7 @@ Every command runs the same in PowerShell and bash. None of them prints a key.
 | Log Analytics workspace | Pay as you go, 30-day retention, 0.1 GB daily ingestion cap | About $0 |
 | Azure AI Search | Free: 50 MB, 3 indexes, one per subscription | $0 |
 | Cosmos DB | Free tier: one database of 1000 RU/s shared by five containers, one per subscription | $0 |
-| Foundry (AI Services) account with a `gpt-5.4-mini` deployment | S0, Data Zone Standard (EU), 50k tokens a minute | $0; pay per token |
+| Foundry (AI Services) account with a `gpt-5.4-mini` deployment | S0, Data Zone Standard (EU), 10k tokens a minute | $0; pay per token |
 | Document Intelligence | F0: 500 pages a month, one per subscription | $0 |
 
 No keys are stored. The API's managed identity signs in to Cosmos DB, the model and Document
@@ -36,8 +36,9 @@ called (see "Known issues" in [`CHANGELOG.md`](../CHANGELOG.md)).
 2. **Free-tier slots.** AI Search Free, the Cosmos DB free tier and Document Intelligence F0 each
    allow one per subscription. If one is already taken, the deployment fails; for Cosmos DB,
    `cosmosFreeTier=false` deploys a billed account instead.
-3. **Model quota.** `gpt-5.4-mini` Data Zone Standard needs 50k tokens a minute of quota in the
-   region (`chatCapacity` sets it).
+3. **Model quota.** `gpt-5.4-mini` Data Zone Standard needs 10k tokens a minute of quota in the
+   region (`chatCapacity` sets it). The API is public, so this rate is also the most that a flood
+   of requests can spend on the model.
 4. **Tools.** The Azure CLI, signed in (`az login`), with Owner (or Contributor and Role Based
    Access Control Administrator) on the resource group. `uv` for the data scripts.
 5. **The image.** A public image of the API on GitHub Container Registry, built from the root
