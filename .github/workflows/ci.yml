@@ -139,6 +139,22 @@ jobs:
         if: always()
         run: docker logs argus || true
 
+  infra:
+    name: Infrastructure template
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Offline: compiles the template and runs the Bicep linter; any warning fails the job.
+      - name: Build and lint infra/main.bicep
+        run: |
+          az bicep install
+          az bicep build --file infra/main.bicep --stdout > /dev/null
+          az bicep lint --file infra/main.bicep 2>&1 | tee lint.txt
+          ! grep -E ' : (Warning|Error) ' lint.txt
+
   web:
     name: Web UI
     runs-on: ubuntu-latest

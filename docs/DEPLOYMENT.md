@@ -96,6 +96,33 @@ tier, where each result came from, and cited regulations (which need the filled 
 It prints how long `/health` took to answer, which is the cold start when the API was scaled to
 zero.
 
+## Deploy from GitHub
+
+[`deploy.yml`](../.github/workflows/deploy.yml) does the same from GitHub Actions: it builds the
+image, pushes it to GitHub Container Registry as `sha-<commit>`, deploys the template with the
+image's digest, and runs the smoke test against the result. It runs when started by hand (Actions
+→ Deploy → Run workflow) and after every published release (`release.yml`). It signs in to Azure
+with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
+
+1. **An identity for the workflow.** Create an app registration (Microsoft Entra ID → App
+   registrations → New), and on it a federated credential for GitHub Actions: organization
+   `iarjunganesh`, repository `argus`, entity **Environment**, name `azure`.
+2. **Its access, on the resource group only.** Contributor, plus Role Based Access Control
+   Administrator constrained to assigning the two roles the template grants the API (Cognitive
+   Services OpenAI User and Cognitive Services User; the portal's "Allow user to only assign
+   selected roles" condition does this).
+3. **The GitHub environment.** Settings → Environments → `azure`: allow deployments from `main`
+   and `v*` tags only (optionally require a reviewer), and add the environment secrets
+   `AZURE_CLIENT_ID` (the app's client ID), `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`. They
+   are identifiers, not credentials; as secrets they are masked in the public logs.
+4. **The target.** The repository variable `AZURE_RESOURCE_GROUP` (for example `rg-argus`).
+   `release.yml` deploys only when it is set.
+5. **The package.** After the first run, make the `argus` package public (Packages → argus →
+   Package settings → Change visibility), then run the workflow again.
+
+The workflow deploys with the template's defaults; filling the data plane stays a step you run
+yourself.
+
 ## The web UI
 
 The web UI is deployed separately, on Vercel: a project with root directory `web`, framework
