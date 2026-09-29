@@ -12,7 +12,11 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from argus.config import get_cosmos_database, get_knowledge_base_client
+from argus.config import (
+    get_cosmos_database,
+    get_document_intelligence_client,
+    get_knowledge_base_client,
+)
 from argus.data_plane.base import DataPlaneUnavailable, KnowledgeBase, Passage
 
 # Each knowledge base reads one search index through one knowledge source. The knowledge base
@@ -204,15 +208,9 @@ _ID_FIELDS = {
 class DocumentIntelligenceOCR:
     async def extract(self, image: bytes, doc_type: str) -> dict[str, dict]:
         def run() -> dict[str, dict]:
-            from azure.ai.documentintelligence import DocumentIntelligenceClient
             from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
-            from azure.core.credentials import AzureKeyCredential
 
-            client = DocumentIntelligenceClient(
-                endpoint=os.environ["DOC_INTELLIGENCE_ENDPOINT"],
-                credential=AzureKeyCredential(os.environ["DOC_INTELLIGENCE_KEY"]),
-            )
-            poller = client.begin_analyze_document(
+            poller = get_document_intelligence_client().begin_analyze_document(
                 "prebuilt-idDocument", AnalyzeDocumentRequest(bytes_source=image)
             )
             return _id_fields(poller.result())

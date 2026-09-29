@@ -3,8 +3,9 @@
 `ARGUS_MODEL_PROVIDER` chooses it:
 
 - `none` (default): no model. Explanations use the fixed template and say so.
-- `azure-openai`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, and the deployment name in
-  `AZURE_OPENAI_DEPLOYMENT`, through Azure OpenAI's OpenAI-compatible v1 endpoint.
+- `azure-openai`: `AZURE_OPENAI_ENDPOINT` and the deployment name in `AZURE_OPENAI_DEPLOYMENT`,
+  through Azure OpenAI's OpenAI-compatible v1 endpoint. It signs in with `AZURE_OPENAI_API_KEY`
+  when that is set, and otherwise with Microsoft Entra ID (the managed identity when deployed).
 - `openai`: `OPENAI_API_KEY` and the model name in `ARGUS_MODEL`.
 - `github-models`: `GITHUB_TOKEN` and the model name in `ARGUS_MODEL`.
 
@@ -18,8 +19,10 @@ A model only ever writes the explanation. Scores, tiers and findings never depen
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
 from openai import AsyncOpenAI
@@ -30,6 +33,8 @@ load_repo_env(__file__)  # the provider settings usually live in the repository'
 
 PROVIDERS = ("none", "azure-openai", "openai", "github-models")
 GITHUB_MODELS_ENDPOINT = "https://models.github.ai/inference"
+# The Entra ID scope of Azure OpenAI and the other Azure AI services.
+COGNITIVE_SERVICES_SCOPE = "https://cognitiveservices.azure.com/.default"
 # A reasoning model's completion budget covers its hidden reasoning as well as the answer.
 REASONING_COMPLETION_TOKENS = 4000
 # gpt-5*, o1, o3, o4-mini..., optionally behind a publisher prefix such as GitHub Models' "openai/".
@@ -78,9 +83,8 @@ def get_chat_model() -> ChatModel:
     provider = os.getenv("ARGUS_MODEL_PROVIDER", "none").strip().lower()
     if provider == "azure-openai":
         endpoint = _require("AZURE_OPENAI_ENDPOINT").rstrip("/")
-        client = AsyncOpenAI(
-            base_url=f"{endpoint}/openai/v1/", api_key=_require("AZURE_OPENAI_API_KEY")
-        )
+        key = os.getenv("AZURE_OPENAI_API_KEY") or _entra_token_provider()
+        client = AsyncOpenAI(base_url=f"{endpoint}/openai/v1/", api_key=key)
         return _chat_model(provider, _require("AZURE_OPENAI_DEPLOYMENT"), client)
     if provider == "openai":
         client = AsyncOpenAI(api_key=_require("OPENAI_API_KEY"))
@@ -93,6 +97,20 @@ def get_chat_model() -> ChatModel:
     raise ModelUnavailable(
         f"ARGUS_MODEL_PROVIDER must be one of {', '.join(PROVIDERS)}, not {provider!r}"
     )
+
+
+def _entra_token_provider() -> Callable[[], Awaitable[str]]:
+    """Fresh Entra ID tokens for the client, which asks before each request."""
+    from azure.identity import get_bearer_token_provider
+
+    from argus.config import get_azure_credential
+
+    token = get_bearer_token_provider(get_azure_credential(), COGNITIVE_SERVICES_SCOPE)
+
+    async def provider() -> str:
+        return await asyncio.to_thread(token)  # the credential's calls block
+
+    return provider
 
 
 def _chat_model(provider: str, model: str, client: AsyncOpenAI) -> ChatModel:

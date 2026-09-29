@@ -15,6 +15,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Keyless access to Azure OpenAI and Document Intelligence.** Like Cosmos DB already did, both
+  now sign in with Microsoft Entra ID when no key is set: the managed identity when deployed, the
+  developer's `az login` locally. `AZURE_OPENAI_API_KEY` and `DOC_INTELLIGENCE_KEY` become
+  optional, and one shared credential serves every client, so its tokens are reused instead of
+  fetched per query. AI Search still takes a key: the Free tier has no keyless access. Checked:
+  tests for both sign-in paths of each client, including the token the model client sends.
 - **A web UI that follows each assessment as it runs** (`web/`: Next.js, TypeScript,
   shadcn/ui). Submit an entity or one of the six demo cases; the assessment page draws the
   workflow's fan-out and fan-in from the progress stream, with each agent's state, time and where
