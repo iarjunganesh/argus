@@ -8,12 +8,11 @@ Loads:
   data/synthetic/transactions.jsonl   → container: transactions
   data/synthetic/sanctions.jsonl      → extracts PEPs → container: pep_list
 
-Run after: make generate-data
-Usage:     python data/synthetic/upload_to_cosmos.py
+Run after the generate_*.py scripts in this folder and a deployment (docs/DEPLOYMENT.md).
+Usage:     uv run python data/synthetic/upload_to_cosmos.py
 """
 
 import json
-import os
 import time
 import uuid
 from pathlib import Path
@@ -108,14 +107,11 @@ def upload_to_cosmos():
     print("Uploading synthetic data to Azure Cosmos DB...")
 
     try:
-        from azure.cosmos import CosmosClient
+        # COSMOS_KEY if set, otherwise the caller's Entra ID login (az login), which needs the
+        # data role that infra/main.bicep grants to operatorPrincipalId.
+        from argus.config import get_cosmos_database
 
-        endpoint = os.environ["COSMOS_ENDPOINT"]
-        key = os.environ["COSMOS_KEY"]
-        database_name = os.environ.get("COSMOS_DATABASE", "argus-db")
-
-        client = CosmosClient(endpoint, key)
-        database = client.get_database_client(database_name)
+        database = get_cosmos_database()
 
         for upload_def in UPLOADS:
             docs = _load_jsonl(upload_def["file"])
@@ -134,9 +130,6 @@ def upload_to_cosmos():
 
         print("\nCosmos DB upload complete.")
 
-    except KeyError as e:
-        print(f"  ❌ Missing env var: {e}. Run infra/setup.ps1 first.")
-        raise
     except Exception as e:
         print(f"  ❌ Upload failed: {e}")
         raise

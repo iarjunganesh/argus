@@ -15,6 +15,21 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **An Azure deployment that follows decision D1** (`infra/main.bicep`, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)),
+  replacing the hackathon template (AI Search Basic, a `gpt-4o` deployment, a machine learning
+  hub). One resource group: Container Apps (consumption, 0 to 1 replicas) pulling the image from
+  GitHub Container Registry; Log Analytics with a 0.1 GB daily cap and 30-day retention; AI Search
+  Free; Cosmos DB free tier, whose five containers now share the database's 1000 RU/s (the old
+  setup gave each container 400 RU/s of its own, 2000 in all, more than the free tier covers); a
+  Foundry account with `gpt-5.4-mini` (Data Zone Standard, EU); Document Intelligence F0. No key
+  is stored: the API's managed identity holds the data roles, and key authentication is off on
+  Cosmos DB, the model and Document Intelligence; AI Search Free's query key reaches the API as a
+  Container Apps secret. `infra/populate.py` fills the indexes, knowledge bases and containers
+  with the operator's Entra ID login, and `infra/teardown.py` lists (dry run) or deletes the
+  resource group and purges the soft-deleted AI accounts. `upload_to_cosmos.py` signs in with
+  Entra ID when no key is set. Checked: the template builds and lints clean with Bicep 0.43;
+  tests for the two scripts' Azure CLI calls and their order, and that the template's partition
+  keys are fields of the synthetic records. **Not deployed yet**: that waits for approval.
 - **Keyless access to Azure OpenAI and Document Intelligence.** Like Cosmos DB already did, both
   now sign in with Microsoft Entra ID when no key is set: the managed identity when deployed, the
   developer's `az login` locally. `AZURE_OPENAI_API_KEY` and `DOC_INTELLIGENCE_KEY` become
@@ -373,6 +388,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   asyncio-throttle, opentelemetry-sdk, azure-monitor-opentelemetry, azure-ai-inference,
   azure-ai-documentintelligence, python-multipart, pytest-httpx, requests. Checked: nothing imports
   them.
+- **`infra/setup.ps1` and `infra/create_cosmos_db.py`**, the hackathon setup: the first wrote
+  every service's key into `.env`; the template now creates the Cosmos DB containers, and
+  `infra/populate.py` does the rest without keys on disk.
 - **`requirements.txt`, `.coveragerc` and `python-tests.yml`**, replaced by `pyproject.toml`,
   `uv.lock` and `ci.yml`.
 - **Generated files are no longer tracked:** `coverage.xml` and `data/reports_batch.jsonl`.

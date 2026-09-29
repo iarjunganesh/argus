@@ -225,7 +225,7 @@ The planned deployment keeps the idle cost near zero, within a $500 sponsorship 
 | Search | Azure AI Search **Free** (50 MB, 3 indexes; agentic retrieval and semantic ranker are available on Free in this region) | $0 |
 | Entities and reports | Cosmos DB free tier | $0 |
 | OCR | Document Intelligence F0 | $0 |
-| Model | Azure OpenAI `gpt-5.4-mini` and `text-embedding-3-small`, EU data zone, pay per call | $0 |
+| Model | Azure OpenAI `gpt-5.4-mini` on a Foundry account, EU data zone, pay per call (the knowledge bases retrieve without a model, so no embedding model is deployed) | $0 |
 | Logs | Log Analytics with a daily cap | About $0 |
 
 Search moves to Basic ($0.101 an hour, about $74 a month at list price) only when the data outgrows
@@ -234,12 +234,19 @@ and a re-index. The idle cost is an estimate until the exit gate observes a full
 
 ## Infrastructure
 
-`infra/main.bicep` still describes the hackathon deployment: a storage account, Key Vault, Azure
-OpenAI with a `gpt-4o` deployment, an Azure Machine Learning hub and project, Azure AI Search
-(**Basic** tier), Cosmos DB and Document Intelligence (F0). It does not match D1 above (its Search
-tier is billed while it exists) and is replaced in the deployment work; nothing is deployed from it
-today. `data/synthetic/` generates and uploads the synthetic data; `infra/foundry_iq/` creates and
-populates the search indexes.
+[`infra/main.bicep`](../infra/main.bicep) describes the D1 deployment in one resource group: Log
+Analytics, the Container Apps environment and API app, AI Search Free, Cosmos DB (free tier; the
+database and its five containers, sharing 1000 RU/s), a Foundry account with the `gpt-5.4-mini`
+deployment, and Document Intelligence F0. The API's system-assigned managed identity holds the
+data roles it needs (Cognitive Services OpenAI User, Cognitive Services User, and the Cosmos DB
+Built-in Data Contributor on the database), and key authentication is off on those three
+services; AI Search's query key reaches the API as a Container Apps secret. Nothing is deployed
+yet. [`DEPLOYMENT.md`](DEPLOYMENT.md) gives the commands; `infra/populate.py` fills the indexes
+and containers (through the `infra/foundry_iq/` scripts and `data/synthetic/upload_to_cosmos.py`),
+and `infra/teardown.py` removes the deployment, purging what Azure would otherwise keep
+soft-deleted. Both call the Azure CLI through `infra/azcli.py`, asking only for the fields they
+need. `infra/create_typology_index.py` is a hackathon leftover that nothing calls; it would need a
+fourth index, which the Free tier does not allow.
 
 ## Tests
 
