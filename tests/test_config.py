@@ -41,6 +41,33 @@ def test_cosmos_uses_entra_id_without_key(monkeypatch):
     assert isinstance(client.kwargs["credential"], Recorder)
 
 
+def test_one_entra_id_credential_is_shared(monkeypatch):
+    monkeypatch.setattr("azure.identity.DefaultAzureCredential", Recorder)
+
+    assert config.get_azure_credential() is config.get_azure_credential()
+
+
+def test_document_intelligence_uses_key_when_given(monkeypatch):
+    monkeypatch.setattr("azure.ai.documentintelligence.DocumentIntelligenceClient", Recorder)
+    monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "https://di.example")
+    monkeypatch.setenv("DOC_INTELLIGENCE_KEY", "di-test")
+
+    client = config.get_document_intelligence_client()
+
+    assert client.kwargs["endpoint"] == "https://di.example"
+    assert client.kwargs["credential"].key == "di-test"
+
+
+def test_document_intelligence_uses_entra_id_without_key(monkeypatch):
+    monkeypatch.setattr("azure.ai.documentintelligence.DocumentIntelligenceClient", Recorder)
+    monkeypatch.setattr("azure.identity.DefaultAzureCredential", Recorder)
+    monkeypatch.setenv("DOC_INTELLIGENCE_ENDPOINT", "https://di.example")
+
+    client = config.get_document_intelligence_client()
+
+    assert isinstance(client.kwargs["credential"], Recorder)
+
+
 def test_knowledge_base_client(monkeypatch):
     monkeypatch.setattr(
         "azure.search.documents.knowledgebases.KnowledgeBaseRetrievalClient", Recorder

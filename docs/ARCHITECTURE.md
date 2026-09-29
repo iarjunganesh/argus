@@ -207,6 +207,11 @@ o-series) reject `max_tokens` and `temperature`, so they are called with `max_co
 only; `ARGUS_MODEL_REASONING` (`auto` from the model name, or `true`/`false`) says which kind the
 model is. Settings are read from environment variables, or from `.env` (see `.env.example`).
 
+Cosmos DB, Document Intelligence and Azure OpenAI take a key when one is set and otherwise sign
+in with Microsoft Entra ID through one shared credential (`argus.config.get_azure_credential`):
+the managed identity when deployed, the developer's `az login` locally. AI Search always takes a
+key, because its Free tier has no keyless access.
+
 ## Hosting (decision D1, recorded 2026-09-27; not deployed yet)
 
 The planned deployment keeps the idle cost near zero, within a $500 sponsorship that ends

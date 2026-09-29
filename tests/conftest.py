@@ -25,12 +25,15 @@ os.environ["ARGUS_DATA_DIR"] = str(FIXTURE_DATA)
 
 @pytest.fixture(autouse=True)
 def _fresh_data_plane():
-    """Every test starts from the plane its settings describe."""
+    """Every test starts from the plane its settings describe, with no Entra ID credential yet."""
+    from argus.config import get_azure_credential
     from argus.data_plane import set_data_plane
 
     set_data_plane(None)
+    get_azure_credential.cache_clear()
     yield
     set_data_plane(None)
+    get_azure_credential.cache_clear()
 
 
 @pytest.fixture

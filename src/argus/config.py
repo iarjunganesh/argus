@@ -1,9 +1,14 @@
 """
 ARGUS — Azure client factories used by the Azure data plane (`argus.data_plane.azure`).
 The language model client lives in `argus.models`.
+
+Cosmos DB, Document Intelligence and Azure OpenAI take a key when one is set and otherwise sign
+in with Microsoft Entra ID: the managed identity when deployed, the developer's login locally.
+AI Search always takes a key, because the Free tier it runs on has no keyless access.
 """
 
 import os
+from functools import cache
 
 from argus.utils.env_loader import load_repo_env
 
@@ -17,6 +22,14 @@ def _require_env(name: str) -> str:
     return value
 
 
+@cache
+def get_azure_credential():
+    """The one Entra ID credential, so every client shares its cached tokens."""
+    from azure.identity import DefaultAzureCredential
+
+    return DefaultAzureCredential()
+
+
 # ── Azure Cosmos DB ───────────────────────────────────────────────────────────
 
 
@@ -28,16 +41,26 @@ def get_cosmos_client():
     if key:
         return CosmosClient(url=endpoint, credential=key)
 
-    from azure.identity import DefaultAzureCredential
-
-    return CosmosClient(
-        url=endpoint,
-        credential=DefaultAzureCredential(),
-    )
+    return CosmosClient(url=endpoint, credential=get_azure_credential())
 
 
 def get_cosmos_database():
     return get_cosmos_client().get_database_client(os.environ.get("COSMOS_DATABASE", "argus-db"))
+
+
+# ── Azure Document Intelligence ───────────────────────────────────────────────
+
+
+def get_document_intelligence_client():
+    endpoint = _require_env("DOC_INTELLIGENCE_ENDPOINT")
+    from azure.ai.documentintelligence import DocumentIntelligenceClient
+
+    key = os.getenv("DOC_INTELLIGENCE_KEY")
+    if key:
+        from azure.core.credentials import AzureKeyCredential
+
+        return DocumentIntelligenceClient(endpoint=endpoint, credential=AzureKeyCredential(key))
+    return DocumentIntelligenceClient(endpoint=endpoint, credential=get_azure_credential())
 
 
 # ── Azure AI Search ───────────────────────────────────────────────────────────
