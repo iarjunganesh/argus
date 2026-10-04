@@ -302,4 +302,6 @@ diagram variants match their SVG masters and pass WCAG AA contrast. It builds th
 runs one demo assessment through it. The Web UI job lints, type-checks, unit-tests and builds
 `web/`, then runs its Playwright tests against the API container: the six demo scenarios in light,
 dark and phone layouts, each page checked with axe. The infrastructure job compiles
-`infra/main.bicep` and fails on any Bicep linter warning.
+`infra/main.bicep` and fails on any Bicep linter warning. A separate Attribution workflow fails
+a pull request whose commits or description credit an AI assistant
+(`scripts/ci/check_attribution.py`).

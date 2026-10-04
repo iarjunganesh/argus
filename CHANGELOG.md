@@ -15,6 +15,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **No commit or pull request credits an AI assistant.** A new Attribution workflow runs
+  `scripts/ci/check_attribution.py` on every pull request (its commits and its description, again
+  when the description is edited) and on every push to `main`. It fails on a `Co-authored-by`
+  trailer naming an assistant (Claude, Copilot, Codex and others) or a "Generated with" footer.
+  `AGENTS.md` states the rule, and `.claude/settings.json` turns off Claude Code's own commit and
+  pull request attribution for everyone working in the repository. Checked: tests with real git
+  commits and pull request events; run on the deploy branch's history before its trailers were
+  removed, it names the four commits that had one.
 - **A public deployment runs only the synthetic demo cases, and forgets reports after a day.**
   With `ARGUS_DEMO_ONLY=true`, which `infra/main.bicep` sets, the API answers 403 to anything but
   Synthetic Holdings B.V., Jane Synthetic and Cayman Synth Capital with nothing added, so a
