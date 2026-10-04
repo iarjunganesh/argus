@@ -50,7 +50,7 @@ jobs:
             gh release view "$RELEASE_TAG" --json tagName --jq .tagName
           fi
           git checkout --detach "refs/tags/$RELEASE_TAG"
-          uv run --no-build --locked python scripts/ci/release_notes.py "$RELEASE_TAG" --output .tmp/release-notes.md
+          uv run --no-build --locked python scripts/ci/release_notes.py "$RELEASE_TAG"
           echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
   publish:
@@ -68,7 +68,7 @@ jobs:
       - name: Extract release notes
         env:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
-        run: uv run --no-build --locked python scripts/ci/release_notes.py "$RELEASE_TAG" --output .tmp/release-notes.md
+        run: uv run --no-build --locked python scripts/ci/release_notes.py "$RELEASE_TAG"
       # The runner's own gh CLI publishes, so no third-party action holds contents: write.
       - name: Publish the GitHub Release
         env:

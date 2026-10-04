@@ -762,12 +762,23 @@ def test_api_url_encodes_query_values():
     )
 
 
-@pytest.mark.parametrize("script", [notes, versions])
-def test_outputs_go_directly_into_tmp(script, monkeypatch):
-    import argparse
+def test_release_notes_go_to_their_fixed_file(repo, monkeypatch, capsys):
+    monkeypatch.setattr(notes, "ROOT", repo)
+    monkeypatch.setattr(notes, "NOTES", repo / ".tmp" / "release-notes.md")
+    monkeypatch.setattr("sys.argv", ["release_notes.py", "v0.1.0"])
 
-    monkeypatch.chdir(ROOT)
-    assert script.scratch_file(".tmp/report.md") == ROOT / ".tmp" / "report.md"
-    for path in ("report.md", "../report.md", ".tmp/sub/report.md", "/etc/report.md", ".tmp/"):
-        with pytest.raises(argparse.ArgumentTypeError, match=r"directly into .tmp/"):
-            script.scratch_file(path)
+    notes.main()
+
+    assert (repo / ".tmp" / "release-notes.md").read_text() == "### Added\n\n- A tested release.\n"
+    assert "written to .tmp" in capsys.readouterr().out
+
+
+def test_the_inventory_writes_its_report_and_candidate_to_fixed_files(tmp_path, monkeypatch):
+    monkeypatch.setattr(versions, "upstream", lambda root: (["| row |"], {}, {}, {}, "3.15"))
+    monkeypatch.setattr(versions, "REPORTS", {"after": tmp_path / "after.md"})
+    monkeypatch.setattr(versions, "CANDIDATE", tmp_path / "candidate.txt")
+
+    assert versions.main(["--check-upstream", "--report", "after", "--write-candidate"]) == 0
+
+    assert (tmp_path / "after.md").read_text() == "| row |\n"
+    assert (tmp_path / "candidate.txt").read_text() == "3.15"
