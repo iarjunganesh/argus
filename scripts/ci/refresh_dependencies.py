@@ -69,7 +69,19 @@ def commands(python: str) -> list[tuple[str, list[str]]]:
         ),
         (
             "Audit",
-            ["uvx", "pip-audit", "--strict", "--requirement", ".tmp/audit.txt", "--disable-pip"],
+            [
+                "uv",
+                "run",
+                "--locked",
+                "--no-build",
+                "--only-group",
+                "audit",
+                "pip-audit",
+                "--strict",
+                "--requirement",
+                ".tmp/audit.txt",
+                "--disable-pip",
+            ],
         ),
     ]
 
