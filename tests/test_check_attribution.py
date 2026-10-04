@@ -59,7 +59,8 @@ def repo(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_each_commit_in_the_range_is_checked(repo, capsys):
+def test_each_commit_in_the_range_is_checked(repo, monkeypatch, capsys):
+    monkeypatch.setenv("BASE", "base")
     git(repo, "commit", "-q", "--allow-empty", "-m", "clean")
     git(
         repo,
@@ -70,16 +71,18 @@ def test_each_commit_in_the_range_is_checked(repo, capsys):
         "feat: x\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
     )
 
-    assert check.main(["base", "HEAD"]) == 1
+    assert check.main() == 1
     out = capsys.readouterr().out
     assert out.count("commit ") == 1 and "Co-Authored-By: Claude" in out
 
 
 def test_a_clean_range_passes(repo, monkeypatch, capsys):
     monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+    monkeypatch.setenv("BASE", "base")
+    monkeypatch.delenv("HEAD", raising=False)
     git(repo, "commit", "-q", "--allow-empty", "-m", "fix: y\n\nA body that names Claude.")
 
-    assert check.main(["base"]) == 0
+    assert check.main() == 0
     assert "No AI attribution in base..HEAD" in capsys.readouterr().out
 
 
@@ -87,9 +90,18 @@ def test_the_pull_request_description_is_checked(repo, tmp_path, monkeypatch, ca
     event = tmp_path / "event.json"
     event.write_text(json.dumps({"pull_request": {"body": "Notes\n\nGenerated with Claude Code"}}))
     monkeypatch.setenv("GITHUB_EVENT_PATH", str(event))
+    monkeypatch.setenv("BASE", "base")
+    monkeypatch.setenv("HEAD", "HEAD")
 
-    assert check.main(["base", "HEAD"]) == 1
+    assert check.main() == 1
     assert "pull request description: Generated with Claude Code" in capsys.readouterr().out
+
+
+def test_a_range_is_never_read_as_an_option(repo, monkeypatch):
+    monkeypatch.setenv("BASE", "--output=/tmp/x")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        check.main()  # git: unknown revision, not an option
 
 
 def test_events_without_a_description_check_commits_only(tmp_path):
