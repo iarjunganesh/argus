@@ -28,7 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from azcli import AzError, az, deployment_outputs, resource_group_name
+from azcli import AzError, az, deployment_outputs, existing_resource_group, resource_group_name
 
 ROOT = Path(__file__).resolve().parents[1]
 STEPS = (
@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Generate the synthetic data first; missing: {', '.join(missing)}.")
         return 1
     try:
-        env = step_environment(args.resource_group)
+        env = step_environment(existing_resource_group(args.resource_group))
     except AzError as exc:
         print(exc)
         return 1

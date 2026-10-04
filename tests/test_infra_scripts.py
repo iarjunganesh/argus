@@ -69,6 +69,14 @@ def test_az_returns_output_and_raises_the_error_text(monkeypatch):
         azcli.az("fail")
 
 
+def test_the_resource_group_passed_on_is_azures_own_name(monkeypatch):
+    monkeypatch.setattr(azcli, "az_json", lambda *args: ["rg-other", "RG-Argus"])
+
+    assert azcli.existing_resource_group("rg-argus") == "RG-Argus"
+    with pytest.raises(azcli.AzError, match="No resource group named 'rg-gone'"):
+        azcli.existing_resource_group("rg-gone")
+
+
 def test_deployment_outputs_are_plain_values(monkeypatch):
     fake = FakeAz({("deployment",): '{"searchName": {"type": "String", "value": "s"}}'})
     monkeypatch.setattr(azcli, "az", fake)
@@ -108,6 +116,7 @@ def test_a_dry_run_lists_and_deletes_nothing(monkeypatch, capsys):
     fake = FakeAz()
     monkeypatch.setattr(teardown, "az_json", lambda *args: RESOURCES)
     monkeypatch.setattr(teardown, "az", fake)
+    monkeypatch.setattr(teardown, "existing_resource_group", str)
 
     assert teardown.main(["--resource-group", "rg"]) == 0
 
@@ -120,6 +129,7 @@ def test_deleting_forgets_the_workspace_then_the_group_then_purges(monkeypatch):
     fake = FakeAz()
     monkeypatch.setattr(teardown, "az_json", lambda *args: RESOURCES)
     monkeypatch.setattr(teardown, "az", fake)
+    monkeypatch.setattr(teardown, "existing_resource_group", str)
 
     assert teardown.main(["--resource-group", "rg", "--yes"]) == 0
 
@@ -137,6 +147,7 @@ def test_teardown_reports_a_cli_error(monkeypatch, capsys):
         raise azcli.AzError("ResourceGroupNotFound")
 
     monkeypatch.setattr(teardown, "az_json", fail)
+    monkeypatch.setattr(teardown, "existing_resource_group", str)
 
     assert teardown.main(["--resource-group", "rg"]) == 1
     assert "ResourceGroupNotFound" in capsys.readouterr().out
@@ -212,6 +223,7 @@ def test_populate_runs_every_step_and_stops_at_a_failure(monkeypatch, capsys):
         return SimpleNamespace(returncode=3 if len(ran) == 2 else 0)
 
     monkeypatch.setattr(populate, "missing_data", list)
+    monkeypatch.setattr(populate, "existing_resource_group", str)
     monkeypatch.setattr(populate, "step_environment", lambda rg: {})
     monkeypatch.setattr(populate.subprocess, "run", run)
 
@@ -233,6 +245,7 @@ def test_populate_reports_a_cli_error(monkeypatch, capsys):
         raise azcli.AzError("AuthorizationFailed")
 
     monkeypatch.setattr(populate, "missing_data", list)
+    monkeypatch.setattr(populate, "existing_resource_group", str)
     monkeypatch.setattr(populate, "step_environment", fail)
 
     assert populate.main(["--resource-group", "rg"]) == 1
