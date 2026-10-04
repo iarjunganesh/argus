@@ -20,8 +20,14 @@
 
 targetScope = 'resourceGroup'
 
-@description('Region for every resource. Sweden Central has every service and model used here.')
+@description('Region for every resource but AI Search. Sweden Central has every other service and model used here.')
 param location string = resourceGroup().location
+
+// Microsoft's region list (learn.microsoft.com/azure/search/search-region-support, checked
+// 2026-10-04) marks Sweden Central as too much in demand for new search services. France Central
+// is in the EU and has agentic retrieval and the semantic ranker on the Free tier.
+@description('Region for AI Search: one that accepts new services and runs agentic retrieval on the Free tier.')
+param searchLocation string = 'francecentral'
 
 @description('Short prefix for resource names.')
 @minLength(3)
@@ -90,7 +96,7 @@ resource logs 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
 
 resource search 'Microsoft.Search/searchServices@2025-05-01' = {
   name: '${prefix}-search-${suffix}'
-  location: location
+  location: searchLocation
   tags: tags
   sku: { name: 'free' }
   properties: {

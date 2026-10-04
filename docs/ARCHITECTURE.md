@@ -222,7 +222,8 @@ key, because its Free tier has no keyless access.
 ## Hosting (decision D1, recorded 2026-09-27; not deployed yet)
 
 The planned deployment keeps the idle cost near zero, within a $500 sponsorship that ends
-2027-06-30 and a $15 monthly budget alert. Region: Sweden Central.
+2027-06-30 and a $15 monthly budget alert. Region: Sweden Central, except AI Search in France
+Central (Sweden Central takes no new search services; both are in the EU).
 
 | Part | Choice | Cost when idle |
 | --- | --- | --- |
