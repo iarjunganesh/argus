@@ -21,7 +21,7 @@ Only an explicitly approved tag push publishes a release. Once Azure is set up f
    carries its own dated notes.
 5. Run all commands in `AGENTS.md`, plus
    `uv run python scripts/ci/check_versions.py --check` and
-   `uv run python scripts/ci/release_notes.py v0.1.0 --output .tmp/release-notes.md`.
+   `uv run python scripts/ci/release_notes.py v0.1.0` (it writes `.tmp/release-notes.md`).
 6. Obtain the maintainer's explicit approval to create and push the release tag.
 
 ## What the tag runs

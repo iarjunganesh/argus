@@ -228,8 +228,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **SonarQube Cloud's security findings on `main` are fixed or scoped.** CI and release
   workflows run `uv run --no-build`, so no dependency's build script runs (every locked package
   installs from wheels); `pip-audit` comes from a new locked `audit` dependency group instead of an
-  unpinned `uvx`; `check_versions.py` and `release_notes.py` write their outputs only directly
-  into `.tmp/`; `populate.py` and `teardown.py` pass `az` the resource group's name as Azure lists
+  unpinned `uvx`; `check_versions.py` and `release_notes.py` write to fixed files in `.tmp/` and
+  take no output path (`--report before|after`, `--write-candidate`; the release notes always go
+  to `.tmp/release-notes.md`); `populate.py` and `teardown.py` pass `az` the resource group's name as Azure lists
   it. In `infra/main.bicep`, Cosmos DB moves from 8-hour periodic backups to continuous backup
   with 7 days of point-in-time restore (a tier whose backups cost nothing), and Cosmos DB, the
   Foundry account and Document Intelligence get a system-assigned identity. `.sonarcloud.properties`

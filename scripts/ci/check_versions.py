@@ -773,13 +773,12 @@ def check_python_wheels(root: Path, minor: str) -> list[str]:
     return blocked
 
 
-def scratch_file(value: str) -> Path:
-    """An output path given on the command line: a file directly in the repository's .tmp/."""
-    name = os.path.basename(value)  # noqa: PTH119 - the last part only, whatever the path
-    target = ROOT / ".tmp" / name
-    if not name or Path(value).resolve() != target.resolve():
-        raise argparse.ArgumentTypeError(f"{value!r}: write outputs directly into .tmp/")
-    return target
+# The files the dependency refresh reads (refresh_dependencies.py), always in .tmp/.
+REPORTS = {
+    "before": ROOT / ".tmp" / "upstream-before.md",
+    "after": ROOT / ".tmp" / "upstream-after.md",
+}
+CANDIDATE = ROOT / ".tmp" / "python-candidate.txt"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -791,8 +790,10 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--write-minimums", action="store_true")
     mode.add_argument("--write-python")
     mode.add_argument("--check-python-wheels")
-    parser.add_argument("--report", type=scratch_file)
-    parser.add_argument("--candidate-file", type=scratch_file)
+    parser.add_argument("--report", choices=sorted(REPORTS), help="also write the report to .tmp/")
+    parser.add_argument(
+        "--write-candidate", action="store_true", help="write the next Python minor to .tmp/"
+    )
     args = parser.parse_args(argv)
     try:
         if args.check_python_wheels:
@@ -813,11 +814,12 @@ def main(argv: list[str] | None = None) -> int:
         report = "\n".join(rows) + "\n"
         print(report)
         if args.report:
-            args.report.parent.mkdir(parents=True, exist_ok=True)
-            args.report.write_text(report, encoding="utf-8")
-        if args.candidate_file:
-            args.candidate_file.parent.mkdir(parents=True, exist_ok=True)
-            args.candidate_file.write_text(candidate or "", encoding="utf-8")
+            path = REPORTS[args.report]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(report, encoding="utf-8")
+        if args.write_candidate:
+            CANDIDATE.parent.mkdir(parents=True, exist_ok=True)
+            CANDIDATE.write_text(candidate or "", encoding="utf-8")
         if args.write:
             write_backend(ROOT)
             write_actions(ROOT, actions)
