@@ -7,8 +7,8 @@ It talks to this machine (127.0.0.1) or, over HTTPS, to a Container Apps host or
 own domain; nothing else. A deployed API may be scaled to zero, so the first health check waits
 for it to start and reports how long that took (the cold start).
 
-Checks /health, submits the Wirecard AG demo scenario, follows its progress stream until the
-final status, then fetches the report and checks its tier and where each result came from.
+Checks /health, submits the Cayman Synth Capital demo scenario, follows its progress stream until
+the final status, then fetches the report and checks its tier and where each result came from.
 Standard library only, so it runs against the container without installing anything.
 """
 
@@ -20,7 +20,7 @@ import sys
 import time
 from urllib.request import Request, urlopen
 
-REQUEST = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
+REQUEST = {"entity_name": "Cayman Synth Capital", "entity_type": "corporate", "jurisdiction": "KY"}
 AGENTS = ("identity", "screening", "corporate", "transaction", "compliance")
 EXPECTED_SOURCES = {**dict.fromkeys(AGENTS[:4], "demo_profile"), "compliance": "computed"}
 DEPLOYED = re.compile(
@@ -76,7 +76,7 @@ def smoke(base: str, wait: float = 60) -> list[str]:
     completed = {e["agent"] for e in events if e["type"] == "agent_completed"}
     if completed != set(AGENTS):
         problems.append(f"agents completed: {sorted(completed)}")
-    if report.get("risk_summary", {}).get("overall_risk_tier") != "HIGH":
+    if report.get("risk_summary", {}).get("overall_risk_tier") != "CRITICAL":
         problems.append(f"tier: {report.get('risk_summary')}")
     if report.get("audit_trace", {}).get("agent_sources") != EXPECTED_SOURCES:
         problems.append(f"sources: {report.get('audit_trace', {}).get('agent_sources')}")

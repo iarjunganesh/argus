@@ -16,13 +16,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 ### Added
 
 - **Deployment from GitHub Actions** (`deploy.yml`). It builds the API image, pushes it to GitHub
-  Container Registry, deploys `infra/main.bicep` with the image's digest, and runs the Wirecard AG
-  demo against the deployed API, recording the cold start. It signs in to Azure with OpenID
-  Connect (no client secret) from a protected `azure` environment. It runs by hand, and
+  Container Registry, deploys `infra/main.bicep` with the image's digest, and runs the synthetic
+  Cayman Synth Capital demo against the deployed API, recording the cold start. It signs in to
+  Azure with OpenID Connect (no client secret) from a protected `azure` environment. It runs by hand, and
   `release.yml` runs it after each published release once the repository variable
   `AZURE_RESOURCE_GROUP` is set, so tagging deploys the API. A new CI job compiles the template
   and fails on any Bicep linter warning. Checked: actionlint and zizmor (no new findings), the
-  template locally; the workflow itself has not run, because Azure is not set up for it yet.
+  template locally; the Cayman smoke passed against an isolated local API, checking its CRITICAL
+  tier, agent provenance and regulatory citations. The workflow itself has not run, because
+  Azure is not set up for it yet.
 - **An Azure deployment that follows decision D1** (`infra/main.bicep`, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)),
   replacing the hackathon template (AI Search Basic, a `gpt-4o` deployment, a machine learning
   hub). One resource group: Container Apps (Consumption profile, 0 to 1 replicas) pulling the image from
