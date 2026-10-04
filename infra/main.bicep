@@ -114,6 +114,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-04-15' = {
   location: location
   tags: tags
   kind: 'GlobalDocumentDB'
+  identity: { type: 'SystemAssigned' } // holds no roles yet; ready for keyless outbound access
   properties: {
     databaseAccountOfferType: 'Standard'
     enableFreeTier: cosmosFreeTier
@@ -121,14 +122,8 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-04-15' = {
     minimalTlsVersion: 'Tls12'
     locations: [{ locationName: location, failoverPriority: 0, isZoneRedundant: false }]
     consistencyPolicy: { defaultConsistencyLevel: 'Session' }
-    backupPolicy: {
-      type: 'Periodic'
-      periodicModeProperties: {
-        backupIntervalInMinutes: 240
-        backupRetentionIntervalInHours: 8
-        backupStorageRedundancy: 'Local'
-      }
-    }
+    // Point-in-time restore over 7 days; this tier stores its backups at no charge.
+    backupPolicy: { type: 'Continuous', continuousModeProperties: { tier: 'Continuous7Days' } }
   }
 }
 
@@ -162,6 +157,7 @@ resource ai 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   tags: tags
   kind: 'AIServices'
   sku: { name: 'S0' }
+  identity: { type: 'SystemAssigned' } // holds no roles yet; ready for keyless outbound access
   properties: {
     customSubDomainName: '${prefix}-ai-${suffix}'
     disableLocalAuth: true
@@ -187,6 +183,7 @@ resource ocr 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   tags: tags
   kind: 'FormRecognizer'
   sku: { name: 'F0' }
+  identity: { type: 'SystemAssigned' } // holds no roles yet; ready for keyless outbound access
   properties: {
     customSubDomainName: '${prefix}-ocr-${suffix}'
     disableLocalAuth: true
