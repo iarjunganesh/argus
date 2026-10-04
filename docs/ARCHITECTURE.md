@@ -266,7 +266,9 @@ Applied:
 
 - **Identity and secrets.** Managed identity for every service that supports it, key
   authentication off on those, and least-privilege data roles (the Cosmos DB role is scoped to the
-  one database). The one secret is a read-only query key. The deploy workflow signs in with OpenID
+  one database). Cosmos DB, the Foundry account and Document Intelligence also carry a
+  system-assigned identity that holds no role yet, ready for keyless calls out of them. The one
+  secret is a read-only query key. The deploy workflow signs in with OpenID
   Connect from a protected GitHub environment, which [DEPLOYMENT.md](DEPLOYMENT.md) limits to
   `main` and release tags.
 - **Health.** Startup, readiness and liveness probes on `/health`; HTTPS only (`allowInsecure`

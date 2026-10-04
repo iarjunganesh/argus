@@ -15,7 +15,7 @@ Every command runs the same in PowerShell and bash. None of them prints a key.
 | Container Apps environment and the API app | Consumption profile, 0 to 1 replicas, 0.5 vCPU and 1 GiB | $0 (within the monthly free grant) |
 | Log Analytics workspace | Pay as you go, 30-day retention, 0.1 GB daily ingestion cap | About $0 |
 | Azure AI Search | Free: 50 MB, 3 indexes, one per subscription | $0 |
-| Cosmos DB | Free tier: one database of 1000 RU/s shared by four containers, one per subscription | $0 |
+| Cosmos DB | Free tier: one database of 1000 RU/s shared by four containers, one per subscription; continuous backup with 7 days of point-in-time restore | $0 (a restore is billed) |
 | Foundry (AI Services) account with a `gpt-5.4-mini` deployment | S0, Data Zone Standard (EU), 10k tokens a minute | $0; pay per token |
 | Document Intelligence | F0: 500 pages a month, one per subscription | $0 |
 
