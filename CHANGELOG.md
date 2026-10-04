@@ -215,6 +215,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The web UI's `npm audit` in CI blocks on the packages the site ships** (`npm audit
+  --omit=dev`) and only reports advisories in the build tools. A `braces` advisory
+  (GHSA-vfj7-8cjw-p6xm) with no fixed version reaches only the shadcn CLI and the Next.js ESLint
+  config, and blocked every pull request. Checked: `npm audit --omit=dev` finds nothing.
 - **The README badges say what the code does today, in six labelled rows:** repository state
   (CI, the SonarQube Cloud quality gate, Codecov, the latest release, licence, demo video); the
   Microsoft framework and every Azure service ARGUS uses, each with its job (Agent Framework,
