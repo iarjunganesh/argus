@@ -186,8 +186,12 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      # Blocks on any advisory in what the site ships. The build tools (dev dependencies) are
+      # reported but don't block: an advisory there can have no fixed version yet.
       - name: npm audit
-        run: npm audit
+        run: |
+          npm audit --omit=dev
+          npm audit || echo "::warning::npm audit found advisories in dev dependencies only"
       - name: Start the API container
         working-directory: .
         run: |
