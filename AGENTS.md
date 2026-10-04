@@ -36,6 +36,9 @@ runtime as it is, not as planned.
   the current session.
 - **Don't name inspirations.** Don't name or link external projects that served only as style
   references, in any file, commit message or image.
+- **No AI attribution.** Commits, pull request descriptions and review replies credit no AI
+  assistant: no `Co-authored-by` trailer naming one and no "Generated with" footer. Turn off any
+  tool default that adds them; the Attribution workflow fails a pull request that has one.
 
 ## Secrets
 

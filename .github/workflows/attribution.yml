@@ -1,0 +1,33 @@
+name: Attribution
+
+# Commits and pull requests credit no AI assistant (AGENTS.md). Its own workflow so that editing a
+# pull request's description reruns this check alone, not the whole CI gate.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: attribution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  attribution:
+    name: No AI attribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # A pull request: its own commits and its description. A push to main: the pushed commits.
+      - name: Commit messages and the pull request description
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/ci/check_attribution.py "$BASE" "$HEAD"
