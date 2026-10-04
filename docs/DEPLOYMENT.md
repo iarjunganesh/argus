@@ -92,8 +92,9 @@ run again after the data is regenerated.
 uv run python scripts/ci/smoke_api.py https://<the API's address>
 ```
 
-This runs the Wirecard AG demo through the deployed API: the progress stream, the report, its
-tier, where each result came from, and cited regulations (which need the filled knowledge bases).
+This runs the synthetic Cayman Synth Capital demo through the deployed API: the progress stream,
+the report, its CRITICAL tier (a potential sanctions match), where each result came from, and
+cited regulations (which need the filled knowledge bases).
 It prints how long `/health` took to answer, which is the cold start when the API was scaled to
 zero.
 
