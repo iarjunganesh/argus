@@ -773,6 +773,15 @@ def check_python_wheels(root: Path, minor: str) -> list[str]:
     return blocked
 
 
+def scratch_file(value: str) -> Path:
+    """An output path given on the command line: a file directly in the repository's .tmp/."""
+    name = os.path.basename(value)  # noqa: PTH119 - the last part only, whatever the path
+    target = ROOT / ".tmp" / name
+    if not name or Path(value).resolve() != target.resolve():
+        raise argparse.ArgumentTypeError(f"{value!r}: write outputs directly into .tmp/")
+    return target
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -782,8 +791,8 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--write-minimums", action="store_true")
     mode.add_argument("--write-python")
     mode.add_argument("--check-python-wheels")
-    parser.add_argument("--report", type=Path)
-    parser.add_argument("--candidate-file", type=Path)
+    parser.add_argument("--report", type=scratch_file)
+    parser.add_argument("--candidate-file", type=scratch_file)
     args = parser.parse_args(argv)
     try:
         if args.check_python_wheels:

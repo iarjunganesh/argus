@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from azcli import AzError, az, az_json, resource_group_name
+from azcli import AzError, az, az_json, existing_resource_group, resource_group_name
 
 WORKSPACE = "Microsoft.OperationalInsights/workspaces"
 COGNITIVE = "Microsoft.CognitiveServices/accounts"
@@ -62,14 +62,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        found = resources(args.resource_group)
-        print(f"{len(found)} resources in {args.resource_group}:")
+        group = existing_resource_group(args.resource_group)
+        found = resources(group)
+        print(f"{len(found)} resources in {group}:")
         for r in sorted(found, key=lambda r: (r["type"], r["name"])):
             print(f"  {r['type']:55} {r['name']}")
         if not args.yes:
             print("\nDry run: nothing was deleted. Add --yes to delete all of the above.")
             return 0
-        delete(args.resource_group, found)
+        delete(group, found)
     except AzError as exc:
         print(exc)
         return 1

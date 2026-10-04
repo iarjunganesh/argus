@@ -760,3 +760,14 @@ def test_api_url_encodes_query_values():
     assert versions.api_url("ghcr", "token", query={"scope": "a b/c"}) == (
         "https://ghcr.io/token?scope=a%20b%2Fc"
     )
+
+
+@pytest.mark.parametrize("script", [notes, versions])
+def test_outputs_go_directly_into_tmp(script, monkeypatch):
+    import argparse
+
+    monkeypatch.chdir(ROOT)
+    assert script.scratch_file(".tmp/report.md") == ROOT / ".tmp" / "report.md"
+    for path in ("report.md", "../report.md", ".tmp/sub/report.md", "/etc/report.md", ".tmp/"):
+        with pytest.raises(argparse.ArgumentTypeError, match=r"directly into .tmp/"):
+            script.scratch_file(path)

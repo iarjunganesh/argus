@@ -1,12 +1,22 @@
 """Validate a release tag against package metadata and extract its changelog section."""
 
 import argparse
+import os
 import re
 import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TAG = re.compile(r"v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(alpha|beta|rc)\.[1-9]\d*)?")
+
+
+def scratch_file(value: str) -> Path:
+    """An output path given on the command line: a file directly in the repository's .tmp/."""
+    name = os.path.basename(value)  # noqa: PTH119 - the last part only, whatever the path
+    target = ROOT / ".tmp" / name
+    if not name or Path(value).resolve() != target.resolve():
+        raise argparse.ArgumentTypeError(f"{value!r}: write outputs directly into .tmp/")
+    return target
 
 
 def extract(root: Path, tag: str) -> str:
@@ -33,7 +43,7 @@ def extract(root: Path, tag: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("tag")
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--output", type=scratch_file, required=True)
     args = parser.parse_args()
     try:
         notes = extract(ROOT, args.tag)

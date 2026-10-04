@@ -52,6 +52,17 @@ def az_json(*args: str) -> Any:
     return json.loads(az(*args, "--output", "json") or "null")
 
 
+def existing_resource_group(name: str) -> str:
+    """The subscription's resource group of that name, spelled as Azure lists it.
+
+    The scripts pass this on to az, never the name as typed, and stop early when it doesn't exist.
+    """
+    for group in az_json("group", "list", "--query", "[].name"):
+        if group.lower() == name.lower():
+            return str(group)
+    raise AzError(f"No resource group named {name!r} in this subscription.")
+
+
 def deployment_outputs(resource_group: str) -> dict[str, str]:
     """The outputs of infra/main.bicep's last deployment to the resource group."""
     outputs = az_json(
