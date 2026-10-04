@@ -253,8 +253,7 @@ yet. [`DEPLOYMENT.md`](DEPLOYMENT.md) gives the commands; `infra/populate.py` fi
 and containers (through the `infra/foundry_iq/` scripts and `data/synthetic/upload_to_cosmos.py`),
 and `infra/teardown.py` removes the deployment, purging what Azure would otherwise keep
 soft-deleted. Both call the Azure CLI through `infra/azcli.py`, asking only for the fields they
-need. `infra/create_typology_index.py` is a hackathon leftover that nothing calls; it would need a
-fourth index, which the Free tier does not allow.
+need.
 
 ### Design review
 

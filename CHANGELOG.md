@@ -457,6 +457,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **`requirements.txt`, `.coveragerc` and `python-tests.yml`**, replaced by `pyproject.toml`,
   `uv.lock` and `ci.yml`.
 - **Generated files are no longer tracked:** `coverage.xml` and `data/reports_batch.jsonl`.
+- **Files nothing used:** `infra/create_typology_index.py` (a fourth search index the Free tier
+  does not allow), `scripts/dev/check_cosmos_counts.py` (it signed in with a Cosmos DB key, which
+  the deployment turns off), `scripts/dev/batch_run_kyc.py`, the Gradio UI's ARIA label strings
+  (`src/argus/accessibility/aria.py`; the web UI has its own), and three `.gitkeep` files in
+  folders that hold tracked files. Also unused definitions (`KYCResponse`, `KNOWLEDGE_BASES`, a
+  structuring "window" the detector never applied) and the `API_HOST`, `API_PORT` and `LOG_LEVEL`
+  settings, which no code reads, from `.env.example` and the template. Checked: a search of the
+  repository and a dead-code scan (vulture) find no other user; every command in `AGENTS.md`
+  passes.
 
 ### Known issues
 

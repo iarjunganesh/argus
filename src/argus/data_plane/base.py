@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 KnowledgeBase = Literal["regulations", "sanctions", "adverse_media"]
-KNOWLEDGE_BASES: tuple[KnowledgeBase, ...] = ("regulations", "sanctions", "adverse_media")
 
 # How long a report, its status and its progress events are kept after their last change. Cosmos
 # deletes them through the `kyc_reports` container's default time to live (`infra/main.bicep`);
