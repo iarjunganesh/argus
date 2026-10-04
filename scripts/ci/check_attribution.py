@@ -2,10 +2,11 @@
 
 Run from the repository root:
 
-    python scripts/ci/check_attribution.py [BASE [HEAD]]
+    python scripts/ci/check_attribution.py
 
-Checks the messages of the commits in BASE..HEAD (default: origin/main..HEAD) and, when run for a
-GitHub pull request, its description (from the event in GITHUB_EVENT_PATH). Commits and pull
+Checks the messages of the commits in BASE..HEAD, from the environment variables of those names
+(default: origin/main..HEAD), and, when run for a GitHub pull request, its description (from the
+event in GITHUB_EVENT_PATH). Commits and pull
 requests here are the maintainer's own (AGENTS.md); some assistants add a co-author trailer or a
 "Generated with" footer by default, and this catches it before it reaches main. Exits non-zero
 and prints each line found. Standard library only.
@@ -36,8 +37,10 @@ def attributions(text: str) -> list[str]:
 
 def commit_messages(base: str, head: str) -> dict[str, str]:
     """Each commit in base..head, by short hash, with its full message."""
-    out = subprocess.run(  # noqa: S603 - fixed program; the range comes from CI or the caller
-        ["git", "log", "--format=%h%x00%B%x01", f"{base}..{head}"],  # noqa: S607 - git on PATH
+    # --end-of-options: git reads the range as a revision even if it starts with "-".
+    command = ["git", "log", "--format=%h%x00%B%x01", "--end-of-options", f"{base}..{head}"]
+    out = subprocess.run(  # noqa: S603 - fixed program; the range is a revision only
+        command,  # git from PATH
         capture_output=True,
         text=True,
         check=True,
@@ -67,10 +70,9 @@ def problems(base: str, head: str, event_path: str | None) -> list[str]:
     return found
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    base = args[0] if args else "origin/main"
-    head = args[1] if len(args) > 1 else "HEAD"
+def main() -> int:
+    base = os.environ.get("BASE") or "origin/main"
+    head = os.environ.get("HEAD") or "HEAD"
     found = problems(base, head, os.environ.get("GITHUB_EVENT_PATH"))
     for problem in found:
         print(problem)

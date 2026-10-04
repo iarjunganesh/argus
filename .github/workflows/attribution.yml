@@ -30,4 +30,4 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: python3 scripts/ci/check_attribution.py "$BASE" "$HEAD"
+        run: python3 scripts/ci/check_attribution.py
