@@ -54,7 +54,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   with the operator's Entra ID login, and `infra/teardown.py` lists (dry run) or deletes the
   resource group and purges the soft-deleted AI accounts; both refuse anything but a valid
   resource group name before calling `az`, so a value can't be read as an option. Document
-  Intelligence's public network access is off while nothing calls it. `populate.py` gives the
+  Intelligence's public network access is off while nothing calls it. AI Search goes to France
+  Central (`searchLocation`), because Microsoft's region list marks Sweden Central as taking no new
+  search services. `populate.py` gives the
   signed-in operator the Cosmos DB data role on its first run, so filling the data plane works
   after a deployment from the workflow too. Each step now leaves its index or container holding
   exactly the current data: rejected records stop the run instead of being counted, and records

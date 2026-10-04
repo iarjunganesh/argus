@@ -38,12 +38,18 @@ there is no virtual network; only Entra ID sign-in, with the API's role, is acce
 2. **Free-tier slots.** AI Search Free, the Cosmos DB free tier and Document Intelligence F0 each
    allow one per subscription. If one is already taken, the deployment fails; for Cosmos DB,
    `cosmosFreeTier=false` deploys a billed account instead.
-3. **Model quota.** `gpt-5.4-mini` Data Zone Standard needs 10k tokens a minute of quota in the
+3. **A region that takes new search services.** Microsoft's
+   [region list](https://learn.microsoft.com/azure/search/search-region-support) marks some
+   regions, Sweden Central among them (checked 2026-10-04), as too much in demand for new search
+   services. The template therefore puts AI Search in France Central (`searchLocation`), which is
+   in the EU and runs agentic retrieval on the Free tier; everything else stays in the resource
+   group's region.
+4. **Model quota.** `gpt-5.4-mini` Data Zone Standard needs 10k tokens a minute of quota in the
    region (`chatCapacity` sets it). The API is public, so this rate is also the most that a flood
    of requests can spend on the model.
-4. **Tools.** The Azure CLI, signed in (`az login`), with Owner (or Contributor and Role Based
+5. **Tools.** The Azure CLI, signed in (`az login`), with Owner (or Contributor and Role Based
    Access Control Administrator) on the resource group. `uv` for the data scripts.
-5. **The image.** A public image of the API on GitHub Container Registry, built from the root
+6. **The image.** A public image of the API on GitHub Container Registry, built from the root
    `Dockerfile`. Container Apps pulls it anonymously, so the package must be public (package
    settings on GitHub, once).
 
