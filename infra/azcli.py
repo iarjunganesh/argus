@@ -6,7 +6,9 @@ resource, and a key read here goes into a child process's environment, never to 
 
 from __future__ import annotations
 
+import argparse
 import json
+import re
 import shutil
 import subprocess
 from typing import Any
@@ -14,6 +16,19 @@ from typing import Any
 # The name `az deployment group create` is given in docs/DEPLOYMENT.md and deploy.yml; the
 # scripts read the deployment's outputs by it.
 DEPLOYMENT_NAME = "argus"
+
+
+# Azure's rule for resource group names: 1 to 90 letters, digits, underscores, hyphens, periods and
+# parentheses, not ending in a period. A name can't start with a hyphen here either, so it can never
+# be read as one of az's options.
+_RESOURCE_GROUP = re.compile(r"(?!-)[\w().-]{0,89}[\w()-]")
+
+
+def resource_group_name(value: str) -> str:
+    """The `--resource-group` argument of populate.py and teardown.py, checked before any az call."""
+    if not _RESOURCE_GROUP.fullmatch(value):
+        raise argparse.ArgumentTypeError(f"not a resource group name: {value!r}")
+    return value
 
 
 class AzError(RuntimeError):

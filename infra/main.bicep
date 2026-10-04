@@ -188,7 +188,8 @@ resource ocr 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   properties: {
     customSubDomainName: '${prefix}-ocr-${suffix}'
     disableLocalAuth: true
-    publicNetworkAccess: 'Enabled'
+    // Closed until the API accepts documents: nothing calls it yet (CHANGELOG "Known issues").
+    publicNetworkAccess: 'Disabled'
   }
 }
 

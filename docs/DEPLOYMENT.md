@@ -26,7 +26,9 @@ the service and hands it to the API as a Container Apps secret. The image comes 
 Container Registry, so there is no container registry to pay for, and there is no virtual network.
 
 The API does not accept identity documents yet, so Document Intelligence is deployed but not
-called (see "Known issues" in [`CHANGELOG.md`](../CHANGELOG.md)).
+called, and its public network access is off until it is (see "Known issues" in
+[`CHANGELOG.md`](../CHANGELOG.md)). The Foundry account stays reachable over the internet, as
+there is no virtual network; only Entra ID sign-in, with the API's role, is accepted there.
 
 ## Before the first deployment
 
