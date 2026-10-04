@@ -24,7 +24,7 @@ async def assess(request: dict, task_id: str) -> dict:
             "result": {"skipped": True, "reason": "Transaction analysis disabled for this request"},
         }
 
-    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
+    logger.info("assess", extra={"task_id": task_id})
 
     # Load transaction history
     tx_history = await transaction_monitor(entity_name)

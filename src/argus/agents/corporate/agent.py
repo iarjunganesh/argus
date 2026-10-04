@@ -18,7 +18,7 @@ async def assess(request: dict, task_id: str) -> dict:
     reg_number = request.get("registration_number")
     jurisdiction = request.get("jurisdiction", "")
 
-    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
+    logger.info("assess", extra={"task_id": task_id})
 
     # Only run UBO resolution for corporate entities
     if entity_type != "corporate":

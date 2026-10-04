@@ -61,13 +61,15 @@ var suffix = take(uniqueString(resourceGroup().id), 6)
 var databaseName = 'argus-db'
 
 // Partition keys name a field every uploaded record has (data/synthetic/upload_to_cosmos.py);
-// tests/test_data_plane_azure.py checks them against the synthetic records.
-var cosmosContainers = [
+// tests/test_data_plane_azure.py checks them against the synthetic records. Reports expire 24 hours
+// after their last change (REPORT_RETENTION_SECONDS in src/argus/data_plane/base.py).
+type cosmosContainer = { name: string, partitionKey: string, defaultTtl: int? }
+var cosmosContainers cosmosContainer[] = [
   { name: 'entities', partitionKey: '/entity_type' }
   { name: 'corporate_graph', partitionKey: '/parent_entity' }
   { name: 'transactions', partitionKey: '/entity_name' }
   { name: 'pep_list', partitionKey: '/nationality' }
-  { name: 'kyc_reports', partitionKey: '/report_id' }
+  { name: 'kyc_reports', partitionKey: '/report_id', defaultTtl: 86400 }
 ]
 
 // Built-in role definition IDs.
@@ -142,7 +144,10 @@ resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
     parent: database
     name: c.name
     properties: {
-      resource: { id: c.name, partitionKey: { paths: [c.partitionKey], kind: 'Hash' } }
+      resource: union(
+        { id: c.name, partitionKey: { paths: [c.partitionKey], kind: 'Hash' } },
+        c.?defaultTtl == null ? {} : { defaultTtl: c.?defaultTtl }
+      )
     }
   }
 ]
@@ -236,6 +241,7 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'ARGUS_DATA_BACKEND', value: 'azure' }
             { name: 'ARGUS_MODEL_PROVIDER', value: 'azure-openai' }
             { name: 'ARGUS_CORS_ORIGINS', value: corsOrigins }
+            { name: 'ARGUS_DEMO_ONLY', value: 'true' } // a public API runs only the synthetic cases
             { name: 'AZURE_OPENAI_ENDPOINT', value: 'https://${ai.properties.customSubDomainName}.openai.azure.com' }
             { name: 'AZURE_OPENAI_DEPLOYMENT', value: chat.name }
             { name: 'AZURE_SEARCH_ENDPOINT', value: 'https://${search.name}.search.windows.net' }

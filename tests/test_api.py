@@ -82,8 +82,8 @@ def test_reports_are_written_through_the_report_store(client, use_plane, monkeyp
     monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
     report_id = client.post("/api/v1/kyc/assess", json=REQUEST).json()["report_id"]
 
-    assert store._status[report_id] == "completed"
-    assert store._reports[report_id]["report_id"] == report_id
+    assert asyncio.run(store.status(report_id)) == "completed"
+    assert asyncio.run(store.report(report_id))["report_id"] == report_id
 
 
 def test_cors_origins_come_from_settings(monkeypatch):
@@ -97,6 +97,67 @@ def test_no_browser_origin_is_allowed_by_default(client):
 
     assert main.cors_origins() == []
     assert "access-control-allow-origin" not in response.headers
+
+
+# ── demo-only mode (ARGUS_DEMO_ONLY) ─────────────────────────────────────────
+
+CAYMAN = {"entity_name": "Cayman Synth Capital", "entity_type": "corporate", "jurisdiction": "KY"}
+
+
+@pytest.fixture
+def demo_only(monkeypatch):
+    monkeypatch.setenv("ARGUS_DEMO_ONLY", "true")
+
+    async def assessment(request, on_event):
+        return {"risk_summary": {}}
+
+    monkeypatch.setattr(orchestrator, "run_kyc_assessment", assessment)
+
+
+@pytest.mark.parametrize(
+    "request_body",
+    [
+        REQUEST,
+        {**CAYMAN, "jurisdiction": "DE"},
+        {**CAYMAN, "aliases": ["Someone Real"]},
+        {**CAYMAN, "date_of_birth": "1970-01-01"},
+        {**CAYMAN, "registration_number": "123"},
+    ],
+)
+def test_demo_only_refuses_anything_but_a_synthetic_demo_case(client, demo_only, request_body):
+    response = client.post("/api/v1/kyc/assess", json=request_body)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "This deployment runs only the synthetic demo cases: Synthetic Holdings B.V. (corporate, "
+        "NL); Jane Synthetic (individual, DE); Cayman Synth Capital (corporate, KY)"
+    )
+
+
+def test_demo_only_runs_the_synthetic_demo_cases(client, demo_only):
+    body = {**CAYMAN, "entity_name": "  cayman synth CAPITAL ", "jurisdiction": "ky"}
+
+    report_id = client.post("/api/v1/kyc/assess", json=body).json()["report_id"]
+
+    assert client.get(f"/api/v1/kyc/status/{report_id}").json()["status"] == "completed"
+
+
+@pytest.mark.parametrize(
+    ("value", "on"), [("", False), ("false", False), ("TRUE", True), ("1", True)]
+)
+def test_demo_only_is_off_unless_set(monkeypatch, value, on):
+    monkeypatch.setenv("ARGUS_DEMO_ONLY", value)
+
+    assert main.demo_only() is on
+
+
+def test_submitted_names_stay_out_of_the_logs(client, two_agents, caplog):
+    caplog.set_level("INFO")
+
+    client.post("/api/v1/kyc/assess", json=REQUEST)
+
+    logged = [str(vars(record)) for record in caplog.records]
+    assert logged and not any("Acme" in line for line in logged)
 
 
 # ── progress stream (server-sent events) ─────────────────────────────────────

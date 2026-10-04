@@ -17,6 +17,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from argus.api.schemas import KYCRequest, StatusResponse
 from argus.data_plane import get_data_plane
+from argus.utils.demo_profiles import SYNTHETIC_DEMO_CASES, is_synthetic_demo_case
 from argus.utils.env_loader import load_repo_env
 from argus.utils.structured_logger import get_logger
 
@@ -40,6 +41,29 @@ def cors_origins() -> list[str]:
     raw = os.getenv("ARGUS_CORS_ORIGINS", "")
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
+
+def demo_only() -> bool:
+    """Whether the API runs only the synthetic demo cases (`ARGUS_DEMO_ONLY`), as it does in Azure.
+
+    Off by default. A public deployment can't tell a visitor's typed name from a real person's, so
+    it refuses everything but the demo cases whose entities are invented.
+    """
+    return os.getenv("ARGUS_DEMO_ONLY", "").strip().lower() in ("1", "true", "yes")
+
+
+def is_allowed(request: KYCRequest) -> bool:
+    """Any request, or with `ARGUS_DEMO_ONLY` only a synthetic demo case with nothing added."""
+    if not demo_only():
+        return True
+    added = request.registration_number or request.date_of_birth or request.aliases
+    return not added and is_synthetic_demo_case(
+        request.entity_name, request.entity_type, request.jurisdiction
+    )
+
+
+DEMO_ONLY_DETAIL = "This deployment runs only the synthetic demo cases: " + "; ".join(
+    f"{name} ({kind}, {code})" for name, kind, code in SYNTHETIC_DEMO_CASES
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,12 +92,14 @@ def health():
 @app.post("/api/v1/kyc/assess", response_model=dict)
 async def assess(request: KYCRequest, background_tasks: BackgroundTasks):
     """Submit a KYC request. Returns report_id immediately; assessment runs async."""
+    if not is_allowed(request):
+        logger.info("kyc.request.refused", extra={"reason": "demo_only"})
+        raise HTTPException(status_code=403, detail=DEMO_ONLY_DETAIL)
     report_id = f"argus-rpt-{uuid.uuid4().hex[:12]}"
     await get_data_plane().reports.save_status(report_id, "processing")
 
-    logger.info(
-        "kyc.request.submitted", extra={"report_id": report_id, "entity": request.entity_name}
-    )
+    # Names stay out of the logs, which outlive the reports (REPORT_RETENTION_SECONDS).
+    logger.info("kyc.request.submitted", extra={"report_id": report_id})
     background_tasks.add_task(_run_assessment, report_id, request.model_dump())
     return {"report_id": report_id, "status": "processing"}
 

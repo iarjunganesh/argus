@@ -122,14 +122,20 @@ with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
 5. **The package.** After the first run, make the `argus` package public (Packages → argus →
    Package settings → Change visibility), then run the workflow again.
 
+The deployed API runs only the synthetic demo cases (`ARGUS_DEMO_ONLY=true` in the template):
+anything else gets a 403, so visitors can't enter a real person's details. Reports and their
+progress events expire 24 hours after their last change (the `kyc_reports` container's default
+time to live), and the logs, kept 30 days, record report IDs but not entity names.
+
 The workflow deploys with the template's defaults; filling the data plane stays a step you run
 yourself.
 
 ## The web UI
 
 The web UI is deployed separately, on Vercel: a project with root directory `web`, framework
-Next.js, and one environment variable, `NEXT_PUBLIC_API_URL`, set to the API's address. The API
-must list the site's origin in `corsOrigins`.
+Next.js, and two environment variables: `NEXT_PUBLIC_API_URL`, set to the API's address, and
+`NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, so the site offers only the demo cases the API accepts. The
+API must list the site's origin in `corsOrigins`.
 
 ## Limits to know
 

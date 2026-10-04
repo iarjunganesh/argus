@@ -18,7 +18,7 @@ async def assess(request: dict, task_id: str) -> dict:
     reg_number = request.get("registration_number")
     documents = request.get("documents", [])  # list of base64 doc images
 
-    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
+    logger.info("assess", extra={"task_id": task_id})
 
     # Step 1: Registry lookup
     registry_result = await customer_lookup(entity_name, entity_type, reg_number)

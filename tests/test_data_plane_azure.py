@@ -269,7 +269,7 @@ def test_every_cosmos_container_is_partitioned_on_a_field_its_records_have():
 
     root = Path(__file__).resolve().parents[1]
     bicep = (root / "infra" / "main.bicep").read_text(encoding="utf-8")
-    pattern = r"\{ name: '(\w+)', partitionKey: '/(\w+)' \}"
+    pattern = r"\{ name: '(\w+)', partitionKey: '/(\w+)'(?:, defaultTtl: \d+)? \}"
     keys = dict(re.findall(pattern, bicep))
     assert set(keys) == {"entities", "corporate_graph", "transactions", "pep_list", "kyc_reports"}
     assert keys["kyc_reports"] == "report_id"  # CosmosReportStore partitions by report ID
@@ -278,3 +278,15 @@ def test_every_cosmos_container_is_partitioned_on_a_field_its_records_have():
         lines = (synthetic / f"{container}.jsonl").read_text(encoding="utf-8").splitlines()
         records = [json.loads(line) for line in lines if line.strip()]
         assert records and all(keys[container] in r for r in records), container
+
+
+def test_deployed_reports_expire_and_the_deployed_api_runs_only_the_demo_cases():
+    """`infra/main.bicep` keeps reports as long as the code says, and sets ARGUS_DEMO_ONLY."""
+    from pathlib import Path
+
+    from argus.data_plane.base import REPORT_RETENTION_SECONDS
+
+    bicep = (Path(__file__).resolve().parents[1] / "infra" / "main.bicep").read_text("utf-8")
+    reports = "{ name: 'kyc_reports', partitionKey: '/report_id', defaultTtl: %d }"
+    assert reports % REPORT_RETENTION_SECONDS in bicep
+    assert "{ name: 'ARGUS_DEMO_ONLY', value: 'true' }" in bicep

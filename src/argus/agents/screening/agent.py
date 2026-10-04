@@ -19,7 +19,7 @@ async def assess(request: dict, task_id: str) -> dict:
     nationality = request.get("nationality", "")
     dob_or_inc = request.get("dob_or_incorporated", "")
 
-    logger.info("assess", extra={"task_id": task_id, "entity": entity_name})
+    logger.info("assess", extra={"task_id": task_id})
 
     # Run all three screening tools
     sanctions_result = await sanctions_checker(entity_name, aliases, nationality)

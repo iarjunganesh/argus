@@ -45,3 +45,17 @@ export const DEMO_CASES: DemoCase[] = [
     origin: "Public record",
   },
 ];
+
+/**
+ * Set at build time. A public site, like its API (`ARGUS_DEMO_ONLY`), runs only the synthetic
+ * cases, so no visitor's input names a real person.
+ */
+export const DEMO_ONLY = process.env.NEXT_PUBLIC_ARGUS_DEMO_ONLY === "true";
+
+/** The demo cases the site offers: only the synthetic ones when it is demo-only. */
+export function offeredDemoCases(demoOnly: boolean = DEMO_ONLY): DemoCase[] {
+  return demoOnly ? DEMO_CASES.filter((demo) => demo.origin === "Synthetic") : DEMO_CASES;
+}
+
+/** How long the API keeps a report (REPORT_RETENTION_SECONDS in the API). */
+export const RETENTION_NOTICE = "Reports are deleted 24 hours after their last update.";

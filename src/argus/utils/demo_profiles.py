@@ -24,6 +24,21 @@ NAME_ALIASES = {
 }
 
 
+# The demo cases whose entities are wholly invented: (name, entity type, jurisdiction). A public
+# deployment accepts only these (`ARGUS_DEMO_ONLY`), so no visitor's input names a real person.
+SYNTHETIC_DEMO_CASES = (
+    ("Synthetic Holdings B.V.", "corporate", "NL"),
+    ("Jane Synthetic", "individual", "DE"),
+    ("Cayman Synth Capital", "corporate", "KY"),
+)
+
+
+def is_synthetic_demo_case(entity_name: str, entity_type: str, jurisdiction: str) -> bool:
+    """Whether the request is one of SYNTHETIC_DEMO_CASES, ignoring case and outer spaces."""
+    case = (entity_name.strip().lower(), entity_type.strip().lower(), jurisdiction.strip().upper())
+    return case in {(name.lower(), kind, code) for name, kind, code in SYNTHETIC_DEMO_CASES}
+
+
 def get_demo_profile(entity_name: str, entity_type: str, jurisdiction: str) -> dict | None:
     key = (entity_name.strip().lower(), entity_type.strip().lower(), jurisdiction.strip().upper())
     profile = DEMO_PROFILES.get(key)

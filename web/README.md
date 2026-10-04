@@ -23,8 +23,10 @@ npm ci
 npm run dev        # http://localhost:3000
 ```
 
-`NEXT_PUBLIC_API_URL` sets where the API is (default `http://127.0.0.1:8000`). It is read at
-build time.
+`NEXT_PUBLIC_API_URL` sets where the API is (default `http://127.0.0.1:8000`).
+`NEXT_PUBLIC_ARGUS_DEMO_ONLY=true` replaces the form with a notice and offers only the synthetic
+demo cases, matching an API run with `ARGUS_DEMO_ONLY=true` (as deployed). Both are read at build
+time.
 
 ## Checks
 
