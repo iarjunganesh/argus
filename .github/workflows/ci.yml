@@ -37,9 +37,9 @@ jobs:
         with:
           enable-cache: true
       - name: Ruff lint
-        run: uv run --only-group dev ruff check . --output-format github
+        run: uv run --no-build --only-group dev ruff check . --output-format github
       - name: Ruff format
-        run: uv run --only-group dev ruff format --check .
+        run: uv run --no-build --only-group dev ruff format --check .
 
   typecheck:
     name: Type check
@@ -53,7 +53,7 @@ jobs:
         with:
           enable-cache: true
       - name: Mypy
-        run: uv run mypy
+        run: uv run --no-build mypy
 
   test:
     name: Tests and coverage
@@ -74,7 +74,7 @@ jobs:
       - name: Pytest with coverage floor
         env:
           REQUIRE_TESSERACT: "1"
-        run: uv run pytest --cov --cov-report=term --cov-report=xml
+        run: uv run --no-build pytest --cov --cov-report=term --cov-report=xml
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -103,7 +103,7 @@ jobs:
       - name: Export the locked requirements
         run: uv export --all-groups --no-emit-project --format requirements.txt > locked-requirements.txt
       - name: pip-audit
-        run: uvx pip-audit --strict --requirement locked-requirements.txt --disable-pip
+        run: uv run --no-build --only-group audit pip-audit --strict --requirement locked-requirements.txt --disable-pip
 
   secrets:
     name: Secret scan
@@ -229,10 +229,10 @@ jobs:
           globs: "**/*.md"
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Docs agree with the repository
-        run: uv run python scripts/ci/check_docs.py
+        run: uv run --no-build python scripts/ci/check_docs.py
       - name: Version pins agree
-        run: uv run python scripts/ci/check_versions.py --check
+        run: uv run --no-build python scripts/ci/check_versions.py --check
       # Theme variants must match their SVG masters, and every declared text colour pair must
       # pass WCAG AA in both themes. Rasters (PNG/GIF) need a browser and are not checked here.
       - name: Brand and architecture assets are current
-        run: uv run python scripts/ci/render_assets.py --check
+        run: uv run --no-build python scripts/ci/render_assets.py --check

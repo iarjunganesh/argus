@@ -36,6 +36,10 @@ ocr = [
     "pypdfium2>=5.13.0",
     "pytesseract>=0.3.13",
 ]
+# The dependency audit, locked like everything else so CI runs a known pip-audit release.
+audit = [
+    "pip-audit>=2.10.1",
+]
 data = [
     "azure-storage-blob>=12.30.3",
     "faker>=40.39.0",
