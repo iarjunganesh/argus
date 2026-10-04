@@ -11,11 +11,6 @@ class KYCRequest(BaseModel):
     include_transaction_analysis: bool = True
 
 
-class KYCResponse(BaseModel):
-    report_id: str
-    status: str
-
-
 class StatusResponse(BaseModel):
     report_id: str
     status: str  # processing | completed | error | not_found

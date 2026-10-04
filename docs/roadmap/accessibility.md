@@ -106,6 +106,5 @@ def test_argus_palette_aa_compliance():
 ## Tools
 
 - `src/argus/accessibility/wcag.py` — contrast ratio checker, palette auditor
-- `src/argus/accessibility/aria.py` — centralized ARIA label strings
 - `tests/test_accessibility.py` — CI-enforced palette checks, including the web UI's risk colours
 - `web/e2e/` — axe checks of every page in the end-to-end tests

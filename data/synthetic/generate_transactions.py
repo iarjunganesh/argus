@@ -18,7 +18,6 @@ random.seed(33)
 OUTPUT = Path(__file__).parent / "transactions.jsonl"
 
 CURRENCIES = ["EUR", "USD", "GBP", "SEK", "NOK"]
-THRESHOLD = 10_000  # reporting threshold
 
 
 def random_date(days_back=365) -> str:

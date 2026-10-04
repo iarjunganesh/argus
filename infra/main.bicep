@@ -249,7 +249,6 @@ resource api 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'COSMOS_ENDPOINT', value: cosmos.properties.documentEndpoint }
             { name: 'COSMOS_DATABASE', value: database.name }
             { name: 'DOC_INTELLIGENCE_ENDPOINT', value: ocr.properties.endpoint }
-            { name: 'LOG_LEVEL', value: 'INFO' }
           ]
           probes: [
             {
