@@ -152,6 +152,25 @@ async def test_memory_report_store_keeps_progress_events_in_order():
     assert await store.events("r1") == [{"type": "a"}, {"type": "b"}]
 
 
+async def test_memory_report_store_forgets_a_report_a_day_after_its_last_change():
+    from argus.data_plane.base import REPORT_RETENTION_SECONDS
+
+    now = [1000.0]
+    store = MemoryReportStore(clock=lambda: now[0])
+    await store.save_status("old", "completed")
+    now[0] += 60
+    await store.append_event("new", {"type": "a"})
+    now[0] += REPORT_RETENTION_SECONDS - 60
+
+    assert await store.status("old") is None
+    assert await store.events("new") == [{"type": "a"}]
+    await store.save_status("new", "completed")  # a change restarts the clock
+    now[0] += REPORT_RETENTION_SECONDS - 1
+    assert await store.status("new") == "completed"
+    now[0] += 1
+    assert await store.events("new") == [] and await store.report("new") is None
+
+
 async def test_local_ocr_cannot_read_what_is_not_an_image():
     with pytest.raises(dp.DataPlaneUnavailable):
         await LocalOCR().extract(b"image", "passport")

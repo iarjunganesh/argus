@@ -15,6 +15,20 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **A public deployment runs only the synthetic demo cases, and forgets reports after a day.**
+  With `ARGUS_DEMO_ONLY=true`, which `infra/main.bicep` sets, the API answers 403 to anything but
+  Synthetic Holdings B.V., Jane Synthetic and Cayman Synth Capital with nothing added, so a
+  visitor can't enter a real person's details; a site built with
+  `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true` shows a notice and only those three cases instead of the
+  form. Both are off by default, so local use is unchanged. Reports, statuses and progress events
+  now expire 24 hours after their last change in both report stores (Cosmos through the
+  `kyc_reports` container's default time to live), and the UI says so. The API and four agents no
+  longer log the entity name. Checked: tests for the refusals (other names, other jurisdictions,
+  added aliases, dates of birth or registration numbers), case-insensitive acceptance, the setting,
+  expiry and its reset on change, logs without names, and that the template's time to live and
+  setting match the code; Bicep builds and lints clean; the Cayman smoke and a browser run of the
+  demo-only site against a demo-only local API (three cases, no form, CRITICAL report); the 30
+  Playwright tests on the default build, whose API log held no entity names.
 - **Deployment from GitHub Actions** (`deploy.yml`). It builds the API image, pushes it to GitHub
   Container Registry, deploys `infra/main.bicep` with the image's digest, and runs the synthetic
   Cayman Synth Capital demo against the deployed API, recording the cold start. It signs in to

@@ -10,12 +10,15 @@ import asyncio
 import json
 import math
 import re
+import time
 from collections import Counter
+from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
+from typing import Any
 
 from argus.data_plane import tesseract
-from argus.data_plane.base import KnowledgeBase, Passage
+from argus.data_plane.base import REPORT_RETENTION_SECONDS, KnowledgeBase, Passage
 from argus.data_plane.corpus import (
     adverse_media_documents,
     load_jsonl,
@@ -129,30 +132,41 @@ class LocalEntityStore:
 
 
 class MemoryReportStore:
-    """Reports kept for the life of the process. Lost on restart, so local use only."""
+    """Reports kept in memory, for `REPORT_RETENTION_SECONDS` after their last change as in Cosmos.
 
-    def __init__(self) -> None:
-        self._status: dict[str, str] = {}
-        self._reports: dict[str, dict] = {}
-        self._events: dict[str, list[dict]] = {}
+    Lost on restart, so local use only.
+    """
+
+    def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
+        self._clock = clock
+        self._items: dict[str, dict[str, Any]] = {}
+
+    def _item(self, report_id: str) -> dict[str, Any]:
+        cutoff = self._clock() - REPORT_RETENTION_SECONDS
+        for expired in [key for key, item in self._items.items() if item["changed"] <= cutoff]:
+            del self._items[expired]
+        return self._items.get(report_id, {})
+
+    def _change(self, report_id: str, **fields: Any) -> None:
+        self._items[report_id] = {**self._item(report_id), **fields, "changed": self._clock()}
 
     async def save_status(self, report_id: str, status: str) -> None:
-        self._status[report_id] = status
+        self._change(report_id, status=status)
 
     async def status(self, report_id: str) -> str | None:
-        return self._status.get(report_id)
+        return self._item(report_id).get("status")
 
     async def save_report(self, report_id: str, report: dict) -> None:
-        self._reports[report_id] = report
+        self._change(report_id, report=report)
 
     async def report(self, report_id: str) -> dict | None:
-        return self._reports.get(report_id)
+        return self._item(report_id).get("report")
 
     async def append_event(self, report_id: str, event: dict) -> None:
-        self._events.setdefault(report_id, []).append(event)
+        self._change(report_id, events=[*self._item(report_id).get("events", []), event])
 
     async def events(self, report_id: str) -> list[dict]:
-        return list(self._events.get(report_id, []))
+        return list(self._item(report_id).get("events", []))
 
 
 class LocalOCR:

@@ -45,7 +45,11 @@ run as a step of the orchestrator's workflow inside the API process.
 `web/` is a Next.js (App Router) site in TypeScript with shadcn/ui components. It has no server
 logic of its own: the browser calls the API at `NEXT_PUBLIC_API_URL` (set at build time), so the
 API must list the site's origin in `ARGUS_CORS_ORIGINS` (empty by default, which blocks every
-browser origin). The start page submits an assessment; `/assessments/{id}` opens the progress
+browser origin). With `ARGUS_DEMO_ONLY=true`, as in the Azure deployment, the API refuses
+(403) every request except the three synthetic demo cases with nothing added, because a public
+API cannot tell a typed name from a real person's; a site built with
+`NEXT_PUBLIC_ARGUS_DEMO_ONLY=true` then offers only those cases instead of the form. Both are
+off by default. The start page submits an assessment; `/assessments/{id}` opens the progress
 stream with `EventSource`, draws the workflow's fan-out and fan-in with each agent's state, time
 and `source`, and when the stream's `status` event arrives fetches the report. If the stream
 closes at its time limit while the assessment is still running, the browser reconnects with
@@ -86,7 +90,10 @@ waits for the health check to pass.
    what was recorded before the client connected; a client that reconnects with `Last-Event-ID`
    resumes after the last event it received.
 4. The API stores the report through the `ReportStore`: in memory with the local backend (lost
-   when the API restarts), in Cosmos DB (`kyc_reports`) with the Azure backend. The UI follows
+   when the API restarts), in Cosmos DB (`kyc_reports`) with the Azure backend. Either keeps a
+   report, its status and its events for 24 hours after their last change
+   (`REPORT_RETENTION_SECONDS`; in Cosmos the container's default time to live), and the logs
+   record report IDs, never the submitted names. The UI follows
    the stream, then fetches `GET /api/v1/kyc/report/{id}`; it asks
    `GET /api/v1/kyc/status/{id}` only when the stream is refused, to tell an unknown ID from an
    API it cannot reach. `GET /health` answers while the process is up.

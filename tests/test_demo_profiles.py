@@ -25,3 +25,17 @@ def test_demo_profile_aliases_resolve_to_canonical_profiles():
     assert cayman is not None and cayman["screening"]["sanctions_hit"] is True
     assert synthetic is not None and synthetic["screening"]["pep_hit"] is True
     assert jane is not None and jane["screening"]["screening_risk_score"] == 5
+
+
+def test_only_invented_entities_are_synthetic_demo_cases():
+    from argus.utils.demo_profiles import (
+        DEMO_PROFILES,
+        SYNTHETIC_DEMO_CASES,
+        is_synthetic_demo_case,
+    )
+
+    for name, kind, code in SYNTHETIC_DEMO_CASES:
+        assert (name.lower(), kind, code) in DEMO_PROFILES
+        assert is_synthetic_demo_case(f" {name.upper()} ", kind.title(), code.lower())
+    assert not is_synthetic_demo_case("Wirecard AG", "corporate", "DE")
+    assert not is_synthetic_demo_case("Jane Synthetic", "corporate", "DE")
