@@ -51,9 +51,6 @@ param cosmosFreeTier bool = true
 @description('Daily Log Analytics ingestion cap in GB, as a string (Bicep has no decimal literals).')
 param logDailyCapGb string = '0.1'
 
-@description('Object ID of a person or group that fills the data plane (infra/populate.py); empty for none.')
-param operatorPrincipalId string = ''
-
 @description('Tags on every resource, for cost tracking.')
 param tags object = { workload: 'argus' }
 
@@ -68,7 +65,6 @@ var cosmosContainers cosmosContainer[] = [
   { name: 'entities', partitionKey: '/entity_type' }
   { name: 'corporate_graph', partitionKey: '/parent_entity' }
   { name: 'transactions', partitionKey: '/entity_name' }
-  { name: 'pep_list', partitionKey: '/nationality' }
   { name: 'kyc_reports', partitionKey: '/report_id', defaultTtl: 86400 }
 ]
 
@@ -313,20 +309,9 @@ resource apiUsesCosmos 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments
   }
 }
 
-// The operator uploads the synthetic data (infra/populate.py). Search needs no role: the
-// operator's control-plane access reads its admin key.
-resource operatorFillsCosmos 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2025-04-15' = if (!empty(operatorPrincipalId)) {
-  parent: cosmos
-  name: guid(cosmos.id, operatorPrincipalId, cosmosDataContributor)
-  properties: {
-    roleDefinitionId: '${cosmos.id}/sqlRoleDefinitions/${cosmosDataContributor}'
-    principalId: operatorPrincipalId
-    scope: '${cosmos.id}/dbs/${database.name}'
-  }
-}
-
 output apiUrl string = 'https://${api.properties.configuration.ingress.fqdn}'
 output apiName string = api.name
 output searchName string = search.name
 output cosmosEndpoint string = cosmos.properties.documentEndpoint
+output cosmosAccount string = cosmos.name
 output cosmosDatabase string = database.name

@@ -15,7 +15,7 @@ Every command runs the same in PowerShell and bash. None of them prints a key.
 | Container Apps environment and the API app | Consumption profile, 0 to 1 replicas, 0.5 vCPU and 1 GiB | $0 (within the monthly free grant) |
 | Log Analytics workspace | Pay as you go, 30-day retention, 0.1 GB daily ingestion cap | About $0 |
 | Azure AI Search | Free: 50 MB, 3 indexes, one per subscription | $0 |
-| Cosmos DB | Free tier: one database of 1000 RU/s shared by five containers, one per subscription | $0 |
+| Cosmos DB | Free tier: one database of 1000 RU/s shared by four containers, one per subscription | $0 |
 | Foundry (AI Services) account with a `gpt-5.4-mini` deployment | S0, Data Zone Standard (EU), 10k tokens a minute | $0; pay per token |
 | Document Intelligence | F0: 500 pages a month, one per subscription | $0 |
 
@@ -57,13 +57,11 @@ az group create --name rg-argus --location swedencentral
 az deployment group create --resource-group rg-argus --name argus \
   --template-file infra/main.bicep \
   --parameters image=ghcr.io/iarjunganesh/argus@sha256:<digest> \
-               operatorPrincipalId=$(az ad signed-in-user show --query id --output tsv) \
   --query properties.outputs.apiUrl.value --output tsv
 ```
 
 In PowerShell, continue the lines with a backtick instead of a backslash. The command prints the
-API's address. `operatorPrincipalId` gives you the Cosmos DB data role that filling the data
-plane needs; leave it out on later deployments if you like, the role stays. Other parameters
+API's address. Other parameters
 (region, model, capacity, the web UI's origin in `corsOrigins`) are described in the template.
 
 Redeploying the same template with a new `image` replaces the API's revision and leaves the data
@@ -84,9 +82,13 @@ uv run python infra/populate.py --resource-group rg-argus
 
 [`infra/populate.py`](../infra/populate.py) creates the search indexes, knowledge sources and
 knowledge bases, indexes the regulation texts, sanctions and adverse media, and uploads the
-entities, ownership graph and transactions to Cosmos DB. It reads the search admin key with your
-Azure access and passes it to those steps only. Every step overwrites what is there, so it can
-run again after the data is regenerated.
+entities, ownership graph and transactions to Cosmos DB. On its first run it gives you, the
+person signed in, the Cosmos DB data role the upload needs (on the database only), whether the API
+was deployed by hand or by the workflow; if the upload is then refused, wait a minute for the role
+to take effect and run it again. It reads the search admin key with your Azure access and passes
+it to those steps only. Each step leaves its index or container holding exactly the current data:
+records the service rejects stop the run, and records the regenerated data no longer contains are
+deleted, so it can run again after the data is regenerated.
 
 ## Check it
 

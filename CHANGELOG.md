@@ -43,7 +43,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   replacing the hackathon template (AI Search Basic, a `gpt-4o` deployment, a machine learning
   hub). One resource group: Container Apps (Consumption profile, 0 to 1 replicas) pulling the image from
   GitHub Container Registry; Log Analytics with a 0.1 GB daily cap and 30-day retention; AI Search
-  Free; Cosmos DB free tier, whose five containers now share the database's 1000 RU/s (the old
+  Free; Cosmos DB free tier, whose four containers now share the database's 1000 RU/s (the old
   setup gave each container 400 RU/s of its own, 2000 in all, more than the free tier covers); a
   Foundry account with `gpt-5.4-mini` (Data Zone Standard, EU, 10k tokens a minute, which caps
   what a flood of requests to the public API can spend); Document Intelligence F0. Every resource
@@ -54,7 +54,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   with the operator's Entra ID login, and `infra/teardown.py` lists (dry run) or deletes the
   resource group and purges the soft-deleted AI accounts; both refuse anything but a valid
   resource group name before calling `az`, so a value can't be read as an option. Document
-  Intelligence's public network access is off while nothing calls it. `upload_to_cosmos.py` signs in with
+  Intelligence's public network access is off while nothing calls it. `populate.py` gives the
+  signed-in operator the Cosmos DB data role on its first run, so filling the data plane works
+  after a deployment from the workflow too. Each step now leaves its index or container holding
+  exactly the current data: rejected records stop the run instead of being counted, and records
+  the regenerated data no longer contains are deleted. The unused `pep_list` container is gone
+  (no code read it, and most sanctions records it received lacked its partition key), as is the
+  upload of adverse media into `kyc_reports`, and `index_sanctions_and_media.py` now indexes the
+  adverse media as well as the sanctions when run as a script. `upload_to_cosmos.py` signs in with
   Entra ID when no key is set. Checked: the template builds and lints clean with Bicep 0.43;
   tests for the two scripts' Azure CLI calls and their order, and that the template's partition
   keys are fields of the synthetic records. The design was reviewed against Microsoft's Container Apps and

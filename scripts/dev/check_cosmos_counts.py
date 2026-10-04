@@ -26,7 +26,6 @@ containers = [
     "entities",
     "corporate_graph",
     "transactions",
-    "pep_list",
     "kyc_reports",
 ]
 print(f"Database: {database_name}, Checking containers: {containers}")

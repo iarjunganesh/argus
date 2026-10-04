@@ -271,7 +271,7 @@ def test_every_cosmos_container_is_partitioned_on_a_field_its_records_have():
     bicep = (root / "infra" / "main.bicep").read_text(encoding="utf-8")
     pattern = r"\{ name: '(\w+)', partitionKey: '/(\w+)'(?:, defaultTtl: \d+)? \}"
     keys = dict(re.findall(pattern, bicep))
-    assert set(keys) == {"entities", "corporate_graph", "transactions", "pep_list", "kyc_reports"}
+    assert set(keys) == {"entities", "corporate_graph", "transactions", "kyc_reports"}
     assert keys["kyc_reports"] == "report_id"  # CosmosReportStore partitions by report ID
     synthetic = root / "tests" / "fixtures" / "data" / "synthetic"
     for container in ("entities", "corporate_graph", "transactions"):

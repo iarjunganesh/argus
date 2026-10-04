@@ -2,10 +2,11 @@
 
 usage: uv run python infra/populate.py --resource-group RG
 
-Run once after the first deployment (docs/DEPLOYMENT.md), and again after regenerating the data;
-every step overwrites what is there. It needs `az login` as the operator that infra/main.bicep
-was given as `operatorPrincipalId` (for the Cosmos DB data role), and generated synthetic data in
-data/synthetic/ (run its generate_*.py scripts first).
+Run once after the first deployment (docs/DEPLOYMENT.md), and again after regenerating the data:
+each step leaves its index or container holding exactly the current data, deleting what the data
+no longer contains. It needs `az login` with control of the resource group, and generated
+synthetic data in data/synthetic/ (run its generate_*.py scripts first). The first run gives the
+signed-in operator the Cosmos DB data role the upload needs, on the database only.
 
 Steps, each a script that also runs on its own:
   1. infra/foundry_iq/create_knowledge_bases.py   indexes, knowledge sources, knowledge bases
@@ -40,8 +41,40 @@ STEPS = (
 SYNTHETIC = ("entities", "corporate_graph", "transactions", "sanctions", "adverse_media")
 
 
+# Cosmos DB Built-in Data Contributor, the data role the upload signs in with.
+COSMOS_DATA_CONTRIBUTOR = "00000000-0000-0000-0000-000000000002"
+
+
+def grant_operator_cosmos_access(resource_group: str, outputs: dict[str, str]) -> bool:
+    """Give the signed-in operator the Cosmos DB data role on the database, unless they have it.
+
+    Returns whether it was granted now. Whoever deployed (a person or the GitHub workflow), the
+    person filling the data plane is the one signed in here.
+    """
+    operator = az("ad", "signed-in-user", "show", "--query", "id", "--output", "tsv")
+    account = ["--account-name", outputs["cosmosAccount"], "--resource-group", resource_group]
+    held = az(
+        "cosmosdb", "sql", "role", "assignment", "list", *account,
+        "--query", f"length([?principalId=='{operator}' && ends_with(roleDefinitionId, '/{COSMOS_DATA_CONTRIBUTOR}')])",
+        "--output", "tsv",
+    )  # fmt: skip
+    if held not in ("", "0"):
+        return False
+    az(
+        "cosmosdb", "sql", "role", "assignment", "create", *account,
+        "--role-definition-id", COSMOS_DATA_CONTRIBUTOR,
+        "--principal-id", operator,
+        "--scope", f"/dbs/{outputs['cosmosDatabase']}",
+    )  # fmt: skip
+    return True
+
+
 def step_environment(resource_group: str) -> dict[str, str]:
     outputs = deployment_outputs(resource_group)
+    if grant_operator_cosmos_access(resource_group, outputs):
+        print(
+            "Gave you the Cosmos DB data role. If the upload is refused, wait a minute and rerun."
+        )
     search = outputs["searchName"]
     admin_key = az(
         "search", "admin-key", "show",

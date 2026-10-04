@@ -243,7 +243,7 @@ and a re-index. The idle cost is an estimate until the exit gate observes a full
 
 [`infra/main.bicep`](../infra/main.bicep) describes the D1 deployment in one resource group: Log
 Analytics, the Container Apps environment and API app, AI Search Free, Cosmos DB (free tier; the
-database and its five containers, sharing 1000 RU/s), a Foundry account with the `gpt-5.4-mini`
+database and its four containers, sharing 1000 RU/s), a Foundry account with the `gpt-5.4-mini`
 deployment, and Document Intelligence F0. The API's system-assigned managed identity holds the
 data roles it needs (Cognitive Services OpenAI User, Cognitive Services User, and the Cosmos DB
 Built-in Data Contributor on the database), and key authentication is off on those three

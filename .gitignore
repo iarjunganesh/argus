@@ -64,8 +64,7 @@ data/synthetic/*.csv
 data/synthetic/*.parquet
 data/synthetic/ocr_documents/
 
-# Generated adverse-media payload export (written when Azure SDK is unavailable)
-data/public/adverse_media_index_payload.jsonl
+# Regulation PDFs placed for index_regulations.py
 data/public/*.pdf
 
 # Demo outputs
