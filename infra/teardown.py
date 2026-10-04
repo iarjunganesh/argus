@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from azcli import AzError, az, az_json
+from azcli import AzError, az, az_json, resource_group_name
 
 WORKSPACE = "Microsoft.OperationalInsights/workspaces"
 COGNITIVE = "Microsoft.CognitiveServices/accounts"
@@ -57,7 +57,7 @@ def delete(resource_group: str, found: list[dict[str, str]]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--resource-group", required=True)
+    parser.add_argument("--resource-group", required=True, type=resource_group_name)
     parser.add_argument("--yes", action="store_true", help="delete; without it, only list")
     args = parser.parse_args(argv)
 

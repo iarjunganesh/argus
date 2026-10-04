@@ -52,7 +52,9 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Cosmos DB, the model and Document Intelligence; AI Search Free's query key reaches the API as a
   Container Apps secret. `infra/populate.py` fills the indexes, knowledge bases and containers
   with the operator's Entra ID login, and `infra/teardown.py` lists (dry run) or deletes the
-  resource group and purges the soft-deleted AI accounts. `upload_to_cosmos.py` signs in with
+  resource group and purges the soft-deleted AI accounts; both refuse anything but a valid
+  resource group name before calling `az`, so a value can't be read as an option. Document
+  Intelligence's public network access is off while nothing calls it. `upload_to_cosmos.py` signs in with
   Entra ID when no key is set. Checked: the template builds and lints clean with Bicep 0.43;
   tests for the two scripts' Azure CLI calls and their order, and that the template's partition
   keys are fields of the synthetic records. The design was reviewed against Microsoft's Container Apps and

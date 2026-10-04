@@ -3,6 +3,7 @@
 The Azure CLI is replaced by a recorder, so nothing here reaches Azure.
 """
 
+import argparse
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -78,6 +79,26 @@ def test_deployment_outputs_are_plain_values(monkeypatch):
     monkeypatch.setattr(azcli, "az", FakeAz({("deployment",): "null"}))
     with pytest.raises(azcli.AzError, match="No deployment"):
         azcli.deployment_outputs("rg")
+
+
+@pytest.mark.parametrize("name", ["rg-argus", "a", "RG_1", "my.group(test)", "grüppe", "x" * 90])
+def test_resource_group_names_azure_allows_pass(name):
+    assert azcli.resource_group_name(name) == name
+
+
+@pytest.mark.parametrize("name", ["", "-", "--subscription", "rg.", "a b", "rg;ls", "x" * 91])
+def test_anything_else_is_refused_before_az_runs(name):
+    with pytest.raises(argparse.ArgumentTypeError):
+        azcli.resource_group_name(name)
+
+
+@pytest.mark.parametrize("script", [teardown, populate])
+def test_both_scripts_refuse_an_option_as_the_resource_group(script, monkeypatch):
+    monkeypatch.setattr(script, "az", FakeAz())
+
+    with pytest.raises(SystemExit) as exit_:
+        script.main(["--resource-group=--subscription"])
+    assert exit_.value.code == 2
 
 
 # ── teardown ──────────────────────────────────────────────────────────────────

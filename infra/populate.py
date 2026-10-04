@@ -27,7 +27,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from azcli import AzError, az, deployment_outputs
+from azcli import AzError, az, deployment_outputs, resource_group_name
 
 ROOT = Path(__file__).resolve().parents[1]
 STEPS = (
@@ -69,7 +69,7 @@ def missing_data() -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--resource-group", required=True)
+    parser.add_argument("--resource-group", required=True, type=resource_group_name)
     args = parser.parse_args(argv)
 
     if missing := missing_data():
