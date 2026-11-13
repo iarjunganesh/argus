@@ -1,18 +1,24 @@
 # Roadmap: Multi-Modal Evidence
 
-**Status:** Planned
+**Status:** idea, not scheduled. "Current state" corrected on 2026-11-11.
 **Goal:** Extend ARGUS identity verification beyond static documents to voice, video, and liveness signals.
 
 ---
 
 ## Current state
 
-ARGUS v1 supports static document OCR:
+ARGUS reads static, synthetic identity documents only, and not yet through the API:
 
-- Passport, driver's licence, national ID card, tax invoice
-- 6 document quality variants (clean, noisy, degraded, low-contrast, photocopy, skewed)
-- Azure Document Intelligence for field extraction
-- `identity_validator` cross-checks extracted fields against the entity registry
+- The API has no documents field. OCR runs only when the Identity agent is called directly,
+  as the tests do.
+- Locally, Tesseract reads the `Label: value` lines of the synthetic documents (PNG and PDF).
+- The Azure implementation (Document Intelligence) is tested against stand-ins and has not run
+  against the live service.
+- `identity_validator` cross-checks extracted fields against the entity store.
+
+Everything below would process biometric data of real people. That is outside the
+synthetic-data rule in [`AGENTS.md`](../../AGENTS.md) and would need its own decision, a
+privacy review and a lawful basis before any of it is built.
 
 ## What multi-modal adds
 

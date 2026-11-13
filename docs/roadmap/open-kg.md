@@ -1,6 +1,6 @@
 # Roadmap: Open Knowledge Graph
 
-**Status:** Planned
+**Status:** idea, not scheduled. Licences below were corrected on 2026-11-11 and still need checking.
 **Goal:** Publish the ARGUS regulatory knowledge corpus as structured, versioned, open data.
 
 ---
@@ -11,7 +11,7 @@ The knowledge that determines who gets a bank account is currently locked behind
 
 - Licensed compliance data providers ($10k–$100k/year)
 - Proprietary risk scoring models (opaque, unauditable)
-- Vendor-specific knowledge bases (Foundry IQ, Dow Jones, LexisNexis)
+- Vendor-specific knowledge bases
 
 Organizations that need this most — NGOs, microfinance lenders, community researchers studying financial exclusion — are priced out. The result: they either skip compliance checks entirely (regulatory risk) or rely on blunt country-level heuristics that create false positives at scale.
 
@@ -23,15 +23,22 @@ The ARGUS Open KG makes the base regulatory layer a public good.
 
 ### v1 Open KG (launch target)
 
-| Dataset | Source | Format | License |
-| --- | --- | --- | --- |
-| FATF 40 Recommendations | FATF | JSON-LD | Public domain |
-| FATF Mutual Evaluation Reports (summaries) | FATF | JSON | Public domain |
-| Basel AML Index | Basel Institute | JSON | CC-BY 4.0 |
-| Open Sanctions consolidated list | OpenSanctions.org | JSON, CSV | ODC-BY |
-| OFAC SDN List | US Treasury | JSON (converted) | Public domain |
-| EU Consolidated Sanctions List | European Commission | JSON (converted) | Public domain |
-| UN Security Council Sanctions | UN | JSON (converted) | Public domain |
+No source has been approved. Each needs its reuse terms and personal-data basis recorded first
+(see [`../research/data-rule-proposal.md`](../research/data-rule-proposal.md)); the reuse column
+is the current understanding from [`../research/related-work.md`](../research/related-work.md)
+and [`../research/study-data-design.md`](../research/study-data-design.md), not a legal check.
+
+| Dataset | Source | Reuse terms, to verify |
+| --- | --- | --- |
+| FATF Recommendations | FATF | Copyright FATF/OECD; redistribution needs permission, so link and cite, do not republish |
+| Basel AML Index | Basel Institute | Not checked |
+| OFAC SDN and consolidated lists | US Treasury | US public domain |
+| EU consolidated financial sanctions list | European Commission | Commission reuse notice |
+| UK Sanctions List | UK government | Open Government Licence v3, which excludes personal data |
+| UN Security Council list | UN | UN website terms allow personal non-commercial use only; use the EU transpositions instead |
+
+Aggregated lists under non-commercial licences are excluded (maintainer decision, 2026-09-27).
+List entries about natural persons need their own privacy decision before any are published.
 
 ### v2 Open KG (contribution target)
 
@@ -70,5 +77,5 @@ Regulatory knowledge is structured as a graph:
 
 - Versioned with SemVer (regulatory changes are breaking changes)
 - All contributions require a source citation
-- No PII in the corpus
+- No personal data in the corpus without a recorded lawful basis
 - Available as: GitHub releases, pip package (`argus-open-kg`), and hosted API endpoint

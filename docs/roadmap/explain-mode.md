@@ -1,90 +1,40 @@
-# Roadmap: ARGUS Explain Mode
+# Roadmap: a plain-language explanation for the person screened
 
-**Status:** In progress — `explain_decision` tool wired in `src/argus/agents/compliance/tools/explain_decision.py`
-**Goal:** A parallel plain-language report version for end customers, NGO caseworkers, and non-technical reviewers.
+**Status:** deferred, and the original design is withdrawn. Revised 2026-11-11.
+**Goal:** a second version of the explanation that the person being screened, or a caseworker
+helping them, can read.
 
----
+## What exists today
 
-## The problem
+- The analyst explanation is wired in: `explain_decision()` in
+  `src/argus/agents/compliance/tools/explain_decision.py`.
+- A customer-facing variant, `explain_decision_plain_language()`, is in the same file. It has
+  tests, but nothing calls it: no API field, no UI toggle.
 
-Every ARGUS report is currently written for a compliance analyst. The language assumes familiarity with:
+## Why the original design is withdrawn
 
-- Regulatory frameworks (FATF, AMLD, BSA)
-- Risk tier semantics (what "HIGH" means operationally)
-- Foundry IQ citation format (KB-Regulations › FATF-40 › R.16)
-- What "Enhanced Due Diligence" actually requires
+The first version of this page proposed sending that variant's output to customers. Its prompt
+and fallback do things ARGUS's own rules do not allow:
 
-A refugee applying for a bank account, an NGO caseworker explaining a rejection to their board, or a small business owner trying to understand why they've been flagged — none of them can use this report as-is.
+- It tells the model not to quote the findings and passes only the first two, so the text cannot
+  be checked against what was found.
+- It never says that a person still decides.
+- Its fallback promises contact "within 5 business days", which nothing in ARGUS supports.
+- It reassures the reader ("it doesn't mean we've found anything wrong") whatever the findings
+  are.
+- It takes no account of what may lawfully be said. Anti-money-laundering law limits what a
+  customer may be told about an examination or a report.
 
----
+## What has to come first
 
-## What Explain Mode produces
+1. The matched explanation study in [`../ARGUS-V2-PLAN.md`](../ARGUS-V2-PLAN.md), which builds
+   the measures for whether an explanation preserves findings, evidence, uncertainty and
+   review status. Its follow-up question is whether wording can be made simpler without losing
+   them.
+2. A design for what may be disclosed, reviewed by a legal expert and a practitioner. The
+   working draft is "Paper 1" in
+   [`../research/study-data-design.md`](../research/study-data-design.md): code removes facts
+   that must be withheld before any model call, each sentence cites the facts it rests on, and
+   a person approves every letter. Nothing is sent automatically.
 
-Same underlying data. Different output.
-
-**Analyst output (current):**
-> Risk Tier: HIGH | Score: 82 | Regulatory trigger: FATF R.16 (correspondent banking) | Gap: No beneficial owner documentation beyond 25% threshold | Recommended action: Enhanced Due Diligence — obtain notarized UBO declaration within 14 days
-
-**Explain Mode output (target):**
-> **What happened:** We reviewed this account application and found some things we need to look into more carefully before we can proceed.
->
-> **What we found:** The way money has been moving through accounts connected to this application raised a flag in our checks. This is a standard review for certain types of transactions — it doesn't mean we've found anything wrong.
->
-> **What happens next:** A compliance officer will review this personally and reach out within 5 business days. You may be asked to provide some additional documents confirming the ownership structure of your organization. This is a normal part of the process.
->
-> **If you have questions:** Contact our compliance team at [email]. Reference number: RPT-2026-4892.
-
----
-
-## Architecture
-
-The `explain_decision` tool already exists in `src/argus/agents/compliance/tools/explain_decision.py`. In v2 it becomes a first-class output path.
-
-```mermaid
-graph LR
-    CRA[Compliance Agent] -->|analyst_report| ORC
-    CRA -->|explain_decision tool| EXP[Explain Mode Output]
-    ORC -->|both outputs| API
-    API -->|?mode=explain| UI[Web UI]
-```
-
-The web UI's Explanation section gains a toggle:
-
-- "Analyst Report" (default) — current output
-- "Plain Language" — Explain Mode output
-
-Both are generated in the same compliance agent pass. No extra latency.
-
----
-
-## Prompt design
-
-The `explain_decision` tool calls the LLM with a system prompt that enforces:
-
-- Plain English (Flesch-Kincaid grade level ≤ 8)
-- No acronyms without expansion
-- Active voice
-- Empathetic, non-judgmental framing ("we found some things to look into" not "you are high risk")
-- Always includes: what happened, what was found, what happens next, who to contact
-- Never includes: raw scores, regulatory citation codes, internal tool names
-
----
-
-## Localization
-
-Explain Mode is the natural first step for i18n — the plain language version is easier to translate than the analyst report. Target languages for v2:
-
-- Spanish (es) — largest unbanked population in Latin America
-- French (fr) — West Africa NGO operations
-- Arabic (ar) — Middle East/North Africa microfinance
-- Amharic (am) — Ethiopia, one of the largest microfinance markets
-
----
-
-## Rollout plan
-
-- [ ] Wire `explain_decision` into compliance agent as a parallel tool call
-- [ ] Add `?mode=explain` query param to `/api/v1/kyc/report/{id}` endpoint
-- [ ] Add toggle to the web UI (screen-reader accessible — `aria-pressed` toggle button)
-- [ ] Add Flesch-Kincaid grade level assertion to Explain Mode tests
-- [ ] Add localization scaffold (i18n strings in `explain_mode/locales/`)
+Translations, a UI toggle and readability targets depend on both, and are not scheduled.

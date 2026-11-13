@@ -1,8 +1,8 @@
 # Contributing to ARGUS
 
-Thanks for your interest. ARGUS is being cleaned up before the v2 work described in
-[`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md), so the structure may still move. Issues and
-small, focused pull requests are welcome.
+Thanks for your interest. The next work is the study described in
+[`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md); [`HANDOFF.md`](HANDOFF.md) says what is in
+progress. Issues and small, focused pull requests are welcome.
 
 [`AGENTS.md`](AGENTS.md) is the rulebook for humans and coding agents alike: the rules that must
 not be broken, the commands, the definition of done and a map of the repository. This page is
@@ -44,8 +44,9 @@ uv run python scripts/ci/render_assets.py --check
 
 ## What helps most right now
 
-1. Accessibility beyond the tested risk palette: screen-reader announcements and keyboard
-   navigation (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md)).
+1. An accessibility review of the web UI with real assistive technology. The automated checks
+   pass, but that is not a full audit (see
+   [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md)).
 2. Translations of explanation output: the people who most need plain language often don't
    read English.
 

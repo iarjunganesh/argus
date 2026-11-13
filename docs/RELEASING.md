@@ -1,12 +1,13 @@
 # Releases and dependency refreshes
 
-Release automation is prepared for `v0.1.0`. No release has been published by this change.
+Release automation is merged and ready for `v0.1.0`. No release has been published yet.
 Only an explicitly approved tag push publishes a release. Once Azure is set up for GitHub
 ([DEPLOYMENT.md](DEPLOYMENT.md)), the same tag also deploys the API.
 
 ## Before the first tag
 
-1. Merge the release automation PR after its full CI gate passes.
+1. Confirm the three setup items below exist; they are repository settings, so this page cannot
+   tell whether they were done.
 2. Create the repository secret `DEPS_BOT_TOKEN`. Use a fine-grained PAT restricted to this
    repository, with Contents, Pull requests and Workflows read/write permissions. Workflows
    permission is needed because the refresh updates action pins. Never put the token in a file.

@@ -101,7 +101,7 @@ A change is done when:
 After each release tag, every dependency moves to its latest version in a pull request titled
 `deps: refresh after vX.Y.Z`: the Python packages in `uv.lock` and the `pyproject.toml`
 minimums, the GitHub Actions pins, and the Python version once all dependencies support it.
-Microsoft Agent Framework compatibility is part of that check once it is a dependency. **A
+Microsoft Agent Framework is pinned exactly, and its compatibility is part of that check. **A
 release isn't finished until that pull request exists**; report which packages moved and whether
 anything broke. `release.yml` opens that pull request automatically after each tag (see
 [`docs/RELEASING.md`](docs/RELEASING.md)); to do the same by hand:
