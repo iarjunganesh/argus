@@ -467,6 +467,17 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   repository and a dead-code scan (vulture) find no other user; every command in `AGENTS.md`
   passes.
 
+### Security
+
+- **The locked Python packages have no known advisory.** Pillow 12.3.0 → 13.0.0 (the `ocr` and
+  `data` groups now require `pillow>=13.0.0`), certifi 2026.7.22 → 2026.10.23, filelock 4.0.10 →
+  4.2.10 and opentelemetry-api 1.45.0 → 1.45.2; nothing else in `uv.lock` moved. These were the
+  packages behind the open Dependabot alerts for Python, which had made CI's dependency audit
+  fail on every pull request since October; this supersedes Dependabot's Pillow pull request
+  (#26). Checked: `pip-audit --strict` on the exported lock, run as CI runs it, reports nothing;
+  the 381 tests pass with 100% line and branch coverage; ruff, mypy and
+  `render_assets.py --check` (which draws the images with Pillow) pass.
+
 ### Known issues
 
 - **The API does not accept identity documents yet.** `POST /api/v1/kyc/assess` has no
