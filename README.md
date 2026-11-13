@@ -47,7 +47,7 @@
 [![Azure Monitor](https://img.shields.io/badge/Azure_Monitor-API_logs-0078D4)](https://azure.microsoft.com/en-us/products/monitor)
 
 <!-- Row 3 — frontend (web/). Vercel Hobby is the chosen host (decision D1); not deployed yet. -->
-[![Next.js](https://img.shields.io/badge/Next.js-16.3-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
