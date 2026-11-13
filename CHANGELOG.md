@@ -477,6 +477,19 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   (#26). Checked: `pip-audit --strict` on the exported lock, run as CI runs it, reports nothing;
   the 381 tests pass with 100% line and branch coverage; ruff, mypy and
   `render_assets.py --check` (which draws the images with Pillow) pass.
+- **What the web UI ships has no known advisory, and its build tools are down to one with no
+  fix.** Next.js 16.3.8 → 16.4.6 (critical and high advisories, among them remote code execution
+  in the image optimizer and in `use cache` functions), `eslint-config-next` aligned at 16.4.6,
+  Vitest 5.0.2 → 5.0.5, and shadcn 4.21.0 → 4.23.0, whose command-line tool no longer pulls in
+  zod 3 or an MCP server stack (hono, express). `npm audit fix` moved vite, undici, fast-uri and
+  systeminformation within their ranges. An `overrides` entry in `web/package.json` gives
+  typescript-eslint and ts-morph minimatch 11, because no 10.x release has the fix. The only
+  change to shadcn's stylesheet is a reduced-motion rule for its shimmer animation. The README's
+  Next.js badge now says 16.4. Supersedes Dependabot's vite pull request (#25). Left open:
+  deepmerge 4.3.1, used only by the shadcn command-line tool, which has no fixed release.
+  Checked with Node.js 24 after `npm ci`: `npm audit --omit=dev` finds nothing; lint, format,
+  typecheck, the 31 unit tests and the build pass; the 30 Playwright tests pass against a local
+  API.
 
 ### Known issues
 
