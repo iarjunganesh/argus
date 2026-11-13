@@ -49,8 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </main>
         <footer className="border-t">
           <p className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted-foreground sm:px-6">
-            Synthetic data and published enforcement facts only. ARGUS recommends; a human reviewer
-            decides.
+            Synthetic data only. ARGUS recommends; a human reviewer decides.
           </p>
         </footer>
       </body>

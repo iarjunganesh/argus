@@ -36,17 +36,6 @@ def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: d
         + transaction_risk * WEIGHTS["transaction"]
     )
 
-    # Heuristic boost for adverse-only public enforcement cases (e.g., Wirecard-style demos).
-    # Keep this narrow so heavily signaled cases (sanctions/PEP) are not over-amplified into
-    # CRITICAL solely because adverse media is also present.
-    if (
-        screening.get("adverse_media_hit")
-        and screening.get("screening_risk_score", 0) >= 70
-        and not screening.get("sanctions_hit")
-        and not screening.get("pep_hit")
-    ):
-        overall += 12.0
-
     # Format weight strings from WEIGHTS constant for display
     def w(key):
         return f"{int(WEIGHTS[key] * 100)}%"
@@ -85,7 +74,7 @@ def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: d
 
 def _estimate_regulatory_risk(screening: dict, corporate: dict) -> float:
     score = 0.0
-    # Make regulatory signals more sensitive for public adverse-media and PEP hits
+    # PEP and adverse-media hits weigh heavily in the regulatory dimension
     if screening.get("pep_hit"):
         score += 45
     if screening.get("adverse_media_hit"):

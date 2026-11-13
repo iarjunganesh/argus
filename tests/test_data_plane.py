@@ -94,10 +94,10 @@ async def test_nothing_to_search_returns_nothing():
 async def test_local_retriever_reads_the_data_folder():
     retriever = local_retriever(FIXTURE_DATA)
 
-    hits = await retriever.search("adverse_media", "Example Bank enforcement")
+    hits = await retriever.search("adverse_media", "Harbor Test Holdings fraud")
 
-    assert hits[0].id == "PUB-T1"
-    assert hits[0].metadata["source_kind"] == "public"
+    assert hits[0].id == "NEWS-T1"
+    assert hits[0].metadata["source_kind"] == "synthetic"
 
 
 # ── local stores ──────────────────────────────────────────────────────────────
@@ -201,13 +201,13 @@ def test_adverse_media_documents_keep_negative_coverage_only():
         [
             {"id": "a", "sentiment": "negative", "headline": "H"},
             {"id": "b", "sentiment": "positive"},
-        ],
-        [{"document_id": "p", "body": "B"}],
+            {"document_id": "c", "sentiment": "negative", "body": "B"},
+        ]
     )
 
-    assert [d["id"] for d in docs] == ["a", "p"]
+    assert [d["id"] for d in docs] == ["a", "c"]
     assert docs[0]["content"] == "H"  # no body: the headline is the content
-    assert '"source_kind": "public"' in docs[1]["metadata_json"]
+    assert '"source_kind": "synthetic"' in docs[1]["metadata_json"]
 
 
 def test_load_jsonl_skips_blank_lines(tmp_path):

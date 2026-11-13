@@ -7,6 +7,7 @@
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Deploying the API to Azure, filling its data plane, checking it and removing it |
 | [RELEASING.md](RELEASING.md) | Release approval, automation setup, dependency refreshes and retries |
 | [DEPENDENCY-REFRESH.md](DEPENDENCY-REFRESH.md) | Latest automated dependency inventory and validation report |
+| [DATA-SOURCES.md](DATA-SOURCES.md) | The register of official public sources read as reference data, and what was checked before each was added (none yet) |
 | [`research/`](research/README.md) | Working drafts and dated notes behind the study: the data-rule proposal, the study data design, related work and sources |
 | [`roadmap/`](roadmap/) | Ideas that are not scheduled; each page states its status |
 | [`../archive/hackathon-2026/`](../archive/hackathon-2026/) | The frozen Microsoft Agents League 2026 submission material |

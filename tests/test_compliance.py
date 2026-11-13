@@ -192,16 +192,16 @@ def test_unknown_tier_recommendation():
 # ── risk scorer and gap analyzer ──────────────────────────────────────────────
 
 
-def test_adverse_media_only_case_gets_boost():
+def test_adverse_media_only_case_gets_no_boost():
     screening = {"adverse_media_hit": True, "screening_risk_score": 70}
-    boosted = risk_scorer({}, screening, {}, {})
-    plain = risk_scorer({}, {**screening, "pep_hit": True}, {}, {})
+    adverse_only = risk_scorer({}, screening, {}, {})
+    with_pep = risk_scorer({}, {**screening, "pep_hit": True}, {}, {})
 
-    # identity 4 + screening 21 + corporate 3 + regulatory, plus 12 only for the adverse-only
-    # case; the score is rounded to one decimal.
-    assert boosted["overall"] == 48.8  # 4 + 21 + 3 + 8.75 + 12
-    assert plain["overall"] == 48.0  # 4 + 21 + 3 + 20, no boost
-    assert boosted["dimensions"]["regulatory"]["tier"] == "MEDIUM"
+    # identity 4 + screening 21 + corporate 3 + regulatory; nothing is added for an
+    # adverse-media-only case. The score is rounded to one decimal.
+    assert adverse_only["overall"] == 36.8  # 4 + 21 + 3 + 8.75
+    assert with_pep["overall"] == 48.0  # 4 + 21 + 3 + 20
+    assert adverse_only["dimensions"]["regulatory"]["tier"] == "MEDIUM"
 
 
 def test_critical_score_adds_legal_hold():

@@ -6,6 +6,9 @@ once when a potential sanctions match began to hold the case: only Cayman Synth 
 PEP match began to require enhanced due diligence: the two PEP scenarios gain `edd_required` and a
 monitoring action, and Synthetic Holdings B.V. gets the EDD recommendation; no tier or score moved.
 Unchanged when the five agent services became one in-process Agent Framework workflow.
+The three scenarios that named real companies were replaced by synthetic stand-ins (Synthetic
+Payments AG, Synthetic Nordic Bank A/S, Synthetic Pacific Banking Corporation) and recorded new,
+from facts whose scores follow the live agents; the other three did not change.
 A change that moves a tier, a score, a finding or a recommended action shows up here. Regulatory
 triggers are checked for citations only: they come from knowledge-base retrieval, which the
 refactor made real.

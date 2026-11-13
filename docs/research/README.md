@@ -6,7 +6,7 @@ peer reviewed.
 
 | Document | What it is | Status |
 | --- | --- | --- |
-| [data-rule-proposal.md](data-rule-proposal.md) | Proposed wording for the data rule and the synthetic stand-in migration | Accepted by the maintainer on 2026-11-13; not yet in force |
+| [data-rule-proposal.md](data-rule-proposal.md) | Proposed wording for the data rule and the synthetic stand-in migration | Accepted by the maintainer on 2026-11-13; carried out by the stand-in branch |
 | [study-data-design.md](study-data-design.md) | Stand-in migration inventory, typed findings as the scoring reference, and the design of two later studies | Working draft; the two later studies are deferred |
 | [related-work.md](related-work.md) | Papers, regulation and data licences surveyed on 2026-09-30 | Dated notes; recheck before citing |
 | [perpetual-kyc-sources.md](perpetual-kyc-sources.md) | Sources on ongoing monitoring, sanctions and PEP rules, and free public company data (2026-09-27) | Dated notes; the monitoring work is deferred |

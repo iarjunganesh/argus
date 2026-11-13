@@ -9,8 +9,6 @@ def _norm(value: str) -> str:
 
 # Common shorthand names used during demos map to canonical profiles.
 NAME_ALIASES = {
-    "wirecard": ("wirecard ag", "corporate", "DE"),
-    "wirecard ag": ("wirecard ag", "corporate", "DE"),
     "cayman": ("cayman synth capital", "corporate", "KY"),
     "cayman synth": ("cayman synth capital", "corporate", "KY"),
     "cayman holdings": ("cayman synth capital", "corporate", "KY"),
@@ -24,12 +22,15 @@ NAME_ALIASES = {
 }
 
 
-# The demo cases whose entities are wholly invented: (name, entity type, jurisdiction). A public
+# The demo cases, every one an invented entity: (name, entity type, jurisdiction). A public
 # deployment accepts only these (`ARGUS_DEMO_ONLY`), so no visitor's input names a real person.
 SYNTHETIC_DEMO_CASES = (
     ("Synthetic Holdings B.V.", "corporate", "NL"),
     ("Jane Synthetic", "individual", "DE"),
     ("Cayman Synth Capital", "corporate", "KY"),
+    ("Synthetic Payments AG", "corporate", "DE"),
+    ("Synthetic Nordic Bank A/S", "corporate", "DK"),
+    ("Synthetic Pacific Banking Corporation", "corporate", "AU"),
 )
 
 
@@ -242,112 +243,168 @@ DEMO_PROFILES = {
             "transaction_risk_score": 50,
         },
     },
-    ("wirecard ag", "corporate", "DE"): {
+    # The three cases below are invented companies; no GLEIF record matches their names (checked
+    # 2026-11-13). Each agent score is what that live agent computes from the facts beside it, so
+    # their tiers come from the live rules (`tests/test_demo_profiles.py` checks this).
+    ("synthetic payments ag", "corporate", "DE"): {
         "identity": {
             "registry_match": True,
-            "ocr_documents": 0,
-            "discrepancies": [],
-            "identity_score": 92,
-            "verified_fields": ["name"],
+            "ocr_documents": 1,
+            "discrepancies": [
+                {
+                    "field": "name",
+                    "registry": "Synthetic Payments AG",
+                    "document": "Synthetic Payment Services AG",
+                    "severity": "high",
+                }
+            ],
+            "identity_score": 70,
+            "verified_fields": [],
         },
         "screening": {
             "sanctions_hit": False,
             "adverse_media_hit": True,
-            "pep_hit": False,
+            "pep_hit": True,
             "findings": [
                 {
-                    "type": "adverse_media",
-                    "match": "Public coverage highlights accounting irregularities and insolvency proceedings.",
-                    "confidence": 0.91,
-                    "citation": {
-                        "knowledge_base": "adverse_media",
-                        "document": "wirecard_public_enforcement_summary.json",
-                        "snippet_id": "demo-public-001",
-                        "published_at": "2020-06-25",
-                        "tags": ["fraud", "accounting", "governance"],
-                    },
-                }
-            ],
-            "screening_risk_score": 72,
-        },
-        "corporate": {
-            "registry": {"found": True, "record": {"name": "Wirecard AG", "jurisdiction": "DE"}},
-            "ubo_chain": {
-                "ownership_chain": [{"name": "Wirecard AG", "jurisdiction": "DE"}],
-                "depth": 1,
-            },
-            "jurisdiction_info": {"fatf_risk_tier": "standard"},
-            "risk_flags": ["Public adverse-media profile warrants enhanced governance review"],
-            "corporate_score": 60,
-        },
-        "transaction": {
-            "transaction_count": 14,
-            "date_range": {"from": "2026-01-08", "to": "2026-05-30"},
-            "structuring_flag": False,
-            "layering_flag": False,
-            "anomalous_transactions": [],
-            "typology_hits": [],
-            "transaction_risk_score": 15,
-        },
-    },
-    ("danske bank a/s", "corporate", "DK"): {
-        "identity": {
-            "registry_match": True,
-            "ocr_documents": 0,
-            "discrepancies": [],
-            "identity_score": 94,
-            "verified_fields": ["name"],
-        },
-        "screening": {
-            "sanctions_hit": False,
-            "adverse_media_hit": True,
-            "pep_hit": False,
-            "findings": [
+                    "type": "pep",
+                    "match": "Supervisory board member identified as a domestic PEP (former state secretary)",
+                    "confidence": 0.86,
+                    "source": "synthetic_pep_db",
+                },
                 {
                     "type": "adverse_media",
-                    "match": "Public coverage references historical AML control weaknesses and supervisory scrutiny.",
-                    "confidence": 0.88,
+                    "match": "Synthetic press reports delayed annual accounts and an unexplained intercompany receivable",
+                    "confidence": 0.84,
                     "citation": {
                         "knowledge_base": "adverse_media",
-                        "document": "danske_bank_public_enforcement_summary.json",
-                        "snippet_id": "demo-public-002",
-                        "published_at": "2018-09-19",
-                        "tags": ["aml", "controls", "governance"],
+                        "document": "synthetic_payments_accounts_inquiry.json",
+                        "snippet_id": "demo-standin-001",
+                        "published_at": "2026-03-12",
+                        "tags": ["accounting", "governance"],
                     },
-                }
+                },
             ],
-            "screening_risk_score": 68,
+            "screening_risk_score": 40,
         },
         "corporate": {
             "registry": {
                 "found": True,
-                "record": {"name": "Danske Bank A/S", "jurisdiction": "DK"},
+                "record": {"name": "Synthetic Payments AG", "jurisdiction": "DE"},
             },
             "ubo_chain": {
-                "ownership_chain": [{"name": "Danske Bank A/S", "jurisdiction": "DK"}],
-                "depth": 1,
+                "ownership_chain": [
+                    {"name": "Synthetic Payments AG", "jurisdiction": "DE"},
+                    {"name": "Synth Trust Nominees Ltd.", "jurisdiction": "VG"},
+                    {"name": "Synth Harbour SPC", "jurisdiction": "KY"},
+                ],
+                "depth": 3,
             },
-            "jurisdiction_info": {"fatf_risk_tier": "low"},
-            "risk_flags": ["Legacy controls issue requires remediation evidence review"],
-            "corporate_score": 58,
+            "jurisdiction_info": {
+                "country_code": "DE",
+                "fatf_risk_tier": "low",
+                "special_measures": [],
+            },
+            "risk_flags": [
+                "High-risk jurisdiction node: Synth Trust Nominees Ltd. (VG)",
+                "High-risk jurisdiction node: Synth Harbour SPC (KY)",
+            ],
+            "corporate_score": 70,
         },
         "transaction": {
-            "transaction_count": 18,
-            "date_range": {"from": "2026-01-22", "to": "2026-05-26"},
-            "structuring_flag": False,
-            "layering_flag": False,
-            "anomalous_transactions": [],
-            "typology_hits": [],
-            "transaction_risk_score": 18,
+            "transaction_count": 31,
+            "date_range": {"from": "2026-01-15", "to": "2026-06-02"},
+            "structuring_flag": True,
+            "layering_flag": True,
+            "anomalous_transactions": [
+                {
+                    "id": "TX-SPA-01",
+                    "amount": 9800,
+                    "note": "threshold-adjacent merchant settlements",
+                },
+                {
+                    "id": "TX-SPA-02",
+                    "amount": 48000,
+                    "note": "same-day pass-through to an affiliate",
+                },
+            ],
+            "typology_hits": [
+                "Structuring below reporting threshold",
+                "Rapid movement through intermediary accounts",
+            ],
+            "transaction_risk_score": 90,
         },
     },
-    ("westpac banking corporation", "corporate", "AU"): {
+    ("synthetic nordic bank a/s", "corporate", "DK"): {
         "identity": {
             "registry_match": True,
             "ocr_documents": 0,
             "discrepancies": [],
-            "identity_score": 93,
-            "verified_fields": ["name"],
+            "identity_score": 100,
+            "verified_fields": [],
+        },
+        "screening": {
+            "sanctions_hit": False,
+            "adverse_media_hit": True,
+            "pep_hit": True,
+            "findings": [
+                {
+                    "type": "pep",
+                    "match": "Board chair identified as a former minister requiring enhanced due diligence",
+                    "confidence": 0.9,
+                    "source": "synthetic_pep_db",
+                },
+                {
+                    "type": "adverse_media",
+                    "match": "Synthetic press reports a supervisory order to clear a transaction-monitoring backlog",
+                    "confidence": 0.82,
+                    "citation": {
+                        "knowledge_base": "adverse_media",
+                        "document": "synthetic_nordic_bank_monitoring_order.json",
+                        "snippet_id": "demo-standin-002",
+                        "published_at": "2026-02-24",
+                        "tags": ["aml", "monitoring"],
+                    },
+                },
+            ],
+            "screening_risk_score": 40,
+        },
+        "corporate": {
+            "registry": {
+                "found": True,
+                "record": {"name": "Synthetic Nordic Bank A/S", "jurisdiction": "DK"},
+            },
+            "ubo_chain": {
+                "ownership_chain": [{"name": "Synthetic Nordic Bank A/S", "jurisdiction": "DK"}],
+                "depth": 1,
+            },
+            "jurisdiction_info": {
+                "country_code": "DK",
+                "fatf_risk_tier": "low",
+                "special_measures": [],
+            },
+            "risk_flags": [],
+            "corporate_score": 100,
+        },
+        "transaction": {
+            "transaction_count": 22,
+            "date_range": {"from": "2026-01-20", "to": "2026-05-27"},
+            "structuring_flag": False,
+            "layering_flag": True,
+            "anomalous_transactions": [
+                {"id": "TX-SNB-01", "amount": 125000, "note": "inflow forwarded within the day"},
+            ],
+            "typology_hits": ["Rapid movement through intermediary accounts"],
+            "transaction_risk_score": 40,
+        },
+    },
+    ("synthetic pacific banking corporation", "corporate", "AU"): {
+        "identity": {
+            "registry_match": True,
+            "ocr_documents": 0,
+            "discrepancies": [],
+            "identity_score": 100,
+            "verified_fields": [],
         },
         "screening": {
             "sanctions_hit": False,
@@ -356,40 +413,52 @@ DEMO_PROFILES = {
             "findings": [
                 {
                     "type": "adverse_media",
-                    "match": "Public coverage references AML and sanctions-screening control failings.",
-                    "confidence": 0.87,
+                    "match": "Synthetic press reports gaps in the screening of outgoing correspondent payments",
+                    "confidence": 0.8,
                     "citation": {
                         "knowledge_base": "adverse_media",
-                        "document": "westpac_public_enforcement_summary.json",
-                        "snippet_id": "demo-public-003",
-                        "published_at": "2020-11-24",
-                        "tags": ["aml", "sanctions", "monitoring"],
+                        "document": "synthetic_pacific_banking_screening_review.json",
+                        "snippet_id": "demo-standin-003",
+                        "published_at": "2026-04-02",
+                        "tags": ["sanctions", "screening"],
                     },
                 }
             ],
-            "screening_risk_score": 66,
+            "screening_risk_score": 15,
         },
         "corporate": {
             "registry": {
                 "found": True,
-                "record": {"name": "Westpac Banking Corporation", "jurisdiction": "AU"},
+                "record": {"name": "Synthetic Pacific Banking Corporation", "jurisdiction": "AU"},
             },
             "ubo_chain": {
-                "ownership_chain": [{"name": "Westpac Banking Corporation", "jurisdiction": "AU"}],
+                "ownership_chain": [
+                    {"name": "Synthetic Pacific Banking Corporation", "jurisdiction": "AU"}
+                ],
                 "depth": 1,
             },
-            "jurisdiction_info": {"fatf_risk_tier": "standard"},
-            "risk_flags": ["Public compliance remediation case requires control evidence"],
-            "corporate_score": 57,
+            "jurisdiction_info": {
+                "country_code": "AU",
+                "fatf_risk_tier": "low",
+                "special_measures": [],
+            },
+            "risk_flags": [],
+            "corporate_score": 100,
         },
         "transaction": {
-            "transaction_count": 20,
-            "date_range": {"from": "2026-02-01", "to": "2026-05-29"},
-            "structuring_flag": False,
+            "transaction_count": 19,
+            "date_range": {"from": "2026-02-03", "to": "2026-05-29"},
+            "structuring_flag": True,
             "layering_flag": False,
-            "anomalous_transactions": [],
-            "typology_hits": [],
-            "transaction_risk_score": 20,
+            "anomalous_transactions": [
+                {
+                    "id": "TX-SPB-01",
+                    "amount": 9900,
+                    "note": "repeated transfers below the threshold",
+                },
+            ],
+            "typology_hits": ["Structuring below reporting threshold"],
+            "transaction_risk_score": 50,
         },
     },
 }

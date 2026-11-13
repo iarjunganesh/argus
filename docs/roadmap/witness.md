@@ -25,7 +25,7 @@ ARGUS has no mechanism for:
 1. A secure, anonymous web form (Tor-accessible) accepts structured adverse event reports
 2. Reports are reviewed by a human moderator before indexing (no automated ingestion)
 3. Approved reports are indexed into the adverse media knowledge base with a `witness:` provenance tag
-4. The ARGUS Screening Agent surfaces `witness:`-tagged findings with a distinct visual treatment — separate from public-source adverse media
+4. The ARGUS Screening Agent surfaces `witness:`-tagged findings with a distinct visual treatment — separate from other adverse media
 
 This is deliberately modest — no AI processing of raw submissions, no automated entity resolution. The human review step is non-negotiable for whistleblower protection.
 

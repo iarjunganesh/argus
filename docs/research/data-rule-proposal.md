@@ -1,6 +1,8 @@
 # Proposal: the data rule and the stand-in migration
 
-Status: **accepted by the maintainer on 2026-11-13, not yet in force.** Drafted 2026-10-05,
+Status: **accepted by the maintainer on 2026-11-13; in force once the stand-in branch is
+merged** (it carries the text into `AGENTS.md`, `CONTRIBUTING.md`, the README, the web footer and
+`docs/DATA-SOURCES.md`). Drafted 2026-10-05,
 following the decision of 2026-10-04 to replace the real-company demo profiles with synthetic
 stand-ins and to reword the data rule. On 2026-11-13 the maintainer accepted the two-bullet
 wording as written, the empty `docs/DATA-SOURCES.md` register, and the three stand-in names

@@ -199,11 +199,11 @@ Working drafts behind the study are in [`docs/research/`](docs/research/README.m
 | 🔴 Sanctions Hold | `Cayman Synth Capital` | corporate | KY | CRITICAL — Hold until the sanctions match is confirmed or cleared |
 | 🟠 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM — Enhanced Due Diligence (PEP match) |
 | 🟢 Low Risk | `Jane Synthetic` | individual | DE | LOW — Standard onboarding |
-| 🔴 Public High Risk | `Wirecard AG` | corporate | DE | HIGH — Enhanced Due Diligence |
-| 🟠 Public Medium Risk | `Danske Bank A/S` | corporate | DK | MEDIUM — Elevated monitoring |
-| 🟠 Public Medium Risk | `Westpac Banking Corporation` | corporate | AU | MEDIUM — Elevated monitoring |
+| 🔴 High Risk | `Synthetic Payments AG` | corporate | DE | HIGH — Enhanced Due Diligence (PEP match, offshore owners, structuring) |
+| 🟠 Medium Risk | `Synthetic Nordic Bank A/S` | corporate | DK | MEDIUM — Enhanced Due Diligence (PEP match) |
+| 🟢 Low Risk | `Synthetic Pacific Banking Corporation` | corporate | AU | LOW — Standard onboarding, despite adverse media and a structuring flag |
 
-These use recorded demo profiles for the parallel agents (see the status table above).
+Every entity is invented. These use recorded demo profiles for the parallel agents (see the status table above); the last three's profile scores are what the live agents compute from their facts.
 
 ### What a report shows
 
@@ -286,4 +286,4 @@ Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## Disclaimer
 
-ARGUS is a technology demonstration. It is not a licensed compliance tool and must not be used to make real KYC/AML decisions. Core test data is synthetic, with a small public-source adverse-media corpus for demo variety.
+ARGUS is a technology demonstration. It is not a licensed compliance tool and must not be used to make real KYC/AML decisions. All test and demo data is synthetic.

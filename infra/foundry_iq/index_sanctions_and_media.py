@@ -51,7 +51,6 @@ def index_sanctions():
 # ── Adverse Media ─────────────────────────────────────────────────────────────
 
 MEDIA_FILE = ROOT / "data" / "synthetic" / "adverse_media.jsonl"
-PUBLIC_MEDIA_FILE = ROOT / "data" / "public" / "adverse_media_public.jsonl"
 MEDIA_KB = os.getenv("FOUNDRY_IQ_KB_ADVERSEMEDIA", "argus-kb-adversemedia")
 
 
@@ -62,9 +61,7 @@ def _load_jsonl_records(path: Path) -> list[dict]:
 
 
 def _build_adverse_media_documents() -> list[dict]:
-    return adverse_media_documents(
-        _load_jsonl_records(MEDIA_FILE), _load_jsonl_records(PUBLIC_MEDIA_FILE)
-    )
+    return adverse_media_documents(_load_jsonl_records(MEDIA_FILE))
 
 
 def index_adverse_media():
@@ -79,16 +76,10 @@ def index_adverse_media():
         return
 
     synthetic_records = _load_jsonl_records(MEDIA_FILE)
-    public_records = _load_jsonl_records(PUBLIC_MEDIA_FILE)
     negative_only = [r for r in synthetic_records if r.get("sentiment") == "negative"]
-    public_negative = [r for r in public_records if r.get("sentiment", "negative") == "negative"]
     print(
         f"  Loaded {len(negative_only)} synthetic negative articles (from {len(synthetic_records)} total)"
     )
-    if public_records:
-        print(
-            f"  Loaded {len(public_negative)} public adverse-media records (from {len(public_records)} total)"
-        )
 
     stale = replace_documents(_client(MEDIA_KB), docs)
     print(f"  ✅ {len(docs)} adverse media articles indexed into {MEDIA_KB}; {stale} stale removed")
