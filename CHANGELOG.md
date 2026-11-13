@@ -433,6 +433,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **The unused Community Edition sketch.** `argus.community` (configuration presets naming
+  SQLite, Qdrant and fixed model names), its test and `docs/roadmap/community-edition.compose.yml`
+  predated the data plane; no code imported the package and the Compose file could not run. The
+  roadmap page now describes what a community edition would add to the local data plane.
+  Checked: a search of the repository finds no remaining reference; the suite passes at 100%
+  coverage without them.
 - **The Gradio UI** (`src/argus/ui/`, the `ui` dependency group and the 29 packages only it
   needed), replaced by the web UI, which shows everything it did plus live progress. Its static
   "OCR visibility" box is gone: it described document uploads the API does not accept. Checked:

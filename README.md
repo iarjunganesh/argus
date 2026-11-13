@@ -186,7 +186,6 @@ Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): 
 
 - [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
-- [`community/`](src/argus/community/) holds a design and configuration sketch; it doesn't run yet.
 
 ---
 

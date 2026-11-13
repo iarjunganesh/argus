@@ -1,89 +1,46 @@
 # Roadmap: ARGUS Community Edition
 
-**Status:** Designed — scaffolding in `src/argus/community/`
-**Goal:** Zero-cost, self-hostable ARGUS for NGOs, microfinance institutions, and community banks.
+**Status:** idea, not scheduled. Revised 2026-11-11 to match the current runtime.
+**Goal:** a self-hostable ARGUS with no cloud bill, for NGOs, microfinance institutions and
+community banks.
 
----
+## What already exists
 
-## The case for Community Edition
+Most of the base is the default today:
 
-The organizations most likely to be falsely flagged as high risk — NGOs in sanctioned-adjacent jurisdictions, microfinance lenders serving the unbanked, community banks without enterprise compliance budgets — are also the ones who can least afford to integrate licensed KYC tooling.
+- The **local data plane** runs with no cloud account: keyword search over the knowledge
+  documents, entities and reports from local files and memory, and Tesseract for OCR.
+- **No model is needed.** Scores, tiers and findings come from fixed rules; without a model the
+  explanation is a labelled template. Any provider the model factory supports can be configured.
+- **One container image** runs the API.
 
-Community Edition removes every cost barrier:
+An older configuration sketch and Compose file, written before the data plane existed, were
+removed on 2026-11-11: they named components ARGUS does not use, and nothing imported them.
+They remain in the Git history.
 
-- No Azure subscription required for the base flow
-- No licensed data feeds — open corpus only
-- One Docker Compose command to run
-- SQLite + Qdrant + Tesseract replace the Azure-backed services
+## What a community edition would add
 
----
-
-## Architecture differences vs full edition
-
-| Component | Full Edition | Community Edition |
+| Gap | Today | Needed |
 | --- | --- | --- |
-| LLM | GPT-4o (Azure OpenAI) | GPT-4o-mini (or any OpenAI-compatible endpoint) |
-| Entity store | Azure Cosmos DB | SQLite |
-| Vector search | Azure AI Search | Qdrant (self-hosted) |
-| OCR | Azure Document Intelligence | Tesseract |
-| Knowledge base | Foundry IQ (licensed feeds) | Open corpus (FATF, Basel AML Index, Open Sanctions) |
-| Hosting | Azure | Docker Compose (Railway, Fly.io, or local) |
-| Cost | $$$ | ~$0 for low volume |
+| Reports survive a restart | In memory with the local backend | A file-backed `ReportStore` |
+| Data | Synthetic only | Real reference data, which the data rule does not yet allow (see below) |
+| Packaging | API image only | The web UI in the same deployment, and one command to start both |
+| Guidance | None | A guide to common false-positive patterns, written with practitioners |
 
----
+No third data-plane implementation is planned: the local one is extended instead (decision D6).
 
-## Open Corpus
+## Reference data
 
-The Community Edition ships a pre-seeded regulatory knowledge base from open sources:
+A useful community edition needs real sanctions and regulatory reference data. That is a
+data-rule question first: the proposal in
+[`../research/data-rule-proposal.md`](../research/data-rule-proposal.md) would allow official
+list entries and public legal-entity records, unmodified and attributed, once each source's reuse
+terms and personal-data basis are recorded. Sources that are licensed or non-commercial are
+excluded by the maintainer's decision of 2026-09-27, which rules out the aggregated lists an
+earlier version of this page named. Source notes are in
+[`../research/perpetual-kyc-sources.md`](../research/perpetual-kyc-sources.md).
 
-| Dataset | License | Update frequency |
-| --- | --- | --- |
-| FATF 40 Recommendations | Public domain | Stable |
-| Basel AML Index country scores | CC-BY | Annual |
-| Open Sanctions consolidated list | ODC-BY | Daily |
-| OFAC SDN List | Public domain | Real-time (fetched on startup) |
-| EU Consolidated Sanctions List | Public domain | Real-time |
+## Not claimed
 
-The open corpus does not include proprietary PEP lists or commercial adverse media feeds. Organizations that need those can plug in a licensed provider via the `VectorBackend` abstraction.
-
----
-
-## NGO Onboarding
-
-Community Edition ships with:
-
-1. **Sample entity dataset** — 200 synthetic entities representing common false-positive patterns in NGO/microfinance KYC:
-   - Names that phonetically match sanctions list entries
-   - Jurisdictions that score poorly on blunt country-risk rubrics but have legitimate NGO operations
-   - Corporate structures that look like layering but are standard for international NGO legal frameworks
-
-2. **False-positive playbook** — documented patterns with Foundry IQ / open-corpus citations showing WHY a given entity is flagged and HOW to distinguish it from genuine risk
-
-3. **Explain Mode output** — every report includes the plain-language version (see [`explain-mode.md`](explain-mode.md))
-
----
-
-## Rollout Plan
-
-### Phase 1 — Docker Compose
-
-A first sketch of the stack is in [`community-edition.compose.yml`](community-edition.compose.yml). It does not run yet.
-
-- [ ] Dockerfile for community image
-- [ ] SQLite adapter for entity/transaction store
-- [ ] Qdrant adapter for vector search
-- [x] Tesseract OCR path (`src/argus/data_plane/tesseract.py`, the local `OCR` implementation)
-- [ ] Open corpus seed script
-- [ ] `CommunityConfig` wired into all agent constructors
-
-### Phase 2 — One-click deploy
-
-- [ ] Railway deploy button in README
-- [ ] Fly.io deploy config
-- [ ] Health check endpoint that reports edition (community vs full)
-
-### Phase 3 — NGO Program
-
-- [ ] Application form for verified NGOs
-- [ ] Pre-verified open corpus with NGO-specific false-positive patterns indexed
-- [ ] Community forum / GitHub Discussions for compliance edge cases
+ARGUS is a demonstration. A community edition would not make it a licensed compliance tool, and
+nothing here says it reduces false positives or financial exclusion.
