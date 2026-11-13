@@ -76,7 +76,6 @@ data/*.jsonl
 # Disposable scratch (safe to empty at any time) — never commit
 .tmp/
 
-# Durable local working files: the handoff between coding tools and the working plans — never
-# commit. Unlike .tmp/, this folder must not be cleared.
+# Durable private working files: notes, drafts and working plans — never commit. Unlike .tmp/,
+# this folder must not be cleared. The shared handoff is the tracked HANDOFF.md at the root.
 .local/
-/HANDOFF.md

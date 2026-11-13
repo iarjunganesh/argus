@@ -1,7 +1,8 @@
 # ARGUS architecture (current runtime)
 
-This page describes how ARGUS runs **today**, as checked against the code on 2026-09-28. The planned
-v2 runtime is described in [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original hackathon design spec
+This page describes how ARGUS runs **today**. It was last revised with the deployment work in
+October 2026; `main` has not changed since. The next work is planned in
+[ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original hackathon design spec
 is archived in [`archive/hackathon-2026/docs/`](../archive/hackathon-2026/docs/ARGUS_Architecture.md)
 and is no longer maintained.
 
@@ -282,16 +283,17 @@ Applied:
   each deployment.
 - **AI.** The model writes only the explanation; scores, tiers and findings come from fixed rules,
   and a failed model call falls back to a labelled template. Processing stays in the EU data zone,
-  and the default content filter applies. Explanations keep their findings, evidence, uncertainty
-  and human-review status.
+  and the default content filter applies. The explanation prompt is given the findings, the
+  sanctions and review status and the regulatory triggers; whether the explanation preserves
+  them has not been measured, and is the question of the v2 study.
 
 Left out on purpose, for cost or because the demo does not need it: availability zones, several
 replicas and minimum replicas (cold starts are accepted), a second region, a virtual network,
 private endpoints, a web application firewall and premium ingress, Key Vault (there is one secret,
 held by Container Apps), Defender for Containers, sign-in on the API (it is a public demo of
 synthetic data; CORS limits which sites may call it from a browser), Azure Policy, and load or
-chaos testing. Tracing with OpenTelemetry and an evaluation of the explanations are v2 work
-([ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md)).
+chaos testing. An evaluation of the explanations is the v2 study
+([ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md)); tracing with OpenTelemetry is planned and not built.
 
 ## Tests
 

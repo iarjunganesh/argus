@@ -15,6 +15,19 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **The handoff is a tracked file at the repository root.** `HANDOFF.md` holds the current
+  state, the next step and a session log, with public-safe content only; `AGENTS.md`,
+  `CLAUDE.md` and the Copilot instructions give the same read order (rules, handoff, v2 plan).
+  Private notes stay in the ignored `.local/` folder. `check_docs.py` no longer refuses a
+  tracked `HANDOFF.md` and still refuses anything under `.local/` or `.tmp/`; Markdown lint now
+  covers the handoff. Checked: `check_docs.py` and markdownlint pass with the file tracked.
+- **The working drafts behind the study are in `docs/research/`.** The data-rule proposal, the
+  study data design (stand-in inventory, typed findings, two deferred studies), the related-work
+  survey and the monitoring sources were private notes; they are now tracked, each with a status
+  line and its date, and the durable-execution proposal is in `docs/roadmap/`. None of them
+  describes shipped behaviour or a result. Checked: `check_docs.py` (links, retired terms) and
+  markdownlint pass; the files were searched for account, employer and private references and
+  for the names of other projects, and hold none.
 - **No commit or pull request credits an AI assistant.** A new Attribution workflow runs
   `scripts/ci/check_attribution.py` on every pull request (its commits and its description, again
   when the description is edited) and on every push to `main`. It fails on a `Co-authored-by`
@@ -225,6 +238,21 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The target-runtime diagram matches the revised plan.** Its planned explanation box now
+  shows the study (raw and minimised input, preservation measured) instead of a plain-language
+  explanation, and Fabric IQ and Work IQ are marked as coming after the study. Labels only;
+  the layout is unchanged. Checked: `render_assets.py --check` passes and the regenerated
+  images were inspected in both themes.
+- **The v2 plan leads with a matched explanation study.** `docs/ARGUS-V2-PLAN.md` now asks
+  whether a model's explanation of a rule-determined outcome keeps the findings, evidence,
+  uncertainty and review status, whether that changes when the model receives minimised typed
+  findings instead of the raw case, and what happens under an injected instruction or a missing
+  workflow step. Simplifying the wording becomes the follow-up question; the customer-facing
+  letter, event replay, durable execution and the Fabric IQ and Work IQ integrations are
+  deferred. Two changes are listed before the first week: synthetic stand-ins with the data
+  rule, and typed findings as the only inputs to scoring. Planning only: no application code
+  changed. Checked: the plan's "Starting evidence" section was reread against
+  `explain_decision.py`, the Compliance agent and `risk_scorer.py` at `b75d14c`.
 - **SonarQube Cloud's security findings on `main` are fixed or scoped.** CI and release
   workflows run `uv run --no-build`, so no dependency's build script runs (every locked package
   installs from wheels); `pip-audit` comes from a new locked `audit` dependency group instead of an
@@ -354,6 +382,17 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **The documents no longer contradict the code or each other.** The roadmap page for the
+  plain-language explanation withdrew a design that promised contact "within 5 business days"
+  and reassured the reader whatever was found; the community-edition page describes the data
+  plane that exists instead of components ARGUS does not use; the accessibility page no longer
+  lists finished work as a target; the open-knowledge-graph page no longer calls copyrighted or
+  non-commercial sources public domain; the multimodal and witness pages say that they need a
+  data-rule decision first. `ARCHITECTURE.md` no longer states that explanations keep their
+  findings, which has not been measured. The README states that its two opening stories are
+  illustrations and that ARGUS makes no claim to improve real screening outcomes. Stale dates
+  and "being cleaned up" wording were corrected. Checked: each statement was compared with the
+  code at `b75d14c`; `check_docs.py` and markdownlint pass.
 - **A cited regulation states its whole rule.** Each regulatory trigger was the retrieved
   passage cut at 120 characters, often mid-word ("…whose s"). It is now the passage's first
   sentence, where each passage states its rule, cut at a word and marked with "…" only past 300
@@ -426,6 +465,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **The unused Community Edition sketch.** `argus.community` (configuration presets naming
+  SQLite, Qdrant and fixed model names), its test and `docs/roadmap/community-edition.compose.yml`
+  predated the data plane; no code imported the package and the Compose file could not run. The
+  roadmap page now describes what a community edition would add to the local data plane.
+  Checked: a search of the repository finds no remaining reference; the suite passes at 100%
+  coverage without them.
 - **The Gradio UI** (`src/argus/ui/`, the `ui` dependency group and the 29 packages only it
   needed), replaced by the web UI, which shows everything it did plus live progress. Its static
   "OCR visibility" box is gone: it described document uploads the API does not accept. Checked:

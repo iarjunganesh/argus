@@ -5,6 +5,9 @@
 ## Claude Code notes
 
 - Everything in `AGENTS.md` applies. It is the single source; don't copy its rules here.
+- Read [`HANDOFF.md`](HANDOFF.md) next for the current state and next step, then
+  [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md). Update the root handoff before stopping.
+  Private working material goes in the ignored `.local/` folder.
 - `.claude/settings.json` pre-approves the read-only checks (`uv run pytest`, `ruff`, `mypy`,
   the two scripts' checks) and `git status`, `diff` and `log`, and turns off Claude Code's commit
   and pull request attribution (`attribution`). Anything that writes to GitHub still needs the

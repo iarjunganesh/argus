@@ -7,9 +7,10 @@
   orchestrator, the four specialist agents concurrently, and the Compliance and Risk agent. Models
   sit behind one provider setting. The data plane has four interfaces, Retriever, EntityStore,
   ReportStore and OCR, each with an Azure implementation and a local one; Foundry IQ is the Azure
-  retriever, not yet run against live services. Planned, drawn dashed: Explain Mode, which adds a
-  plain-language explanation to the analyst one; human review of every explanation; Fabric IQ and
-  Work IQ reached as MCP tools; and OpenTelemetry.</desc>
+  retriever, not yet run against live services. Planned, drawn dashed: the explanation study, which
+  explains the same findings from raw and from minimised input and measures what is preserved;
+  human review of every explanation; Fabric IQ and Work IQ reached as MCP tools, after the
+  study; and OpenTelemetry.</desc>
 
   <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        This is the plan in docs/ARGUS-V2-PLAN.md, drawn. It must say "planned" wherever it could
@@ -132,10 +133,10 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <path class="flow" d="M962 475 H1000" marker-end="url(#flowarrow)"/>
 
   <rect class="planned2" x="1006" y="412" width="270" height="124" rx="12"/>
-  <text class="goldtag" x="1026" y="442">EXPLAIN MODE</text>
+  <text class="goldtag" x="1026" y="442">EXPLANATION STUDY</text>
   <text class="small" x="1026" y="472">analyst explanation (built)</text>
-  <text class="small" x="1026" y="498">plain-language explanation</text>
-  <text class="small" x="1026" y="524">evidence + uncertainty kept</text>
+  <text class="small" x="1026" y="498">raw vs minimised input</text>
+  <text class="small" x="1026" y="524">preservation is measured</text>
 
   <rect class="review" x="84" y="600" width="1192" height="62" rx="14"/>
   <text class="goldtag" x="108" y="637">HUMAN REVIEW</text>
@@ -171,14 +172,14 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="label" x="494" y="808">Ownership ontology</text>
   <text class="body" x="494" y="842">entities, owners, jurisdictions</text>
   <text class="body" x="494" y="868">for the Corporate agent</text>
-  <text class="small" x="494" y="910">plus the evaluation dataset</text>
+  <text class="small" x="494" y="910">after the first write-up</text>
 
   <rect class="box" x="890" y="736" width="410" height="210" rx="14"/>
   <text class="tag" x="914" y="770">WORK IQ · MCP</text>
   <text class="label" x="914" y="808">Case-handover context</text>
   <text class="body" x="914" y="842">read-only, synthetic analyst</text>
   <text class="body" x="914" y="868">notes in a test tenant</text>
-  <text class="small" x="914" y="910">later experiment · licence-gated</text>
+  <text class="small" x="914" y="910">after the study · licence-gated</text>
 
   <rect class="built" x="1380" y="736" width="480" height="210" rx="14"/>
   <text class="tag" x="1404" y="770">DATA PLANE · AZURE + LOCAL ONLY</text>

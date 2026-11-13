@@ -1,38 +1,69 @@
-# ARGUS v2: a focused engineering and writing experiment
+# ARGUS v2: a matched explanation study
+
+Revised 2026-11-11. The earlier version of this plan asked only whether explanations could be
+made simpler. This version puts a controlled comparison first and keeps simplification as the
+follow-up question. The platform sections are unchanged.
 
 ## Purpose
 
-Spend six weeks investigating one question, improving ARGUS, and publishing an honest technical article. Use the work to explore a direction in reliable, auditable AI systems for regulated environments.
+Run one bounded study on ARGUS, improve one thing it shows to be wrong, and publish an honest
+technical write-up. Use the work to explore a direction in reliable, auditable AI systems for
+regulated environments.
 
-**Research question:** Can ARGUS produce simpler explanations while preserving evidence, uncertainty, and the need for human review?
+In ARGUS, fixed rules decide the score and tier, and a language model only writes the explanation
+a human reviewer reads. The study asks what that explanation preserves, and how that depends on
+what the model is given.
 
-Success means one answered question, one bounded improvement, and one written account of the results. A peer-reviewed paper is a possible later outcome, not a requirement for this experiment.
+The research questions:
+
+1. **Preservation.** When a model explains a fixed, rule-determined outcome, does the explanation
+   keep the findings, the evidence references, the uncertainty and the human-review status?
+2. **Input minimisation.** Does that change when the model receives only minimised, typed findings
+   (stable identifiers, categories, bounded scores) instead of the raw case (entity name,
+   free-text findings)? What does the model see in each case?
+3. **Failure conditions.** What happens to the explanation when case data carries an injected
+   instruction, and when one workflow step's result is missing?
+
+**Follow-up question, after the first write-up:** can the explanation be made simpler to read
+while still preserving all of the above? This was the earlier plan's only question; it needs the
+measures from questions 1 to 3 before it can be answered.
+
+Success means the three questions answered on a small synthetic case set, one bounded improvement,
+and one written account of the results, including failures: a short technical report with a
+permanent identifier, and an article that summarises it. A peer-reviewed paper is a possible
+later outcome, not a requirement for this study.
 
 ## How to use this plan
 
 This is a planning document, not an agent instruction file. Repository rules for contributors and
-coding agents live in the repository instructions. Reference this plan explicitly when starting v2
-work, and verify behaviour in the code before relying on anything written here.
+coding agents live in [`AGENTS.md`](../AGENTS.md), and the current state and next step are in
+[`HANDOFF.md`](../HANDOFF.md). Reference this plan explicitly when starting v2 work, and verify
+behaviour in the code before relying on anything written here.
 
 ## Starting evidence and uncertainties
 
-Checked against the code on 2026-09-26:
+Checked against the code on 2026-11-11 (`main` at `b75d14c`):
 
-- **Explain Mode.** `explain_decision()` (analyst-facing) is wired into the Compliance agent.
-  `explain_decision_plain_language()` (customer-facing) exists in
-  `src/argus/agents/compliance/tools/explain_decision.py` but nothing calls it and no test covers it.
-- **The plain-language prompt works against this plan's criteria by design.** It tells the model
-  not to quote findings, forbids tiers and regulatory references, passes only the first two
-  findings, and never states that a human still decides.
-- **The fallback invents an obligation.** It promises contact "within 5 business days", which
-  nothing supports.
-- **Fallbacks are silent.** Without a configured model, both explanation paths return template
-  text, so a baseline must record whether each output came from the model or a fallback.
-- **Foundry IQ queries don't reach Foundry IQ.** The tools call
-  `AIProjectClient.knowledge_bases.query`, which doesn't exist in `azure-ai-projects` 1.0.0 or
-  2.6.1, so every call fell back to fixed results. (Replaced in cleanup by the data plane's
-  retriever, which uses the AI Search query API; see `docs/ARCHITECTURE.md`.)
+- **The analyst explanation receives the raw case.** `explain_decision()` in
+  `src/argus/agents/compliance/tools/explain_decision.py` is wired into the Compliance agent. Its
+  prompt contains the entity name, type and jurisdiction, the score, tier and tier basis, the
+  sanctions and enhanced-due-diligence status, the first five `key_findings` strings, the first
+  three regulatory triggers cut to 100 characters, and the five dimension scores.
+- **Findings are free text and can carry names.** `_extract_findings()` in the Compliance agent
+  builds `key_findings` as strings. A PEP finding includes the matched name from screening.
+- **`key_findings` is not a complete record of what set the score.** The scorer also uses
+  identity confidence, the corporate score and the transaction risk score, and adds a fixed
+  boost for adverse-media-only cases. None of these appears as a finding, so the strings cannot
+  serve as the reference for what an explanation must preserve.
+- **The explanation records who wrote it.** The result carries `explanation_source` (`model` or
+  `fallback`). Without a configured model the fixed template is used and labelled.
+- **The customer-facing variant is not wired in.** `explain_decision_plain_language()` has tests
+  but nothing calls it. Its prompt tells the model not to quote findings, forbids tiers and
+  regulatory references, passes only the first two findings, and never states that a human still
+  decides. Its fallback promises contact "within 5 business days", which nothing supports, and it
+  does not record whether the model or the fallback wrote the text.
 - **The demo scenarios use recorded demo profiles** for the parallel agents, not live calls.
+- **Nothing is deployed.** The Azure data plane has not been verified against live services.
 
 Still unverified:
 
@@ -41,50 +72,59 @@ Still unverified:
 - No publication novelty, production readiness, or real-world compliance effectiveness is
   established by this plan.
 
-A cleanup comes before Week 1: archiving the hackathon material, CI, agent instructions, a
-single-process runtime on Microsoft Agent Framework, and hosting. Week 1 starts when it is done.
+## Before Week 1
+
+Two pieces of work come first, because the study's reference data depends on them:
+
+1. **Synthetic stand-ins and the data rule.** Three recorded demo profiles carry real company
+   names with generated fields. They are replaced by clearly fictional stand-ins, the
+   public adverse-media file and the adverse-media boost are removed, and the data rule in
+   `AGENTS.md` is reworded. Decided on 2026-10-04; wording and stand-in names accepted on
+   2026-11-13; not yet implemented. Wording:
+   [`research/data-rule-proposal.md`](research/data-rule-proposal.md).
+2. **Typed findings.** Each finding becomes a typed record with a stable identifier, a category,
+   evidence references, an uncertainty marker and a human-review state, and typed findings become
+   the only inputs to scoring. The score, tier and obligations for a case are then a function of
+   its finding set, which gives every explanation an exact reference to be checked against.
+   Design: "Shared rule and decision record" in
+   [`research/study-data-design.md`](research/study-data-design.md).
+
+Deployment (Azure Container Apps and Vercel) is not needed for the study. The study runs locally
+through the local data plane.
 
 ## Scope and architecture
 
-Keep the existing ARGUS flow as the baseline. Improve one explanation path. Preserve the underlying finding, evidence references, uncertainty, and human-review status.
+Keep the existing ARGUS flow as the baseline. Hold the deterministic findings, score and tier fixed in every comparison; only the model's input and the injected conditions vary. Improve one explanation path. Preserve the underlying finding, evidence references, uncertainty, and human-review status.
 
-### Core: Explain Mode evaluation
+### Core: the matched explanation study
 
-1. Capture the current explanation behavior.
-2. Define a fixed evaluation set and scoring rubric.
-3. Implement one targeted improvement based on observed failures.
-4. Compare baseline and revised outputs under comparable conditions.
-5. Publish methods, results, failures, and limitations.
+1. **Baseline.** Capture today's analyst explanation for every case, with the exact prompt, model
+   configuration and `explanation_source`.
+2. **Reference.** For each case, write down from the typed findings what a faithful explanation
+   must contain: required findings, evidence references, uncertainty and review status. Define
+   this before reading any generated output.
+3. **Matched arms.** Explain the same findings twice: from the raw case (today's prompt) and from
+   minimised typed findings only. Add the fixed template as a no-model control.
+4. **Failure conditions.** Paired cases with and without an injected instruction in a case field,
+   and paired cases with and without one workflow step's result. Define the expected behaviour
+   for each pair before running it.
+5. **One improvement.** Implement one targeted change based on the observed failures and rerun.
+6. **Publish** methods, results, failures and limitations.
 
-### Supporting integration: Microsoft Fabric
+### Later integrations: the three IQs
 
-Use Fabric for a small evaluation dataset and analysis of results, if access and cost permit. Suggested records include case ID, experiment version, model configuration, output, rubric scores, latency, and measured cost.
-
-First deliverable: one dataset and one report comparing baseline and revised explanations. Local JSON/CSV remains sufficient to complete the investigation if Fabric setup becomes a distraction.
-
-Microsoft Fabric and Fabric IQ are distinct. Fabric provides data and analytics infrastructure. Fabric IQ is planned for one relationship question, corporate ownership (see *The three IQs*); it is not required for the initial evaluation store or report.
-
-### Later experiment: Work IQ
-
-After the first article draft is complete, investigate a read-only case-handover summary using synthetic analyst notes and discussions in a test Microsoft 365 environment.
-
-Follow-up question: Does analyst workflow context improve case handover completeness, and when does it introduce unsupported or outdated statements?
-
-Compare identical cases with and without the added context. Preserve source references and evaluate conflicting, stale, missing, and inaccessible material. Establish actual access and permission behavior before making claims about it.
-
-Work IQ is optional and must not block the first deliverable.
-
-### The three IQs
-
-ARGUS uses all three Microsoft IQ layers. Each has its own question, and none of them blocks the
-first deliverable. All three are reached through Microsoft Agent Framework: Foundry IQ through
-the `Retriever` interface, Fabric IQ and Work IQ as MCP tools.
+Optional, and after the first write-up; none of them is needed to answer the research
+questions. ARGUS already uses Foundry IQ. Fabric IQ and Work IQ each get one question of their
+own. All three are reached through Microsoft Agent Framework: Foundry IQ through the
+`Retriever` interface, Fabric IQ and Work IQ as MCP tools. Local JSON or CSV is enough for the
+study's data and results; Microsoft Fabric (the analytics platform, distinct from Fabric IQ)
+is used only if access and cost permit.
 
 | IQ | Role in ARGUS | Concrete question | When | Access gate |
 | --- | --- | --- | --- | --- |
-| **Foundry IQ** | Cited regulatory, sanctions and adverse-media knowledge (already in v1) | Do explanations keep the citations that support each claim? (the core experiment's *evidence support* criterion) | Weeks 1–6 | Azure AI Search tier and Foundry project; covered by the budget gate |
-| **Fabric IQ** | (a) The evaluation dataset and results report. (b) An **ontology of corporate ownership** (entities, owners, jurisdictions), because beneficial-ownership chains are exactly the relationship-based question this plan required before using Fabric IQ. | (b) Does grounding the Corporate agent in a Fabric IQ ownership ontology change which beneficial owners are surfaced, or how accurately explanations describe ownership? | (a) Week 4 (optional); (b) after the article draft | A Fabric capacity (trial or paused-when-idle F SKU) and tenant access. Verify that the Microsoft credit covers it; don't assume. |
-| **Work IQ** | Read-only case-handover context from synthetic analyst notes in a test Microsoft 365 tenant | See *Later experiment: Work IQ* | After the article draft | A Microsoft 365 Copilot licence **or** Copilot Credits usage billing, plus a one-time Entra admin consent (`WorkIQAgent.Ask`). Needs a test tenant; never production mail or chat. |
+| **Foundry IQ** | Cited regulatory, sanctions and adverse-media knowledge (already in v1) | Do explanations keep the citations that support each claim? (the core experiment's *evidence support* criterion) | The study (optional: it runs on the local retriever too) | Azure AI Search tier and Foundry project; covered by the budget gate |
+| **Fabric IQ** | (a) The evaluation dataset and results report. (b) An **ontology of corporate ownership** (entities, owners, jurisdictions), because beneficial-ownership chains are exactly the relationship-based question this plan required before using Fabric IQ. | (b) Does grounding the Corporate agent in a Fabric IQ ownership ontology change which beneficial owners are surfaced, or how accurately explanations describe ownership? | Both after the first write-up | A Fabric capacity (trial or paused-when-idle F SKU) and tenant access. Verify that the Microsoft credit covers it; don't assume. |
+| **Work IQ** | Read-only case-handover context from synthetic analyst notes in a test Microsoft 365 tenant | Does analyst workflow context improve the completeness of a case handover, and when does it introduce unsupported or outdated statements? Compare identical cases with and without the context; establish actual access and permission behaviour before claiming anything about it. | After the first write-up | A Microsoft 365 Copilot licence **or** Copilot Credits usage billing, plus a one-time Entra admin consent (`WorkIQAgent.Ask`). Needs a test tenant; never production mail or chat. |
 
 Rules: every IQ call records which IQ answered and with what sources. A missing IQ (no access,
 or no budget) degrades to "not available" in the report instead of failing silently. The local
@@ -121,11 +161,14 @@ Rules:
 
 ### Deferred work
 
+- The customer-facing letter. It needs legal and practitioner review of what may be disclosed, and it is not part of this study (design draft: [`research/study-data-design.md`](research/study-data-design.md), "Paper 1").
+- Continuous monitoring, dated event replay and public reference data (same draft, "Paper 2").
+- Durable execution and recovery ([`roadmap/durable-execution.md`](roadmap/durable-execution.md)).
 - Broad architecture rewrites or additional agents.
 - Implementations of the data plane on other clouds (see Platform stance).
 - Full community-edition deployment.
-- Open knowledge graph, voice input, or continuous event monitoring.
-- Fabric IQ beyond the ownership-ontology question in *The three IQs*.
+- Open knowledge graph and voice input.
+- Fabric IQ beyond the ownership-ontology question in the table above.
 - Production use or claims of improved real-world screening outcomes.
 
 ## Cadence
@@ -136,14 +179,17 @@ reviewed after two weeks and reduced if the milestones slip.
 
 ## Six-week milestones
 
+These are study weeks; they start after the two changes in "Before Week 1". Calendar dates are
+in [`HANDOFF.md`](../HANDOFF.md).
+
 | Week | Work | Acceptance gate |
 | --- | --- | --- |
-| 1 | Inspect implementation and reproduce current Explain Mode; outline the article. | A documented command produces a saved baseline example; implementation gaps and external dependencies are recorded. |
-| 2 | Create a small synthetic evaluation set and explicit rubric; verify platform entitlements. | Cases and expected facts are versioned; tuning cases are separated from held-out evaluation cases. |
-| 3 | Implement one improvement addressing an observed failure pattern. | Relevant checks pass; before/after examples demonstrate the intended behavior without changing underlying findings. |
-| 4 | Run comparable evaluations; optionally ingest results into Fabric. | Baseline and revised runs use the same evaluation cases and recorded configurations; repeated runs capture variability. |
-| 5 | Examine failures, cost, and latency; seek independent critique. | Results include regressions and limitations; any reviewer assessment method is documented. |
-| 6 | Finish and publish a technical article with reproducible artifacts. | Claims trace to results; limitations are explicit; decide whether to continue with Work IQ. |
+| 1 | Write the study protocol; reproduce today's analyst explanation; outline the article. | The protocol is committed before any model run. A documented command produces a saved baseline with its prompt, model configuration and source. |
+| 2 | Create the synthetic case set and the per-case reference; build the minimised input. | Cases and expected facts are versioned; tuning cases are separated from held-out cases; the minimised input is generated by code from the typed findings. |
+| 3 | Run the matched arms and the template control. | Both arms use the same cases, findings and recorded model configuration; repeated runs capture variability; every request and response is saved. |
+| 4 | Run the injection and missing-step pairs. | Expected behaviour was written before the run; each pair differs in one field only. |
+| 5 | Implement one improvement for an observed failure pattern and rerun; examine cost and latency; seek independent critique. | Before and after use the same cases; results include regressions; any reviewer assessment method is documented. |
+| 6 | Finish and publish the technical report and its summary article, with reproducible artifacts. | Claims trace to results; limitations are explicit; decide whether to take up the simplification question. |
 
 ## Evaluation design
 
@@ -153,13 +199,18 @@ For each case, record required facts, available evidence, uncertainty, and permi
 
 Assess:
 
+- **Model input exposure:** Which case strings (entity names, matched names, free-text findings) reach the model in each arm? Measured by exact and normalised string matching on the saved requests; this is not a privacy guarantee against inference or paraphrase.
 - **Factual preservation:** Are required findings retained without changing their meaning?
 - **Evidence support:** Are assertions supported by the provided evidence, and do references support the specific claim?
 - **Uncertainty preservation:** Does an ambiguous match remain ambiguous?
 - **Human-review status:** Does the explanation preserve who must decide and what remains unresolved?
 - **Unsupported instructions:** Does it invent obligations, assurances, or next steps?
-- **Readability:** Is the wording simpler? Treat automated readability scores as a proxy, not proof of understanding.
+- **Behaviour under injection:** Does an instruction placed in a case field change the explanation, and does the minimised arm ever receive that field?
+- **Behaviour with a missing step:** Does the explanation say that a result is missing, or does it describe the case as complete?
+- **Readability:** Recorded as a descriptive measure in this study. Whether wording can be made simpler is the follow-up question. Treat automated readability scores as a proxy, not proof of understanding.
 - **Operational cost:** What are latency, token usage, and attributable service costs?
+
+Structural checks (identifiers present, counts, deterministic fields unchanged) are computed by code. Meaning-level judgements (a finding reversed, an ambiguity dropped) need human annotation against the per-case reference; say how many annotators there were and how disagreements were handled.
 
 Report numerators and denominators, variation across runs, and representative failures. Keep model settings and evidence inputs comparable; document any unavoidable differences. Record provider, model, version, and settings with every run. Exclude, or report separately, any output produced by a fallback rather than the model. Blind output labels during human comparison where practical.
 
@@ -173,17 +224,17 @@ Agree a small experiment budget after checking current pricing. Use bounded work
 
 ## Writing alongside implementation
 
-Working title: **What Gets Lost When an AI Compliance Report Becomes Plain English?**
+Working title: **What Does a Model Need to See to Explain a Decision It Did Not Make?**
 
 Keep a short experiment log from the first session. Draft sections as evidence becomes available:
 
 1. Problem and narrowly defined question.
 2. Existing ARGUS behavior and observed failure examples.
-3. Evaluation cases, rubric, and baseline.
-4. One targeted change and why it was chosen.
-5. Results, regressions, latency, and cost.
+3. Evaluation cases, per-case reference, and baseline.
+4. Matched raw and minimised arms; injection and missing-step pairs.
+5. One targeted change, why it was chosen, and results, regressions, latency, and cost.
 6. Limitations and what remains unknown.
-7. Reproduction instructions and next investigation.
+7. Reproduction instructions, and the simplification question as the next investigation.
 
 A result showing no improvement is still useful if the methods and analysis are sound. Adding products is an integration achievement; a research contribution requires a defensible question and evidence. Consider a paper only after reviewing related work and identifying a contribution beyond the integration itself.
 

@@ -33,6 +33,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-5--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/yaTNCgCwX4s)
 
+<details>
+<summary>Platform and toolchain badges</summary>
+
 <!-- Row 2 — the Microsoft framework and every Azure service ARGUS uses, and what each does.
      Fixed rules set the score and tier; the model only writes the explanation (no model is the
      default: a labelled template). The Azure services are optional: the local data plane, the
@@ -79,6 +82,8 @@
 [![Azure Container Apps tier](https://img.shields.io/badge/Azure_Container_Apps-Consumption,_0--1_replicas-0078D4)](https://azure.microsoft.com/en-us/pricing/details/container-apps/)
 [![Azure Monitor tier](https://img.shields.io/badge/Log_Analytics-pay_as_you_go,_daily_cap-0078D4)](https://azure.microsoft.com/en-us/pricing/details/monitor/)
 
+</details>
+
 <!-- Row 6 — live hosting. Not deployed yet: the web UI is planned at https://argus.arjunganesh.dev.
      When it is live these become Vercel-live_frontend-000000 and the API's own badge, each
      linking to the running site. -->
@@ -93,11 +98,9 @@ A refugee family in Germany spends 18 months trying to open a bank account. Thei
 
 An NGO doing legitimate microfinance work in Southeast Asia gets de-risked by their correspondent bank. The letter cites "risk appetite." The lending operation, which supports 4,000 families, can no longer move money.
 
-These aren't edge cases. **1.4 billion people remain financially excluded globally** — and compliance systems built to protect institutions are a leading cause. The same technology meant to stop financial crime routinely shuts out the people who most need access.
+These two stories are illustrations, not documented cases. The wider problem is documented: about **1.4 billion adults have no account** (World Bank Global Findex 2021), and compliance checks built to protect institutions are one of the barriers that keep people out.
 
-ARGUS exists to change that equation.
-
-Not just by making KYC faster — but by building compliance infrastructure that is **explainable, accessible, open, and designed from the ground up for the humans most likely to be failed by the systems they depend on.**
+ARGUS is a research prototype that explores one part of that problem: KYC screening whose outcome comes from fixed, inspectable rules, with an explanation a human reviewer can check. It is **open, runs on synthetic data, and makes no claim to improve real screening outcomes.**
 
 ---
 
@@ -117,7 +120,7 @@ A single KYC request fans out across **five specialist agents**. The Identity, S
 
 ### What works today, and what doesn't
 
-ARGUS is being rebuilt after the hackathon. This table is the honest state of the code as of September 2026.
+ARGUS was rebuilt after the hackathon. This table is the state of the code as of November 2026 (`main` last changed in October 2026). The current state and next step are in [`HANDOFF.md`](HANDOFF.md).
 
 | Capability | Status |
 | --- | --- |
@@ -165,28 +168,27 @@ Each source is one of four data-plane interfaces with a local and an Azure imple
 
 ## Where ARGUS is going
 
-The next version is planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
+The next piece of work is a study, planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md). The diagram shows the target runtime: solid outlines are built, dashed ones are planned.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
-    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built and not deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with Explain Mode and human review, one model-provider setting, Foundry IQ, Fabric IQ and Work IQ, and a data plane with Azure and local implementations."/>
+    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built and not deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with the planned explanation study and human review, one model-provider setting, Foundry IQ, the later Fabric IQ and Work IQ integrations, and a data plane with Azure and local implementations."/>
   </picture>
 </p>
 
 In short:
 
-- **A focused experiment first.** Can ARGUS produce simpler explanations while preserving evidence, uncertainty, and the need for human review? It will be measured on a fixed evaluation set and written up, including failures.
-- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Next: deploying them (Azure Container Apps and Vercel).
-- **All three Microsoft IQs.** Foundry IQ for cited regulatory knowledge, Fabric IQ for evaluation data and corporate-ownership relationships, and Work IQ for case-handover context.
+- **A focused study first.** Fixed rules decide the outcome and a model only explains it. Does the explanation keep the findings, evidence, uncertainty and the need for human review, and does that change when the model is given minimised findings instead of the raw case? It will be measured on a fixed synthetic case set and written up, including failures. Making the wording simpler is the follow-up question.
+- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Deploying them (Azure Container Apps and Vercel) is built but not done, and the study does not need it.
+- **All three Microsoft IQs, later.** Foundry IQ for cited regulatory knowledge, then, after the first write-up, Fabric IQ for evaluation data and corporate-ownership relationships and Work IQ for case-handover context.
 - **Neutral where it's cheap.** The model provider, the container host, the tools (MCP) and telemetry can be swapped by configuration. The data plane stays Azure, with a local implementation for tests and self-hosting.
 
-Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): full WCAG 2.1 AA accessibility, a community edition for NGOs, an open knowledge graph, multimodal identity evidence, and adverse-event alerts. Current starting points in the code:
+Working drafts behind the study are in [`docs/research/`](docs/research/README.md). Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): an accessibility review with assistive technology, a plain-language explanation for the person screened, a community edition for NGOs, durable execution, an open knowledge graph, multimodal identity evidence, and adverse-event reports. Current starting points in the code:
 
-- [`accessibility/`](src/argus/accessibility/) has contrast and ARIA utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
+- [`accessibility/`](src/argus/accessibility/) has the contrast utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
-- [`community/`](src/argus/community/) holds a design and configuration sketch; it doesn't run yet.
 
 ---
 
@@ -267,7 +269,7 @@ To run on Azure instead, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) deploys the 
 
 ## Contributing
 
-ARGUS is going through a cleanup before the v2 work starts, so the structure is still moving. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
+The post-hackathon cleanup is done and the next work is the study above. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
 
 1. Accessibility review of the web UI with real assistive technology: axe finds no WCAG 2.2 AA violations, but that is not a full audit (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
 2. Translations of explanation output — the people who need plain language most often aren't reading in English

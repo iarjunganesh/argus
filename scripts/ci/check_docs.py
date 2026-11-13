@@ -28,8 +28,9 @@ SKIP_PREFIXES = ("archive/",)
 PUBLIC_DOCS = ("README.md", "CHANGELOG.md", "docs/")
 UNFINISHED = re.compile(r"\b(TBD|FIXME|XXX)\b|lorem ipsum|\[to fill\]", re.IGNORECASE)
 
-# Local working files that must never be tracked.
-NEVER_TRACKED_FILES = ("HANDOFF.md", ".env", ".claude/settings.local.json")
+# Local working files that must never be tracked. The root HANDOFF.md is tracked on purpose:
+# it is the shared, public-safe state record. Private notes live in `.local/`.
+NEVER_TRACKED_FILES = (".env", ".claude/settings.local.json")
 NEVER_TRACKED_DIRS = (".tmp/", ".local/")
 
 # Wording the code no longer supports. "mock" blurred two things the reports now keep apart: how
