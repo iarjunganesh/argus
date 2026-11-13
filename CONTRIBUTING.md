@@ -39,8 +39,9 @@ uv run python scripts/ci/render_assets.py --check
   checked it.
 - **Keep the docs true.** If you change a port, a fallback, a scoring weight or a threshold,
   update the README, `docs/` and the diagrams in `assets/` in the same pull request.
-- **Synthetic data only.** Never add real people's or companies' personal data, in code, tests
-  or issues.
+- **Cases are synthetic.** Never add a real person or company as a customer or case, in code,
+  tests or issues. Official list entries and public company records follow the rules in
+  [`AGENTS.md`](AGENTS.md).
 
 ## What helps most right now
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError, normaliseRequest, submitAssessment, type AssessmentRequest } from "@/lib/api";
-import { DEMO_ONLY, RETENTION_NOTICE, offeredDemoCases } from "@/lib/demo";
+import { DEMO_CASES, DEMO_ONLY, RETENTION_NOTICE } from "@/lib/demo";
 import { rememberEntityName } from "@/lib/session";
 
 export function AssessmentForm() {
@@ -140,17 +140,15 @@ export function AssessmentForm() {
           Demo cases
         </h2>
         <p className="mt-1 text-muted-foreground">
-          {DEMO_ONLY
-            ? "Invented entities, each with recorded agent results."
-            : "Synthetic entities, and a payment firm and two banks with published enforcement records."}
+          Invented entities, each with recorded agent results.
         </p>
         <ul className="mt-6 divide-y rounded-lg border bg-card">
-          {offeredDemoCases().map((demo) => (
+          {DEMO_CASES.map((demo) => (
             <li key={demo.entity_name} className="flex items-center gap-4 px-4 py-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{demo.entity_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {`${demo.entity_type === "corporate" ? "Company" : "Individual"}, ${demo.jurisdiction}, ${demo.origin.toLowerCase()}`}
+                  {`${demo.entity_type === "corporate" ? "Company" : "Individual"}, ${demo.jurisdiction}`}
                 </p>
               </div>
               <Button

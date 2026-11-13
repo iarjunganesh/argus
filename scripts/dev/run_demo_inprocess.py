@@ -11,7 +11,7 @@ from argus.agents.orchestrator import agent as orchestrator
 
 async def main():
     # Example KYC request — canonical demo profile key
-    kyc = {"entity_name": "Wirecard AG", "entity_type": "corporate", "jurisdiction": "DE"}
+    kyc = {"entity_name": "Synthetic Payments AG", "entity_type": "corporate", "jurisdiction": "DE"}
     print("Running in-process KYC assessment for:", kyc)
     report = await orchestrator.run_kyc_assessment(kyc)
     print(json.dumps(report, indent=2))

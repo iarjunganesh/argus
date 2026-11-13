@@ -27,8 +27,8 @@ describe("withoutTrailingSlashes", () => {
 
 describe("normaliseRequest", () => {
   it("trims the name and upper-cases the jurisdiction", () => {
-    expect(normaliseRequest("  Wirecard AG ", "corporate", " de ")).toEqual({
-      entity_name: "Wirecard AG",
+    expect(normaliseRequest("  Synthetic Payments AG ", "corporate", " de ")).toEqual({
+      entity_name: "Synthetic Payments AG",
       entity_type: "corporate",
       jurisdiction: "DE",
     });

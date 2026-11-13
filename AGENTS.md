@@ -24,8 +24,17 @@ The dated current state is in [`HANDOFF.md`](HANDOFF.md), not here.
 
 ## Rules that must not be broken
 
-- **Synthetic data only.** Never add real people's or real companies' personal data. The public
-  demo cases (for example Wirecard AG) use published enforcement facts only.
+- **Every case is synthetic.** Customers, assessment cases, transactions, finances and
+  identity documents are generated. Never turn a real person or company into one, give a
+  generated record a real one's name, or invent a link (ownership, payment, control) between a
+  generated record and a real person or company.
+- **Official reference data only as published.** Entries from official sanctions and country
+  lists, and public legal-entity records (for example GLEIF), may be added unmodified and
+  attributed to their source, once that source's reuse terms and personal-data basis are
+  recorded in [`docs/DATA-SOURCES.md`](docs/DATA-SOURCES.md). Legal entities only: list
+  entries for natural persons, PEP data and company officers each need their own reviewed
+  decision first. Raw downloads stay out of the repository, and ARGUS's results about a real
+  company are published only in aggregate.
 - **No real decisions and no effectiveness claims.** ARGUS makes recommendations for a human
   reviewer. Don't write that it improves real-world screening outcomes.
 - **Explanations keep the facts.** Any change to explanation output must preserve the findings,

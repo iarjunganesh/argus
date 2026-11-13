@@ -238,6 +238,23 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **No demo case names a real company, and the data rule says so.** The three recorded profiles
+  that gave real companies (a payments firm and two banks) generated registry fields, scores and
+  transactions are replaced by invented companies: Synthetic Payments AG (HIGH, 56.5: a PEP on
+  the supervisory board, adverse media, two offshore owners, structuring and layering), Synthetic
+  Nordic Bank A/S (MEDIUM, 36.0: a PEP chair and adverse media) and Synthetic Pacific Banking
+  Corporation (LOW, 18.2: adverse media and a structuring flag). Their facts are new, not a
+  retelling, and each profile score is what the live agent computes from those facts, so the
+  tiers come from the rules. No GLEIF record matches the three names. All six demo cases are now
+  invented, so a demo-only deployment (`ARGUS_DEMO_ONLY`) accepts all six and the site lists them
+  without a "public record" label. `AGENTS.md` states the accepted rule (every case is
+  synthetic; official reference data only unmodified, attributed and recorded first in the new,
+  empty `docs/DATA-SOURCES.md`), and `CONTRIBUTING.md`, the README and the site's footer follow
+  it. Checked: a test recomputes each stand-in's identity, screening, corporate and transaction
+  score from its facts with the live agents' formulas; the demo-scenario fixture was re-recorded
+  for the three stand-ins only, and the other three scenarios' outcomes did not move; a search of
+  the repository finds the old names only in the dated research notes that record the decision.
+
 - **The target-runtime diagram matches the revised plan.** Its planned explanation box now
   shows the study (raw and minimised input, preservation measured) instead of a plain-language
   explanation, and Fabric IQ and Work IQ are marked as coming after the study. Labels only;

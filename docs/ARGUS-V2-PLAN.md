@@ -80,7 +80,7 @@ Two pieces of work come first, because the study's reference data depends on the
    names with generated fields. They are replaced by clearly fictional stand-ins, the
    public adverse-media file and the adverse-media boost are removed, and the data rule in
    `AGENTS.md` is reworded. Decided on 2026-10-04; wording and stand-in names accepted on
-   2026-11-13; not yet implemented. Wording:
+   2026-11-13; implemented on the stand-in branch on 2026-11-14. Wording:
    [`research/data-rule-proposal.md`](research/data-rule-proposal.md).
 2. **Typed findings.** Each finding becomes a typed record with a stable identifier, a category,
    evidence references, an uncertainty marker and a human-review state, and typed findings become

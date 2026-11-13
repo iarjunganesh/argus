@@ -47,7 +47,7 @@ run as a step of the orchestrator's workflow inside the API process.
 logic of its own: the browser calls the API at `NEXT_PUBLIC_API_URL` (set at build time), so the
 API must list the site's origin in `ARGUS_CORS_ORIGINS` (empty by default, which blocks every
 browser origin). With `ARGUS_DEMO_ONLY=true`, as in the Azure deployment, the API refuses
-(403) every request except the three synthetic demo cases with nothing added, because a public
+(403) every request except the six synthetic demo cases with nothing added, because a public
 API cannot tell a typed name from a real person's; a site built with
 `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true` then offers only those cases instead of the form. Both are
 off by default. The start page submits an assessment; `/assessments/{id}` opens the progress

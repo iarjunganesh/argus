@@ -26,15 +26,15 @@ function brokenStorage(): Storage {
 describe("the entity name for an assessment", () => {
   it("is recalled for the same report ID only", () => {
     const storage = memoryStorage();
-    rememberEntityName("r1", "Wirecard AG", storage);
-    expect(recalledEntityName("r1", storage)).toBe("Wirecard AG");
+    rememberEntityName("r1", "Synthetic Payments AG", storage);
+    expect(recalledEntityName("r1", storage)).toBe("Synthetic Payments AG");
     expect(recalledEntityName("r2", storage)).toBeUndefined();
   });
 
   it("is simply missing when storage is unavailable or blocked", () => {
-    rememberEntityName("r1", "Wirecard AG", undefined);
+    rememberEntityName("r1", "Synthetic Payments AG", undefined);
     expect(recalledEntityName("r1", undefined)).toBeUndefined();
-    expect(() => rememberEntityName("r1", "Wirecard AG", brokenStorage())).not.toThrow();
+    expect(() => rememberEntityName("r1", "Synthetic Payments AG", brokenStorage())).not.toThrow();
     expect(recalledEntityName("r1", brokenStorage())).toBeUndefined();
   });
 });

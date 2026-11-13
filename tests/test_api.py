@@ -130,7 +130,9 @@ def test_demo_only_refuses_anything_but_a_synthetic_demo_case(client, demo_only,
     assert response.status_code == 403
     assert response.json()["detail"] == (
         "This deployment runs only the synthetic demo cases: Synthetic Holdings B.V. (corporate, "
-        "NL); Jane Synthetic (individual, DE); Cayman Synth Capital (corporate, KY)"
+        "NL); Jane Synthetic (individual, DE); Cayman Synth Capital (corporate, KY); Synthetic "
+        "Payments AG (corporate, DE); Synthetic Nordic Bank A/S (corporate, DK); Synthetic Pacific "
+        "Banking Corporation (corporate, AU)"
     )
 
 
