@@ -18,14 +18,15 @@ Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, 
 
 ## Current state — 14 November 2026
 
-- **Source.** `main` is at `056e526`. On 13 November the maintainer merged #27 (security
-  refresh) and #28 (root handoff, research drafts, revised plan); CI passed on `main` after
-  #27. Dependabot closed #25 and #26 as superseded. The merged branches were deleted locally
+- **Source.** `main` is at `6cd749d`. The maintainer merged #27 (security refresh), #28 (root
+  handoff, research drafts, revised plan) and #29 (stand-ins and data rule) on 13 and 14
+  November; Dependabot closed #25 and #26 as superseded. Every merged branch was deleted locally
   and on GitHub.
-- **Security alerts.** One Dependabot alert is open: deepmerge 4.3.1 (low), used only by the
-  shadcn command-line tool, with no fixed release. Dismissing it needs the maintainer in the
-  GitHub UI (an agent's attempt was refused by its permission rules).
-- **Stand-ins and data rule: pull request #29, open, CI green.** Synthetic Payments AG (HIGH,
+- **Security alerts.** One Dependabot alert was left: deepmerge 4.3.1 (low, no fixed release),
+  reachable only through the `shadcn` command-line package. The pull request that carries this
+  update removes that package (the site keeps its stylesheet as a copied file), so the alert
+  closes when it is merged; `npm audit` then finds nothing, development tools included.
+- **Stand-ins and data rule: merged (#29).** Synthetic Payments AG (HIGH,
   56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
   (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
   agents compute from their facts (a test recomputes them). All six demo cases are invented, so
@@ -49,23 +50,21 @@ Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, 
 - **Checks on 14 November, on #29's branch:** 380 tests at 100% line and branch coverage (also
   at its first commit alone), ruff, format, mypy, the three repository checks and markdownlint
   pass; with Node.js 24 the web lint, format, typecheck, unit tests, build and the 30 Playwright
-  tests against a local API pass. CI passed on the pull request.
+  tests against a local API pass. CI passed on the pull request before it was merged.
 
 ## Next step
 
 Maintainer decisions that block work:
 
-1. Merge #29 (or ask for changes).
-2. Dismiss the deepmerge alert in the GitHub UI as a tolerable risk (development-only tool, no
-   fixed release), or ask for the alternative: drop the `shadcn` package and copy its stylesheet.
-3. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
+1. Merge the pull request that drops the `shadcn` package (it closes the last alert).
+2. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
    original cleanup exit gate), or is tagged first because the study does not need hosting.
-4. A model budget for the study, and which model configuration is pinned.
+3. A model budget for the study, and which model configuration is pinned.
 
 Then, in order:
 
-1. Typed findings as the only inputs to scoring (one pull request, in a fresh session, after
-   #29 is merged), fact-level as decided below, with the demo scenarios' tiers unchanged.
+1. Typed findings as the only inputs to scoring (one pull request, in a fresh session),
+   fact-level as decided below, with the demo scenarios' tiers unchanged.
    Design: "Shared rule and decision record" in
    [`docs/research/study-data-design.md`](docs/research/study-data-design.md).
 2. v2 Week 1: write and commit the study protocol, then capture the baseline.
@@ -152,6 +151,14 @@ keep the protocol date.
 
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
+
+### 14 November 2026 (later) — last alert, merged branches
+
+- The maintainer merged #29; deleted `feat/synthetic-stand-ins` locally and on GitHub.
+- Removed the `shadcn` command-line package, the only path to the unfixable deepmerge advisory:
+  its stylesheet is copied byte-for-byte into `web/src/app/shadcn.css` with its MIT notice and
+  kept out of Prettier, and the minimatch override for ts-morph went with it. 163 packages
+  left the lockfile and none changed version. Checks are in that pull request.
 
 ### 14 November 2026 — security refresh, root handoff and stand-ins
 
