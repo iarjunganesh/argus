@@ -119,7 +119,7 @@ then run every command above.
 | `tests/` | The test suite (hermetic; no cloud access) |
 | `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs, version and release checks, the dependency refresh, and the image renderer |
 | `assets/` | Brand and architecture images, each drawn from an SVG master |
-| `docs/` | Architecture as it runs today, the v2 plan, and `roadmap/` (ideas not yet scheduled) |
+| `docs/` | Architecture as it runs today, the v2 plan, `research/` (working drafts and dated notes behind the study) and `roadmap/` (ideas not yet scheduled) |
 | `archive/` | Frozen hackathon material. Never edit it except to add to its index. |
 
 Inside `src/argus/`:

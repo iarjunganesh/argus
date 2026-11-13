@@ -15,6 +15,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **The working drafts behind the study are in `docs/research/`.** The data-rule proposal, the
+  study data design (stand-in inventory, typed findings, two deferred studies), the related-work
+  survey and the monitoring sources were private notes; they are now tracked, each with a status
+  line and its date, and the durable-execution proposal is in `docs/roadmap/`. None of them
+  describes shipped behaviour or a result. Checked: `check_docs.py` (links, retired terms) and
+  markdownlint pass; the files were searched for account, employer and private references and
+  for the names of other projects, and hold none.
 - **No commit or pull request credits an AI assistant.** A new Attribution workflow runs
   `scripts/ci/check_attribution.py` on every pull request (its commits and its description, again
   when the description is edited) and on every push to `main`. It fails on a `Co-authored-by`
