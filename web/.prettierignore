@@ -3,3 +3,5 @@ node_modules/
 playwright-report/
 test-results/
 package-lock.json
+# Copied unchanged from the shadcn package; see the header of the file.
+src/app/shadcn.css
