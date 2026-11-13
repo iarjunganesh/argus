@@ -52,9 +52,9 @@ Checked against the code on 2026-11-11 (`main` at `b75d14c`):
 - **Findings are free text and can carry names.** `_extract_findings()` in the Compliance agent
   builds `key_findings` as strings. A PEP finding includes the matched name from screening.
 - **`key_findings` is not a complete record of what set the score.** The scorer also uses
-  identity confidence, the corporate score and the transaction risk score, and adds a fixed
-  boost for adverse-media-only cases. None of these appears as a finding, so the strings cannot
-  serve as the reference for what an explanation must preserve.
+  identity confidence, the corporate score and the transaction risk score (until the stand-in
+  change it also added a fixed boost for adverse-media-only cases). None of these appears as a
+  finding, so the strings cannot serve as the reference for what an explanation must preserve.
 - **The explanation records who wrote it.** The result carries `explanation_source` (`model` or
   `fallback`). Without a configured model the fixed template is used and labelled.
 - **The customer-facing variant is not wired in.** `explain_decision_plain_language()` has tests

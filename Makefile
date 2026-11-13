@@ -47,7 +47,6 @@ upload-data:
 index-knowledge-bases:
 	uv run python infra/foundry_iq/create_knowledge_bases.py
 	uv run python infra/foundry_iq/index_regulations.py
-	uv run python data/public/generate_adverse_media_public.py
 	uv run python infra/foundry_iq/index_sanctions_and_media.py
 
 run-api:

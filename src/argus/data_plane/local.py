@@ -182,9 +182,6 @@ def local_retriever(data_dir: Path) -> LocalRetriever:
         {
             "regulations": regulation_documents(),
             "sanctions": sanctions_documents(load_jsonl(synthetic / "sanctions.jsonl")),
-            "adverse_media": adverse_media_documents(
-                load_jsonl(synthetic / "adverse_media.jsonl"),
-                load_jsonl(data_dir / "public" / "adverse_media_public.jsonl"),
-            ),
+            "adverse_media": adverse_media_documents(load_jsonl(synthetic / "adverse_media.jsonl")),
         }
     )

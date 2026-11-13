@@ -215,10 +215,9 @@ def sanctions_documents(records: list[dict]) -> list[dict]:
     return docs
 
 
-def adverse_media_documents(synthetic: list[dict], public: list[dict]) -> list[dict]:
-    """Negative coverage only: synthetic articles plus public enforcement summaries."""
-    negative = [(r, "synthetic") for r in synthetic if r.get("sentiment") == "negative"]
-    negative += [(r, "public") for r in public if r.get("sentiment", "negative") == "negative"]
+def adverse_media_documents(synthetic: list[dict]) -> list[dict]:
+    """Negative coverage only, from the synthetic articles."""
+    negative = [r for r in synthetic if r.get("sentiment") == "negative"]
     return [
         {
             "id": r.get("article_id") or r.get("document_id") or r.get("id"),
@@ -229,7 +228,7 @@ def adverse_media_documents(synthetic: list[dict], public: list[dict]) -> list[d
             "category": "adverse_media",
             "metadata_json": json.dumps(
                 {
-                    "source_kind": r.get("source_kind", kind),
+                    "source_kind": r.get("source_kind", "synthetic"),
                     "published_at": r.get("published_at"),
                     "sentiment": r.get("sentiment"),
                     "tags": r.get("tags", []),
@@ -237,5 +236,5 @@ def adverse_media_documents(synthetic: list[dict], public: list[dict]) -> list[d
                 }
             ),
         }
-        for r, kind in negative
+        for r in negative
     ]

@@ -11,9 +11,8 @@ signed-in operator the Cosmos DB data role the upload needs, on the database onl
 Steps, each a script that also runs on its own:
   1. infra/foundry_iq/create_knowledge_bases.py   indexes, knowledge sources, knowledge bases
   2. infra/foundry_iq/index_regulations.py        the regulation texts
-  3. data/public/generate_adverse_media_public.py  the public-source demo articles
-  4. infra/foundry_iq/index_sanctions_and_media.py sanctions and adverse media
-  5. data/synthetic/upload_to_cosmos.py           entities, ownership, transactions
+  3. infra/foundry_iq/index_sanctions_and_media.py sanctions and adverse media
+  4. data/synthetic/upload_to_cosmos.py           entities, ownership, transactions
 
 The search admin key is read with the operator's Azure access and handed to the steps in their
 environment only. The steps ignore `.env` (ARGUS_DISABLE_DOTENV), so they reach exactly the
@@ -34,7 +33,6 @@ ROOT = Path(__file__).resolve().parents[1]
 STEPS = (
     "infra/foundry_iq/create_knowledge_bases.py",
     "infra/foundry_iq/index_regulations.py",
-    "data/public/generate_adverse_media_public.py",
     "infra/foundry_iq/index_sanctions_and_media.py",
     "data/synthetic/upload_to_cosmos.py",
 )

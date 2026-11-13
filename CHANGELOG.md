@@ -482,6 +482,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Removed
 
+- **The public adverse-media file and the adverse-media boost.** `data/public/` (four unsourced
+  paraphrases about real companies, one of them about a fourth company, and their generator)
+  is gone from local retrieval, the image, the Azure indexing step and `infra/populate.py`. The
+  scorer no longer adds 12 points when adverse media is the only screening hit at a screening
+  score of 70 or more: only the recorded real-company profiles reached that score, since live
+  screening scores adverse media alone at 15. Checked: the tests for the scorer, retrieval and
+  indexing were rewritten for synthetic articles only; the suite passes at 100% coverage.
+
 - **The unused Community Edition sketch.** `argus.community` (configuration presets naming
   SQLite, Qdrant and fixed model names), its test and `docs/roadmap/community-edition.compose.yml`
   predated the data plane; no code imported the package and the Compose file could not run. The

@@ -24,9 +24,8 @@ RUN uv sync --locked --no-default-groups --no-editable --no-build
 FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS runtime
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin argus
 COPY --from=build /app/.venv /app/.venv
-# The public demo data the local backend reads. Synthetic data is generated, never baked in:
-# without it the local backend finds nothing and says so; deployments use the Azure backend.
-COPY data/public/adverse_media_public.jsonl /app/data/public/adverse_media_public.jsonl
+# No data is baked in: synthetic data is generated, so the local backend finds nothing and says
+# so (the recorded demo profiles still run); deployments use the Azure backend.
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     ARGUS_DATA_DIR=/app/data

@@ -286,4 +286,4 @@ Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## Disclaimer
 
-ARGUS is a technology demonstration. It is not a licensed compliance tool and must not be used to make real KYC/AML decisions. Core test data is synthetic, with a small public-source adverse-media corpus for demo variety.
+ARGUS is a technology demonstration. It is not a licensed compliance tool and must not be used to make real KYC/AML decisions. All test and demo data is synthetic.

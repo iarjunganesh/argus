@@ -127,7 +127,7 @@ then run every command above.
 | --- | --- |
 | `src/` | The application: the installable package `argus` (see below) |
 | `web/` | The web UI: Next.js, TypeScript and shadcn/ui, with unit and Playwright tests |
-| `data/` | Synthetic data generators and public-source demo data |
+| `data/` | Synthetic data generators |
 | `infra/` | The Azure deployment: Bicep template, `populate.py` and `teardown.py`, and `foundry_iq/` (create and fill the knowledge bases) |
 | `tests/` | The test suite (hermetic; no cloud access) |
 | `scripts/` | `dev/`: demo launchers and local helpers. `ci/`: the docs, version and release checks, the dependency refresh, and the image renderer |

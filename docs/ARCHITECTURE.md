@@ -68,9 +68,9 @@ dependency groups: no dev tools, data generators or Tesseract), from wheels only
 pinned by tag and digest, checked by `scripts/ci/check_versions.py` and moved by the post-release
 refresh. `.dockerignore` is an allow-list, so `.env` and other local files never reach the build.
 
-With no settings the container runs on the local backend, which in the image has only the public
-demo data (`data/public/`): synthetic data is generated, never baked in, so entity lookups find
-nothing and say so, and the six demo scenarios work. Deployments set `ARGUS_DATA_BACKEND=azure`.
+With no settings the container runs on the local backend, which in the image has no data:
+synthetic data is generated, never baked in, so entity lookups find nothing and say so, and the
+six demo scenarios work from their recorded profiles. Deployments set `ARGUS_DATA_BACKEND=azure`.
 CI builds the image and runs one demo assessment through it (`scripts/ci/smoke_api.py`), then
 waits for the health check to pass.
 
@@ -118,10 +118,7 @@ Each agent's own rules are drawn in
 
 **Weighted score (0–100).** Screening 30%, Regulatory 25%, Identity 20%, Corporate 15%,
 Transaction 10%. The Regulatory dimension is an estimate from other agents' flags, not from
-retrieved regulations: PEP 45, adverse media 35, 15 per ownership risk flag, capped at 100. When
-adverse media is the only screening hit and the screening score is at least 70, 12 points are
-added; today only recorded demo profiles reach that screening score, because live screening
-scores adverse media alone at 15.
+retrieved regulations: PEP 45, adverse media 35, 15 per ownership risk flag, capped at 100.
 
 **Tier.** LOW 0–34, MEDIUM 35–54, HIGH 55–74, CRITICAL 75 and above, with one exception:
 
