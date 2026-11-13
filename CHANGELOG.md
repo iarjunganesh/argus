@@ -539,6 +539,17 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Security
 
+- **No dependency of the web UI has a known advisory, development tools included.** The site no
+  longer installs the `shadcn` command-line package, the only path to deepmerge 4.3.1, whose
+  prototype-poisoning advisory has no fixed release. The one file the site took from it, its
+  stylesheet, is copied unchanged into `web/src/app/shadcn.css` with its MIT notice; components
+  are still added with `npx shadcn@4.23.0 add`. That removes 163 packages and the minimatch
+  override for ts-morph; no remaining package changed version. Checked with Node.js 24 after
+  `npm ci`: `npm audit` (development dependencies included) finds nothing; the copied rules are
+  byte-identical to the package's; lint, format, typecheck, unit tests and the build pass, and
+  the 30 Playwright tests (with their axe checks) pass against a local API. The copy is excluded
+  from SonarQube Cloud, whose CSS rules read its Tailwind syntax (`@custom-variant`, `@utility`)
+  as invalid plain CSS: 71 such findings on the pull request, none in ARGUS's own files.
 - **The locked Python packages have no known advisory.** Pillow 12.3.0 → 13.0.0 (the `ocr` and
   `data` groups now require `pillow>=13.0.0`), certifi 2026.7.22 → 2026.10.23, filelock 4.0.10 →
   4.2.10 and opentelemetry-api 1.45.0 → 1.45.2; nothing else in `uv.lock` moved. These were the

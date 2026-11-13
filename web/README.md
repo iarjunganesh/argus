@@ -57,3 +57,5 @@ The colours in `src/app/globals.css` are checked by `scripts/ci/render_assets.py
 declared text/background pair must pass WCAG AA in both themes. `tests/test_accessibility.py`
 holds the risk colours to the audited palette in `src/argus/accessibility/wcag.py`.
 `src/app/icon.svg` is a copy of `assets/brand/logo-mark.svg`, written by the same script.
+`src/app/shadcn.css` is the stylesheet of the shadcn package (4.23.0, MIT), copied so the site
+does not install that command-line package; add a component with `npx shadcn@4.23.0 add <name>`.
