@@ -16,21 +16,22 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, and Codex reads
 `AGENTS.md`; all three point here. Conversation history does not move between tools or sessions.
 
-## Current state — 13 November 2026
+## Current state — 14 November 2026
 
-- **Source.** `main` is at `b75d14c` (15 October 2026). Nothing has been merged since.
-- **CI is red on every pull request, for reasons outside them.** Advisories published after
-  15 October hit `main`'s locked packages: Next.js 16.3.8 (critical and high, in what the site
-  ships), Pillow 12.3.0, certifi, filelock and opentelemetry-api, and several npm build tools.
-  On 13 November GitHub listed 95 open Dependabot alerts. CI's "Dependency audit" job (and the
-  `npm audit --omit=dev` step of "Web UI") therefore fails on any pull request. Dependabot's
-  #25 (vite) and #26 (Pillow 13) each fix only part of it and still fail.
-- **The fix is ready locally, not pushed.** Branch `deps/security-refresh` (two commits on
-  `b75d14c`): Pillow 13.0.0, certifi, filelock and opentelemetry-api in `uv.lock`; Next.js and
-  `eslint-config-next` 16.4.6, Vitest 5.0.5, shadcn 4.23.0, `npm audit fix` for the rest, and an
-  `overrides` entry giving typescript-eslint and ts-morph minimatch 11 (no 10.x has the fix).
-  It supersedes #25 and #26. One alert stays open: deepmerge 4.3.1, which only the shadcn
-  command-line tool uses and which has no fixed release.
+- **Source.** `main` is at `056e526`. On 13 November the maintainer merged #27 (security
+  refresh) and #28 (root handoff, research drafts, revised plan); CI passed on `main` after
+  #27. Dependabot closed #25 and #26 as superseded. The merged branches were deleted locally
+  and on GitHub.
+- **Security alerts.** One Dependabot alert is open: deepmerge 4.3.1 (low), used only by the
+  shadcn command-line tool, with no fixed release. Dismissing it needs the maintainer in the
+  GitHub UI (an agent's attempt was refused by its permission rules).
+- **Stand-ins and data rule: pull request #29, open, CI green.** Synthetic Payments AG (HIGH,
+  56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
+  (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
+  agents compute from their facts (a test recomputes them). All six demo cases are invented, so
+  demo-only mode accepts all six. `AGENTS.md` carries the accepted data rule, with an empty
+  `docs/DATA-SOURCES.md`. The public adverse-media file and the 12-point adverse-media boost are
+  removed. The other three scenarios' recorded outcomes did not move.
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier; a language model only
   writes the explanation. The default is the local data plane with synthetic data and no cloud
@@ -38,53 +39,47 @@ Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, 
 - **Not released, not deployed.** `pyproject.toml` says 0.1.0, but there is no tag and no GitHub
   Release. The deployment workflow and Bicep template are merged; no Azure or Vercel resource has
   been created.
-- **Data rule and stand-ins: decided, not yet implemented.** On 13 November the maintainer
-  accepted the two-bullet rule wording, an empty `docs/DATA-SOURCES.md` register and the three
-  stand-in names in [`docs/research/data-rule-proposal.md`](docs/research/data-rule-proposal.md).
-  No GLEIF record matches any of the three names (checked the same day). The three recorded demo
-  profiles with real company names, the public adverse-media file and the adverse-media boost
-  are still in the code.
-- **v2 plan revised on 11 November.** The study now leads with a matched comparison: the same
+- **v2 plan revised on 11 November.** The study leads with a matched comparison: the same
   rule-determined findings explained from raw and from minimised input, then injection and
-  missing-step conditions. Simplifying the wording is the follow-up question. Fabric IQ, Work IQ,
-  the customer-facing letter, event replay and durable execution are deferred.
-- **What the study needs from the code** (checked 11 November, details in the plan):
-  `key_findings` are free-text strings that can carry names and do not record everything that
-  sets the score, so typed findings come before the study. The customer-facing explanation
-  variant is tested but not wired in.
-- **Checks on 13 November.** On `docs/root-handoff` (uncommitted): 377 tests at 100% line and
-  branch coverage, ruff, format, mypy, the three repository checks and markdownlint pass. On
-  `deps/security-refresh`: the same Python checks (381 tests), `pip-audit --strict` clean,
-  and with Node.js 24 the web lint, format, typecheck, 31 unit tests, build and 30 Playwright
-  tests against a local API pass; `npm audit --omit=dev` finds nothing. The container image
-  was not built locally.
-- **Working tree.** `docs/root-handoff` still holds the 11 and 13 November documentation
-  changes, uncommitted and unpushed, for the maintainer to review.
+  missing-step conditions. Simplifying the wording is the follow-up question.
+- **What the study still needs from the code:** typed findings. `key_findings` are free-text
+  strings that can carry names and do not record everything that sets the score (identity
+  confidence, layering, typology hits and ownership depth move the score without appearing).
+  The customer-facing explanation variant is tested but not wired in.
+- **Checks on 14 November, on #29's branch:** 380 tests at 100% line and branch coverage (also
+  at its first commit alone), ruff, format, mypy, the three repository checks and markdownlint
+  pass; with Node.js 24 the web lint, format, typecheck, unit tests, build and the 30 Playwright
+  tests against a local API pass. CI passed on the pull request.
 
 ## Next step
 
 Maintainer decisions that block work:
 
-1. Go-ahead to push `deps/security-refresh` and open its pull request. Once it is merged,
-   Dependabot closes #25 and #26 and the alerts it fixes.
-2. The deepmerge alert (no fixed release): dismiss it on GitHub as a tolerable risk in a
-   build-only tool, or drop the `shadcn` package by copying its 637-line stylesheet into
-   `web/src/app/` (the command-line tool still works through `npx shadcn@4.23.0`).
-3. Go-ahead to commit `docs/root-handoff` and open its pull request, after the security one.
+1. Merge #29 (or ask for changes).
+2. Dismiss the deepmerge alert in the GitHub UI as a tolerable risk (development-only tool, no
+   fixed release), or ask for the alternative: drop the `shadcn` package and copy its stylesheet.
+3. Typed findings, one design choice (see below).
 4. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
    original cleanup exit gate), or is tagged first because the study does not need hosting.
 5. A model budget for the study, and which model configuration is pinned.
 
 Then, in order:
 
-0. Merge the security refresh; confirm CI is green on `main` and the alerts are closed.
-1. Rebase `docs/root-handoff` on `main`, commit in small steps, open its pull request, merge.
-2. The stand-in and data-rule branch (one pull request), now unblocked. The file inventory is
-   in [`docs/research/study-data-design.md`](docs/research/study-data-design.md); the wording
-   and names are in the accepted proposal.
-3. Typed findings as the only inputs to scoring (one pull request, behaviour-preserving, with the
-   demo scenarios' tiers unchanged). Design: "Shared rule and decision record" in the same file.
-4. v2 Week 1: write and commit the study protocol, then capture the baseline.
+1. Typed findings as the only inputs to scoring (one pull request, with the demo scenarios'
+   tiers unchanged). Design: "Shared rule and decision record" in
+   [`docs/research/study-data-design.md`](docs/research/study-data-design.md).
+2. v2 Week 1: write and commit the study protocol, then capture the baseline.
+
+**The typed-findings choice.** The design asks for fact-level findings (each discrepancy,
+screening hit, high-risk ownership node, deep ownership chain, structuring and layering flag and
+typology hit as its own record), with the agent scores computed from them by the live formulas.
+Live runs then score exactly as today. The three original recorded profiles (Jane Synthetic,
+Synthetic Holdings B.V., Cayman Synth Capital) carry hand-set scores that those formulas do not
+reproduce, so their scores would move while their tiers stay: about 5.8 → 3.0 (LOW), 49.5 → 44
+(MEDIUM) and 73.5 → 76 (CRITICAL, held by the sanctions match either way). The alternative keeps
+every score by recording each agent's score as a finding of its own, which is exact but coarser
+for the study's subset analysis. Either way a dimension whose agent did not run keeps today's
+default and is recorded as not assessed, not as clear.
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
@@ -142,7 +137,7 @@ keep the protocol date.
   `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`). When live, update the README
   hosting badges, the ARCHITECTURE hosting heading and the CHANGELOG known issue.
 - CodeQL alert #1 (Faker `tax_id`) is a false positive, to dismiss in the GitHub UI.
-- `eslint-config-next` matches Next.js (16.4.6) on `deps/security-refresh`. ESLint 9 and
+- `eslint-config-next` matches Next.js (16.4.6) on `main`. ESLint 9 and
   TypeScript 6.0 are held back by peer limits. Remove the minimatch `overrides` entry in
   `web/package.json` once typescript-eslint and ts-morph depend on minimatch 11. Move `web/.nvmrc` and `@types/node` by hand when
   Node 26 is the LTS.
@@ -153,6 +148,27 @@ keep the protocol date.
 
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
+
+### 14 November 2026 — security refresh, root handoff and stand-ins
+
+- Pushed the security refresh and the documentation branch and opened #27 and #28; the
+  maintainer merged both on 13 November. The documentation branch was first split into four
+  commits that each pass `check_docs.py` (research drafts, the community-package removal with
+  its README link, the root handoff, the plan and docs alignment) and rebased on the security
+  branch so its CI ran on fixed dependencies. Merging and dismissing the deepmerge alert were
+  refused by the agent's permission rules and left to the maintainer.
+- Built the stand-in branch (#29) in two commits: the stand-ins with the data rule, then the
+  removal of the public adverse-media file and the boost. The stand-ins' facts were chosen so
+  that each agent score follows the live formulas; their tiers (HIGH, MEDIUM, LOW) are what the
+  rules give. All six demo cases are now invented, so the web UI lost its "public record"
+  label and the demo-only filter, and demo-only mode accepts all six. The fixture was
+  re-recorded by a script that first asserted the other three scenarios were unchanged.
+- Deleted the merged branches (`deps/security-refresh`, `docs/root-handoff`) locally and on
+  GitHub, at the maintainer's request.
+- Updated this file on #29 after the Codex review pointed out that it still described the
+  migration as pending.
+- Did not start typed findings: the choice above changes recorded scores, so it is the
+  maintainer's.
 
 ### 13 November 2026 — security advisories, data-rule answers
 
