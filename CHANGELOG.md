@@ -15,6 +15,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **The handoff is a tracked file at the repository root.** `HANDOFF.md` holds the current
+  state, the next step and a session log, with public-safe content only; `AGENTS.md`,
+  `CLAUDE.md` and the Copilot instructions give the same read order (rules, handoff, v2 plan).
+  Private notes stay in the ignored `.local/` folder. `check_docs.py` no longer refuses a
+  tracked `HANDOFF.md` and still refuses anything under `.local/` or `.tmp/`; Markdown lint now
+  covers the handoff. Checked: `check_docs.py` and markdownlint pass with the file tracked.
 - **The working drafts behind the study are in `docs/research/`.** The data-rule proposal, the
   study data design (stand-in inventory, typed findings, two deferred studies), the related-work
   survey and the monitoring sources were private notes; they are now tracked, each with a status

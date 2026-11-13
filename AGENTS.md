@@ -4,19 +4,23 @@ Instructions for coding agents (Claude Code, Codex, GitHub Copilot) and for huma
 ARGUS. This file is canonical: `CLAUDE.md` and `.github/copilot-instructions.md` only point here,
 and [`CONTRIBUTING.md`](CONTRIBUTING.md) is its short version for first-time contributors.
 
+Read [`HANDOFF.md`](HANDOFF.md) next for the current state and the next step, then
+[`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md) for the study that the work leads to.
+
 ## What ARGUS is
 
 ARGUS is a multi-agent KYC (know-your-customer) risk screening system: a FastAPI API in Python
 that runs five agents as one in-process Microsoft Agent Framework workflow, and a Next.js web UI. Fixed
 rules compute the risk score and tier; a language model only writes the explanation. It won a Hack
-for Good award in the Microsoft Agents League 2026 and is now being cleaned up before the v2 work
-in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md).
+for Good award in the Microsoft Agents League 2026. The next piece of work is the matched
+explanation study in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md) and the two changes that
+plan lists before its first week.
 
-State as of 2026-09-27: every tool reads through a data plane with a local implementation
-(synthetic data, the default, no cloud account) and an Azure one that is not yet verified against
-live services, and every result records where it came from (see "Known issues" in
-[`CHANGELOG.md`](CHANGELOG.md)). [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) describes the
-runtime as it is, not as planned.
+Every tool reads through a data plane with a local implementation (synthetic data, the default,
+no cloud account) and an Azure one that is not yet verified against live services, and every
+result records where it came from (see "Known issues" in [`CHANGELOG.md`](CHANGELOG.md)).
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) describes the runtime as it is, not as planned.
+The dated current state is in [`HANDOFF.md`](HANDOFF.md), not here.
 
 ## Rules that must not be broken
 
@@ -137,12 +141,20 @@ Inside `src/argus/`:
 `scripts/ci/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.
 
-## Handoff between tools
+## Shared state and private material
 
-If `.local/HANDOFF.md` exists, read it before doing anything else: it holds the current state, the
-next step and decisions already made. The working plans sit next to it in `.local/`. Before you
-stop, update its "Current state" and "Next step" sections and add a session-log entry.
-
-`.local/` and `.tmp/` are local and never committed; `check_docs.py` fails if either is tracked.
-`.local/` is durable: never delete or clear it. `.tmp/` is disposable scratch that anyone may
-empty; don't keep anything there that must survive.
+- [`HANDOFF.md`](HANDOFF.md) at the repository root is the shared record for every tool and
+  person: current state, next step and a session log. Conversation history does not move
+  between tools, so before you stop, update its "Current state" and "Next step" sections and
+  add a session-log entry.
+- `HANDOFF.md` is tracked and public. Write only public-safe project state in it: no account,
+  subscription or billing details, no personal correspondence, no unpublished drafts.
+- Drafts, proposals and research notes go in [`docs/research/`](docs/research/README.md), each
+  with a status line and a date. Decisions and open items go in `HANDOFF.md`.
+- `.local/` is the ignored home for what cannot be published: account, subscription and billing
+  notes, notes about one machine, and private measurement records. Keep it small. It is
+  durable: never delete or clear it without the maintainer asking, and never commit it. Cloud
+  agents that work from a copy of the GitHub repository cannot see it.
+- `.tmp/` is disposable scratch that anyone may empty; don't keep anything there that must
+  survive.
+- `check_docs.py` fails if anything under `.local/` or `.tmp/` is tracked.
