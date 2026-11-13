@@ -58,27 +58,28 @@ Maintainer decisions that block work:
 1. Merge #29 (or ask for changes).
 2. Dismiss the deepmerge alert in the GitHub UI as a tolerable risk (development-only tool, no
    fixed release), or ask for the alternative: drop the `shadcn` package and copy its stylesheet.
-3. Typed findings, one design choice (see below).
-4. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
+3. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
    original cleanup exit gate), or is tagged first because the study does not need hosting.
-5. A model budget for the study, and which model configuration is pinned.
+4. A model budget for the study, and which model configuration is pinned.
 
 Then, in order:
 
-1. Typed findings as the only inputs to scoring (one pull request, with the demo scenarios'
-   tiers unchanged). Design: "Shared rule and decision record" in
+1. Typed findings as the only inputs to scoring (one pull request, in a fresh session, after
+   #29 is merged), fact-level as decided below, with the demo scenarios' tiers unchanged.
+   Design: "Shared rule and decision record" in
    [`docs/research/study-data-design.md`](docs/research/study-data-design.md).
 2. v2 Week 1: write and commit the study protocol, then capture the baseline.
 
-**The typed-findings choice.** The design asks for fact-level findings (each discrepancy,
-screening hit, high-risk ownership node, deep ownership chain, structuring and layering flag and
-typology hit as its own record), with the agent scores computed from them by the live formulas.
+**The typed-findings choice (decided 14 November: fact-level).** The design asks for
+fact-level findings (each discrepancy, screening hit, high-risk ownership node, deep ownership
+chain, structuring and layering flag and typology hit as its own record), with the agent scores
+computed from them by the live formulas.
 Live runs then score exactly as today. The three original recorded profiles (Jane Synthetic,
 Synthetic Holdings B.V., Cayman Synth Capital) carry hand-set scores that those formulas do not
 reproduce, so their scores would move while their tiers stay: about 5.8 → 3.0 (LOW), 49.5 → 44
-(MEDIUM) and 73.5 → 76 (CRITICAL, held by the sanctions match either way). The alternative keeps
-every score by recording each agent's score as a finding of its own, which is exact but coarser
-for the study's subset analysis. Either way a dimension whose agent did not run keeps today's
+(MEDIUM) and 73.5 → 76 (CRITICAL, held by the sanctions match either way). The maintainer chose
+this over recording each agent's score as a finding of its own, which would keep every score but
+is coarser for the study's subset analysis. A dimension whose agent did not run keeps today's
 default and is recorded as not assessed, not as clear.
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
@@ -122,6 +123,9 @@ keep the protocol date.
   its summary. A workshop submission is decided only after the results are in.
 - 11 November 2026: the two later studies, the public legal-entity cohort, event replay,
   durable execution, Fabric IQ and Work IQ are deferred until the first study is written up.
+- 14 November 2026: typed findings are fact-level (one finding per fact, agent scores computed
+  from them by the live formulas); the three original recorded profiles' scores may move, their
+  tiers may not. The work starts in a fresh session.
 - 13 November 2026: the data-rule wording is accepted as written, the empty
   `docs/DATA-SOURCES.md` register is added with it, and the stand-ins are Synthetic Payments AG,
   Synthetic Nordic Bank A/S and Synthetic Pacific Banking Corporation (all on the stand-in
@@ -167,8 +171,8 @@ requests.
   GitHub, at the maintainer's request.
 - Updated this file on #29 after the Codex review pointed out that it still described the
   migration as pending.
-- Did not start typed findings: the choice above changes recorded scores, so it is the
-  maintainer's.
+- Asked the maintainer about typed findings, because the choice changes recorded scores:
+  fact-level, started in a fresh session.
 
 ### 13 November 2026 — security advisories, data-rule answers
 
