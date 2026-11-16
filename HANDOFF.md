@@ -20,8 +20,8 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   release-prep branch `chore/release-v0.1.0` is pushed and its pull request is open, not
   merged. No tag, deployment or paid model run.
 - **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
-  found no npm advisories. #31's dependency audit passed; the Dependabot alert count itself has
-  not been rechecked.
+  found no npm advisories. On 16 November there were no open Dependabot, code scanning or
+  secret scanning alerts.
 - **Stand-ins and data rule: merged (#29).** Synthetic Payments AG (HIGH,
   56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
   (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
@@ -32,11 +32,13 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier; a language model only
   writes the explanation. The default is the local data plane with synthetic data and no cloud
-  account. The Azure data plane exists but is not verified against live services.
+  account. The Azure data plane exists but is not verified against live services, and no live
+  model has written an explanation since the rebuild (both are known issues).
 - **Release prepared, not tagged; not deployed.** The release-prep pull request dates the
   changelog section `[0.1.0] - 2026-11-16`; `pyproject.toml` already says 0.1.0. There is no tag and
-  no GitHub Release yet. The `deps-broken` label now exists. The deployment workflow and Bicep
-  template are merged; no Azure or Vercel resource has been created.
+  no GitHub Release yet. The `deps-broken` label now exists. Zenodo archives this repository's
+  releases, so the tag will get a DOI; `CITATION.cff` supplies its metadata. The deployment
+  workflow and Bicep template are merged; no Azure or Vercel resource has been created.
 - **Typed findings: merged (#31).** Canonical facts and explicit assessment states are the only
   case inputs to one shared score/obligation policy. Reports add `findings`, retained
   `evidence` and a versioned `decision_record`, pending human review; cached numeric agent
@@ -157,13 +159,12 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
   30 idle minutes and observe one idle day's cost. Then the Vercel project (root `web`, variables
   `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`). When live, update the README
   hosting badges, the ARCHITECTURE hosting heading and the CHANGELOG known issue.
-- CodeQL alert #1 (Faker `tax_id`) is a false positive, to dismiss in the GitHub UI.
 - `eslint-config-next` matches Next.js (16.4.6) on `main`. ESLint 9 and
   TypeScript 6.0 are held back by peer limits. Remove the minimatch `overrides` entry in
   `web/package.json` once typescript-eslint and ts-morph depend on minimatch 11. Move `web/.nvmrc` and `@types/node` by hand when
   Node 26 is the LTS.
-- Undecided: add a `documents` field to the API, or keep "the API takes no documents" as a
-  known issue for `v0.1.0`.
+- `v0.1.0` ships with "the API takes no documents" as a known issue. Whether to add a
+  `documents` field later is undecided.
 
 ## Session log
 
@@ -181,6 +182,19 @@ requests.
   section `[0.1.0] - 2026-11-16` under a new empty `[Unreleased]`, made the release wording in
   `docs/RELEASING.md` and a README comment true once tagged, and opened the release-prep pull
   request. `uv lock --check`, the release-notes extraction and every check passed. No tag yet.
+- At the maintainer's request, scouted the whole repository before merging the release-prep
+  pull request (read-only): docs against code, the release and deploy workflows, settings and
+  alerts. No blocker; open Dependabot, code scanning and secret scanning alerts were all zero
+  (CodeQL alert #1 had already been dismissed as a false positive).
+- With the maintainer's approval, added to the release-prep pull request: a summary at the top
+  of the `[0.1.0]` notes, a known issue that no live model has written an explanation since the
+  rebuild (and the README status row to match), an absolute link in place of the notes' one
+  relative link, the README container wording, a `.env.example` without the unused
+  `AZURE_RESOURCE_GROUP`, the budget amounts removed from `docs/ARCHITECTURE.md` (earlier
+  versions keep them in history), and `CITATION.cff`. The maintainer switched on the Zenodo
+  archive for this repository, so the release gets a DOI. Updated the repository description
+  and topics (no A2A or Semantic Kernel) and deleted the merged `feat/typed-findings` and
+  `docs/study-protocol` branches on GitHub.
 
 ### 16 November 2026 (evening) — typed findings merged, protocol drafted
 
