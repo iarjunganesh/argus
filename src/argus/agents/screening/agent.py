@@ -4,6 +4,7 @@ Screens entities against sanctions, adverse media, and PEP databases.
 sanctions_checker and adverse_media_scanner search the knowledge bases in the data plane.
 """
 
+from argus.agents.compliance.tools.risk_scorer import agent_score
 from argus.agents.provenance import provenance
 from argus.agents.screening.tools.adverse_media_scanner import adverse_media_scanner
 from argus.agents.screening.tools.pep_checker import pep_checker
@@ -33,15 +34,15 @@ async def assess(request: dict, task_id: str) -> dict:
         + pep_result.get("findings", [])
     )
 
-    # Compute screening risk score (0-100)
-    base_score = 0
-    if sanctions_result.get("hit"):
-        base_score += 60
-    if pep_result.get("hit"):
-        base_score += 25
-    if adverse_media_result.get("hit"):
-        base_score += 15
-    screening_risk_score = min(base_score, 100)
+    screening_risk_score = agent_score(
+        "screening",
+        {
+            "sanctions_hit": sanctions_result.get("hit", False),
+            "pep_hit": pep_result.get("hit", False),
+            "adverse_media_hit": adverse_media_result.get("hit", False),
+            "findings": all_findings,
+        },
+    )
 
     return {
         "agent": "screening",

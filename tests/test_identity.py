@@ -82,6 +82,15 @@ async def test_identity_agent_invoke(monkeypatch):
     assert res["result"]["identity_score"] >= 0
 
 
+async def test_identity_agent_derives_its_score_from_discrepancies(monkeypatch):
+    async def validator(reg, ocr):
+        return {"confidence_score": 1, "discrepancies": [{"field": "name", "severity": "high"}]}
+
+    monkeypatch.setattr(ident, "identity_validator", validator)
+    response = await ident.assess({"entity_name": "Synthetic Unlisted Company"}, "test")
+    assert response["result"]["identity_score"] == 70
+
+
 async def test_a_document_that_cannot_be_read_gives_nothing_and_says_so():
     from argus.agents.identity.tools import ocr_processor as ocp
 

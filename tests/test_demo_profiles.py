@@ -34,7 +34,7 @@ def test_demo_profile_aliases_resolve_to_canonical_profiles():
 
     assert cayman is not None and cayman["screening"]["sanctions_hit"] is True
     assert synthetic is not None and synthetic["screening"]["pep_hit"] is True
-    assert jane is not None and jane["screening"]["screening_risk_score"] == 5
+    assert jane is not None and jane["screening"]["screening_risk_score"] == 0
 
 
 def test_every_demo_case_is_synthetic():

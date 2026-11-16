@@ -13,8 +13,8 @@ ARGUS is a multi-agent KYC (know-your-customer) risk screening system: a FastAPI
 that runs five agents as one in-process Microsoft Agent Framework workflow, and a Next.js web UI. Fixed
 rules compute the risk score and tier; a language model only writes the explanation. It won a Hack
 for Good award in the Microsoft Agents League 2026. The next piece of work is the matched
-explanation study in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md) and the two changes that
-plan lists before its first week.
+explanation study in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md); its prerequisite status
+is recorded in [`HANDOFF.md`](HANDOFF.md).
 
 Every tool reads through a data plane with a local implementation (synthetic data, the default,
 no cloud account) and an Azure one that is not yet verified against live services, and every
@@ -146,6 +146,8 @@ Inside `src/argus/`:
 | `accessibility/` | WCAG contrast utilities, also used to check the images |
 | `models.py` | The one language-model client factory (`ARGUS_MODEL_PROVIDER`) |
 | `config.py` | The Azure client factories behind the Azure data plane |
+| `findings.py` | Typed facts, evidence records and assessment states; ignores cached scores |
+| `decision.py` | The recommendation and policy obligations derived from typed findings, pending human review |
 
 `scripts/ci/check_docs.py` fails if a tracked top-level directory is missing from this table, or if
 the table lists one that doesn't exist.

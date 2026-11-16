@@ -1,7 +1,12 @@
+"""The versioned risk policy: typed findings are its only case inputs.
+
+An empty finding set has risks (20, 0, 20, 0, 0), score 7.0 and LOW tier. Missing assessments
+are unknown, not cleared. Findings can affect several dimensions; contributions are not additive.
 """
-risk_scorer — Weighted risk scoring across all dimensions.
-Weights: Screening 30% | Regulatory 25% | Identity 20% | Corporate 15% | Transaction 10%
-"""
+
+from collections.abc import Sequence
+
+from argus.findings import Category, Finding, collect_findings
 
 # Lower bound of each tier's score band, highest first.
 TIER_BANDS = (("CRITICAL", 75), ("HIGH", 55), ("MEDIUM", 35), ("LOW", 0))
@@ -20,65 +25,59 @@ def score_tier(score: float) -> str:
     return next((name for name, floor in TIER_BANDS if score >= floor), "LOW")
 
 
-def risk_scorer(identity: dict, screening: dict, corporate: dict, transaction: dict) -> dict:
-    # Extract raw scores (0-100, where 100 = highest risk)
-    identity_risk = 100 - identity.get("identity_score", 80)  # invert confidence
-    screening_risk = screening.get("screening_risk_score", 0)
-    corporate_risk = 100 - corporate.get("corporate_score", 80)
-    transaction_risk = transaction.get("transaction_risk_score", 0)
-    regulatory_risk = _estimate_regulatory_risk(screening, corporate)
-
-    overall = (
-        identity_risk * WEIGHTS["identity"]
-        + screening_risk * WEIGHTS["screening"]
-        + corporate_risk * WEIGHTS["corporate"]
-        + regulatory_risk * WEIGHTS["regulatory"]
-        + transaction_risk * WEIGHTS["transaction"]
+def dimension_risks(findings: Sequence[Finding]) -> dict[str, int]:
+    """Apply the live formulas, including category-level screening triggers and caps."""
+    if len({f.id for f in findings}) != len(findings):
+        raise ValueError("Duplicate finding identifiers")
+    kinds = [f.kind for f in findings]
+    assessed = {
+        f.category
+        for f in findings
+        if f.kind != "assessment" or f.value in ("completed", "partial")
+    }
+    identity = sum(
+        {"high": 30, "medium": 10}.get(str(f.value), 0) for f in findings if f.kind == "discrepancy"
     )
-
-    # Format weight strings from WEIGHTS constant for display
-    def w(key):
-        return f"{int(WEIGHTS[key] * 100)}%"
-
+    flags = kinds.count("corporate_flag")
     return {
-        "overall": round(overall, 1),
+        "identity": min(identity, 100) if "identity" in assessed else 20,
+        "screening": (
+            60 * ("sanctions_match" in kinds)
+            + 25 * ("pep_match" in kinds)
+            + 15 * ("adverse_media_match" in kinds)
+        ),
+        "corporate": min(100, 15 * flags + 10 * ("ownership_depth" in kinds))
+        if "corporate" in assessed
+        else 20,
+        "regulatory": min(
+            100, 45 * ("pep_match" in kinds) + 35 * ("adverse_media_match" in kinds) + 15 * flags
+        ),
+        "transaction": min(
+            100,
+            40 * ("structuring" in kinds)
+            + 30 * ("layering" in kinds)
+            + 10 * kinds.count("typology"),
+        ),
+    }
+
+
+def risk_scorer(findings: Sequence[Finding]) -> dict:
+    risks = dimension_risks(findings)
+    return {
+        "overall": round(sum(risks[k] * weight for k, weight in WEIGHTS.items()), 1),
         "dimensions": {
-            "identity": {
-                "score": round(identity_risk, 1),
-                "tier": score_tier(identity_risk),
-                "weight": w("identity"),
-            },
-            "screening": {
-                "score": round(screening_risk, 1),
-                "tier": score_tier(screening_risk),
-                "weight": w("screening"),
-            },
-            "corporate_ubo": {
-                "score": round(corporate_risk, 1),
-                "tier": score_tier(corporate_risk),
-                "weight": w("corporate"),
-            },
-            "regulatory": {
-                "score": round(regulatory_risk, 1),
-                "tier": score_tier(regulatory_risk),
-                "weight": w("regulatory"),
-            },
-            "transaction": {
-                "score": round(transaction_risk, 1),
-                "tier": score_tier(transaction_risk),
-                "weight": w("transaction"),
-            },
+            "corporate_ubo" if key == "corporate" else key: {
+                "score": score,
+                "tier": score_tier(score),
+                "weight": f"{int(WEIGHTS[key] * 100)}%",
+            }
+            for key, score in risks.items()
         },
     }
 
 
-def _estimate_regulatory_risk(screening: dict, corporate: dict) -> float:
-    score = 0.0
-    # PEP and adverse-media hits weigh heavily in the regulatory dimension
-    if screening.get("pep_hit"):
-        score += 45
-    if screening.get("adverse_media_hit"):
-        score += 35
-    if corporate.get("risk_flags"):
-        score += len(corporate.get("risk_flags", [])) * 15
-    return min(score, 100)
+def agent_score(category: Category, result: dict) -> int:
+    """Derive a compatibility score through the same typed facts as Compliance."""
+    records = collect_findings({category: {"result": result}})
+    risk = dimension_risks(records.findings)[category]
+    return 100 - risk if category in ("identity", "corporate") else risk

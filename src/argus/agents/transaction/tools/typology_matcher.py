@@ -38,6 +38,11 @@ async def typology_matcher(patterns: dict) -> dict:
             "fatf_ref": p.source_doc,
             "score": p.score,
             "source": "retrieved",
+            "citation": {
+                "knowledge_base": "regulations",
+                "document": p.source_doc,
+                "snippet_id": p.id,
+            },
         }
         for p in passages
         if p.score >= MATCH_THRESHOLD

@@ -15,8 +15,25 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **Typed facts are the only case inputs to scores and obligations.** Every discrepancy,
+  screening hit, corporate risk flag, deep ownership chain, structuring/layering flag and
+  typology hit has a stable record with evidence, provenance, uncertainty and pending human
+  review. Reports add `findings`, an `evidence` index and a versioned `decision_record`; existing
+  string summaries and score fields remain derived outputs. The live agents and Compliance use
+  one policy, which ignores cached scores. Missing, skipped and partial assessments remain
+  explicit, with the existing numeric defaults; no human decision is fabricated. Jane's score
+  becomes 3.0, Synthetic Holdings' 44.0 and Cayman's 76.0; all six tiers and recommended actions
+  stay unchanged, as do the other three scores. The analyst prompt template is unchanged.
+  Checked: 412 Python tests pass with 100% line and branch coverage, including score-tampering,
+  identifier stability, duplicate facts, caps, partial results, replay/evidence validation and
+  all six recorded scenarios. Retrieved typologies retain their passage IDs and citations;
+  live pattern and ownership findings retain their detector/history and node/jurisdiction
+  observations. Recorded demo claims do not invent missing observations. Node.js 24: web lint,
+  formatting, typecheck, 30 unit tests, the production build and all 30 Playwright tests pass.
+  Repository docs/version/asset checks and markdownlint pass.
+
 - **The handoff is a tracked file at the repository root.** `HANDOFF.md` holds the current
-  state, the next step and a session log, with public-safe content only; `AGENTS.md`,
+  state, the next step, a reusable initialization prompt and a session log, with public-safe content only; `AGENTS.md`,
   `CLAUDE.md` and the Copilot instructions give the same read order (rules, handoff, v2 plan).
   Private notes stay in the ignored `.local/` folder. `check_docs.py` no longer refuses a
   tracked `HANDOFF.md` and still refuses anything under `.local/` or `.tmp/`; Markdown lint now

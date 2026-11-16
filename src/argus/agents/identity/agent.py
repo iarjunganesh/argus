@@ -3,6 +3,7 @@ ARGUS Identity Agent
 Verifies entity identity via registry lookups and document OCR.
 """
 
+from argus.agents.compliance.tools.risk_scorer import agent_score
 from argus.agents.identity.tools.customer_lookup import customer_lookup
 from argus.agents.identity.tools.identity_validator import identity_validator
 from argus.agents.identity.tools.ocr_processor import ocr_processor
@@ -35,7 +36,7 @@ async def assess(request: dict, task_id: str) -> dict:
     # Step 3: Cross-validate
     validation = await identity_validator(registry_result, ocr_results)
 
-    identity_score = validation.get("confidence_score", 50)
+    identity_score = agent_score("identity", {"discrepancies": validation.get("discrepancies", [])})
     logger.info("assess.completed", extra={"task_id": task_id, "identity_score": identity_score})
 
     return {

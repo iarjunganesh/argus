@@ -120,7 +120,7 @@ A single KYC request fans out across **five specialist agents**. The Identity, S
 
 ### What works today, and what doesn't
 
-ARGUS was rebuilt after the hackathon. This table is the state of the code as of November 2026 (`main` last changed in October 2026). The current state and next step are in [`HANDOFF.md`](HANDOFF.md).
+ARGUS was rebuilt after the hackathon. This table describes the current code; the branch, dated checks and next step are in [`HANDOFF.md`](HANDOFF.md).
 
 | Capability | Status |
 | --- | --- |
@@ -203,7 +203,7 @@ Working drafts behind the study are in [`docs/research/`](docs/research/README.m
 | 🟠 Medium Risk | `Synthetic Nordic Bank A/S` | corporate | DK | MEDIUM — Enhanced Due Diligence (PEP match) |
 | 🟢 Low Risk | `Synthetic Pacific Banking Corporation` | corporate | AU | LOW — Standard onboarding, despite adverse media and a structuring flag |
 
-Every entity is invented. These use recorded demo profiles for the parallel agents (see the status table above); the last three's profile scores are what the live agents compute from their facts.
+Every entity is invented. These use recorded demo profiles for the parallel agents (see the status table above). All recorded scores follow the same fact-level formulas as the live agents. The tiers are unchanged by the typed-findings migration; Jane scores 3.0, Synthetic Holdings 44.0 and Cayman 76.0.
 
 ### What a report shows
 
@@ -214,6 +214,8 @@ Every entity is invented. These use recorded demo profiles for the parallel agen
 - **Citations** — the knowledge base, source document and article behind each regulatory trigger
 - **Recommended actions** — driven by risk indicators and compliance gaps
 - **Audit trail** — report and task IDs, each agent's status, where its result came from and which tools fell back, the timeline, and the full report as JSON
+
+The JSON report also includes canonical typed `findings`, an `evidence` index and a `decision_record` with the policy version and evaluated finding IDs. Every record remains pending human review. Scores and obligations use those facts; cached agent scores cannot change them. Missing assessments retain the existing numeric defaults and are explicitly unknown. The string `key_findings` list remains available to current clients. See [the scoring record](docs/ARCHITECTURE.md#typed-findings-and-decision-record).
 
 ---
 

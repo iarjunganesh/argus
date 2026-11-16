@@ -3,6 +3,7 @@ ARGUS Corporate Intelligence Agent
 Resolves UBO structure and maps corporate ownership graph.
 """
 
+from argus.agents.compliance.tools.risk_scorer import agent_score
 from argus.agents.corporate.tools.jurisdiction_mapper import jurisdiction_mapper
 from argus.agents.corporate.tools.registry_lookup import registry_lookup
 from argus.agents.corporate.tools.ubo_resolver import ubo_resolver
@@ -36,18 +37,22 @@ async def assess(request: dict, task_id: str) -> dict:
 
     # Identify structural risk flags
     risk_flags = []
+    risk_flag_evidence = []
     for node in ubo_result.get("ownership_chain", []):
         node_jrsd = node.get("jurisdiction", "")
         jrsd_info = await jurisdiction_mapper(node_jrsd)
         if jrsd_info.get("fatf_risk_tier") == "high":
-            risk_flags.append(f"High-risk jurisdiction node: {node.get('name')} ({node_jrsd})")
+            flag = f"High-risk jurisdiction node: {node.get('name')} ({node_jrsd})"
+            risk_flags.append(flag)
+            risk_flag_evidence.append(
+                {
+                    "flag": flag,
+                    "ownership_node": node,
+                    "jurisdiction_assessment": jrsd_info,
+                }
+            )
 
-    corporate_score = 100
-    if risk_flags:
-        corporate_score -= len(risk_flags) * 15
-    if ubo_result.get("depth", 0) > 3:
-        corporate_score -= 10
-    corporate_score = max(0, corporate_score)
+    corporate_score = agent_score("corporate", {"risk_flags": risk_flags, "ubo_chain": ubo_result})
 
     return {
         "agent": "corporate",
@@ -59,6 +64,7 @@ async def assess(request: dict, task_id: str) -> dict:
             "ubo_chain": ubo_result,
             "jurisdiction_info": jrsd_result,
             "risk_flags": risk_flags,
+            "risk_flag_evidence": risk_flag_evidence,
             "corporate_score": corporate_score,
         },
     }

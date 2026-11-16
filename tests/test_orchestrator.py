@@ -70,7 +70,7 @@ async def test_a_demo_scenario_stands_in_for_the_parallel_agents(fake_agents):
 
     assert set(fake_agents) == {"compliance"}  # the four parallel agents were not run
     upstream = fake_agents["compliance"]["upstream_results"]
-    assert upstream["identity"]["result"]["identity_score"] == 96
+    assert upstream["identity"]["result"]["identity_score"] == 100
     assert upstream["transaction"]["result"]["transaction_count"] == 8
     sources = report["audit_trace"]["agent_sources"]
     assert [sources[a] for a in orchestrator.AGENTS] == ["demo_profile"] * 4 + ["computed"]

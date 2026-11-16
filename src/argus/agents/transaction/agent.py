@@ -3,6 +3,7 @@ ARGUS Transaction Intelligence Agent
 Analyses synthetic transaction history for AML patterns and typologies.
 """
 
+from argus.agents.compliance.tools.risk_scorer import agent_score
 from argus.agents.provenance import provenance
 from argus.agents.transaction.tools.pattern_detector import pattern_detector
 from argus.agents.transaction.tools.transaction_monitor import transaction_monitor
@@ -36,15 +37,15 @@ async def assess(request: dict, task_id: str) -> dict:
     typology = await typology_matcher(patterns)
     typology_hits = typology["hits"]
 
-    # Compute transaction risk score
-    base_score = 0
-    if patterns.get("structuring_flag"):
-        base_score += 40
-    if patterns.get("layering_flag"):
-        base_score += 30
-    if typology_hits:
-        base_score += len(typology_hits) * 10
-    transaction_risk_score = min(base_score, 100)
+    transaction_risk_score = agent_score(
+        "transaction",
+        {
+            "structuring_flag": patterns.get("structuring_flag", False),
+            "layering_flag": patterns.get("layering_flag", False),
+            "typology_hits": typology_hits,
+            "anomalous_transactions": patterns.get("flagged_transactions", []),
+        },
+    )
 
     return {
         "agent": "transaction",
@@ -57,6 +58,7 @@ async def assess(request: dict, task_id: str) -> dict:
             "structuring_flag": patterns.get("structuring_flag", False),
             "layering_flag": patterns.get("layering_flag", False),
             "anomalous_transactions": patterns.get("flagged_transactions", []),
+            "pattern_evidence": {"history": tx_history, "patterns": patterns},
             "typology_hits": typology_hits,
             "transaction_risk_score": transaction_risk_score,
         },

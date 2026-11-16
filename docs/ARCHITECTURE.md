@@ -1,7 +1,7 @@
 # ARGUS architecture (current runtime)
 
-This page describes how ARGUS runs **today**. It was last revised with the deployment work in
-October 2026; `main` has not changed since. The next work is planned in
+This page describes how ARGUS runs **today**, including the typed-findings change of
+15 November 2026. The branch and checked revision are recorded in the handoff. The next work is planned in
 [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original hackathon design spec
 is archived in [`archive/hackathon-2026/docs/`](../archive/hackathon-2026/docs/ARGUS_Architecture.md)
 and is no longer maintained.
@@ -112,8 +112,9 @@ the real protocol through Agent Framework's A2A support, not a custom envelope.
 
 ## Risk scoring
 
-All in [`src/argus/agents/compliance/`](../src/argus/agents/compliance/); no model is involved.
-Each agent's own rules are drawn in
+The formulas are shared in
+[`risk_scorer.py`](../src/argus/agents/compliance/tools/risk_scorer.py); no model is involved.
+Each agent's rules are drawn in
 [`investigation-flow.svg`](../assets/architecture/investigation-flow.svg).
 
 **Weighted score (0–100).** Screening 30%, Regulatory 25%, Identity 20%, Corporate 15%,
@@ -146,13 +147,69 @@ recommendation names the three measures (unless a sanctions hold, an incomplete 
 CRITICAL tier says more), and the actions list them. ARGUS does not yet tell foreign from
 domestic PEPs, so it applies the all-PEP rule.
 
-**What the report does not claim.** It carries no confidence figure: nothing in ARGUS computes one.
+**What the report does not claim.** There is no calibrated confidence in the overall decision.
+Raw retrieval scores and match confidence fields are preserved as source evidence, without
+interpreting them as probabilities that a recommendation is correct.
 
 Sources: [FATF Recommendations](https://www.fatf-gafi.org/en/publications/Fatfrecommendations/Fatf-recommendations.html)
 (R.6, R.12 and the glossary's "without delay");
 [Wolfsberg Guidance on Sanctions Screening](https://wolfsberg-group.org/resources/168/53);
 [EU AML Regulation, Article 42](https://eur-lex.europa.eu/eli/reg/2024/1624/oj/eng);
 [FCA FG25/3 on PEPs](https://www.fca.org.uk/publication/finalised-guidance/fg25-3.pdf).
+
+### Typed findings and decision record
+
+[`findings.py`](../src/argus/findings.py) converts the four upstream responses into typed
+facts. Cached `identity_score`, `screening_risk_score`, `corporate_score` and
+`transaction_risk_score` values are ignored. Each discrepancy, screening match, corporate
+risk flag, deep ownership chain, structuring/layering flag and typology hit has its own record.
+Generic recorded corporate flags stay generic; no ownership node is inferred from their text.
+The agents' compatibility score fields are derived through this same representation and policy.
+
+| Dimension | Risk formula, capped at 100 | Missing or skipped assessment |
+| --- | --- | --- |
+| Identity | 30 per high discrepancy, 10 per medium | 20 |
+| Screening | 60 for any sanctions match, 25 for any PEP match, 15 for any media match | 0 |
+| Corporate | 15 per risk flag, plus 10 when recorded depth exceeds three | 20 |
+| Regulatory | 45 for PEP, 35 for media, 15 per corporate flag | 0 |
+| Transaction | 40 for structuring, 30 for layering, 10 per typology | 0 |
+
+Assessment records distinguish `completed`, `partial`, `not_assessed` and `skipped`, with a
+separate status for each screening tool. A tool fallback does not erase facts from tools that
+answered. Missing evidence is unknown even when the illustrative formula gives zero risk.
+The empty finding set under policy `argus-risk-v1` has score **7.0**, LOW tier, sanctions
+`not_run`, no PEP requirement and the incomplete recommendation to run sanctions screening
+before onboarding. Its gaps and actions are those same existing policy mappings. Assessment
+records are policy inputs too; removing one can restore a missing-dimension default, so subset
+effects must not be assumed monotone or additive.
+
+Reports add three fields without replacing the existing display fields:
+
+- `findings`: typed category, kind, scope and value, stable ID, evidence references, source,
+  source time when known, observation time, uncertainty, pending review and policy version.
+- `evidence`: the referenced source snapshots and original citations. IDs beginning `evidence-`
+  are ARGUS content hashes, not identifiers assigned by an outside source. Finding IDs exclude
+  observation times, task IDs and cached scores. Duplicate identical facts get distinct occurrence
+  suffixes; their set of IDs is stable under reordering. Source identifiers remain in the snapshots
+  and citations; dates are retained as published, never inferred.
+  Live pattern evidence includes the detector metrics and the transaction history it read;
+  live corporate flags include the ownership node and its jurisdiction assessment. Recorded
+  demo flags without those observations retain only their reported claim, labelled `demo_profile`.
+- `decision_record`: the machine evaluation's version, input finding IDs, summary, dimensions,
+  policy gaps/obligations, actions and evaluation time. Its status is `pending`; reviewer, human
+  decision time and rationale are null. Input IDs make no minimal-set or causal-attribution claim.
+
+[`decision.py`](../src/argus/decision.py) derives the recommendation and obligations only from
+these facts. Retrieved regulatory text supplies citations, not scoring inputs. Saved records can
+be validated with `FindingSet.model_validate`; bad kinds, values, scopes and evidence references
+are rejected, and the scorer rejects duplicate finding IDs. These records expire with the report
+under its existing retention policy.
+
+`key_findings` remains a string list generated from the records: the established summary facts
+come first, followed by previously omitted facts and missing-assessment warnings. The analyst
+prompt template and its first-five-findings cap are unchanged. Typed records still contain raw
+strings and names; they are the study's reference, not a minimised model input or a privacy
+guarantee. The matched arms and any explanation improvement remain planned.
 
 ## Provenance: where each result came from
 
