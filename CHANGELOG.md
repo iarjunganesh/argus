@@ -13,6 +13,42 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ## [Unreleased]
 
+### Added
+
+- **ARGUS can be cited by DOI.** Zenodo archived `v0.1.0` as 10.5281/zenodo.24292414; the concept DOI
+  10.5281/zenodo.24292413 always resolves to the latest version. The README's new "Citing ARGUS" section
+  and `CITATION.cff` carry it. Checked: the Zenodo record lists the release's title, version and
+  author from `CITATION.cff`; `cffconvert --validate` accepts the file.
+
+### Changed
+
+- **Dependencies refreshed after `v0.1.0`.** The Python lock and its minimums (FastAPI 0.163,
+  Pydantic 2.14, OpenAI 3.51 and others), the container's Python 3.14.10 and uv 0.13.8 base
+  images, the GitHub Actions pins and the web UI's packages moved to their latest releases within
+  their major versions; `docs/DEPENDENCY-REFRESH.md` lists every version. Microsoft Agent
+  Framework moved from 1.19.0 to 1.26.0 by hand, because the refresh keeps an exact pin at its
+  locked version. ESLint 10, TypeScript 7 and Node.js 26 wait for manual updates. Checked: every
+  gate in the refresh report; on Agent Framework 1.26.0, 412 tests (including the orchestrator
+  workflow and API contract tests) pass with 100% line and branch coverage, and ruff and mypy
+  pass; the pull request's CI, including the Playwright tests.
+- **The web UI no longer overrides minimatch.** `@typescript-eslint/typescript-estree` 8.73.0
+  requires minimatch 11 itself, so the override changed nothing; the lock resolves the same
+  versions. Checked: `npm install --package-lock-only` with npm 11 and the pull request's web CI.
+
+### Fixed
+
+- **The dependency-refresh report passes its own Markdown check.** The release workflow appended
+  the run link as a bare URL after the refresh's Markdown gate had run, so the refresh pull
+  request's Documentation job failed (MD034). The link is now written as `<…>`. Checked:
+  markdownlint passes on the report.
+- **The release and deployment guides describe what happened on the first release.**
+  `docs/RELEASING.md` and `AGENTS.md` say that the refresh leaves the exact Agent Framework pin
+  at its locked version, and how to move it by hand (they said the refresh moved it); the
+  one-time setup is recorded as done, apart from branch protection. `docs/DEPLOYMENT.md` says
+  that a first deployment's smoke step fails until the data plane is filled, because it needs
+  cited regulations. Checked against `release.yml`, `check_versions.py` and `smoke_api.py`;
+  `check_docs.py` and markdownlint pass.
+
 ## [0.1.0] - 2026-11-16
 
 The first release since the Microsoft Agents League 2026 submission, whose versions are archived.
