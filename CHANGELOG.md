@@ -41,6 +41,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   the run link as a bare URL after the refresh's Markdown gate had run, so the refresh pull
   request's Documentation job failed (MD034). The link is now written as `<…>`. Checked:
   markdownlint passes on the report.
+- **The Markdown files no longer carry stale or unwanted content.** The handoff keeps its
+  state, decisions and open items with a shorter history. The data-rule proposal and the study
+  data design, both carried out, are condensed to their reasons and record, without the
+  real-company names and the mapping from each stand-in to the company it replaced. Roadmap
+  pages, source notes and the research index no longer describe the data rule as pending or the
+  public adverse-media file as present, and an unsourced price figure is gone. Checked against
+  `AGENTS.md`, the code and the merged pull requests; `check_docs.py` and markdownlint pass, and
+  no tracked file outside the archive names those companies.
 - **The release and deployment guides describe what happened on the first release.**
   `docs/RELEASING.md` and `AGENTS.md` say that the refresh leaves the exact Agent Framework pin
   at its locked version, and how to move it by hand (they said the refresh moved it); the

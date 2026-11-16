@@ -1,15 +1,14 @@
 # Roadmap: ARGUS Witness — Adverse Event Reporting
 
-**Status:** idea, not scheduled, and not compatible with the current data rule (see the note below).
+**Status:** idea, not scheduled, and not compatible with the current data rule (see the note below). Revised 2026-11-16.
 **Goal:** A whistleblower-safe, anonymous channel for reporting suspicious entities directly into the ARGUS knowledge graph.
 
 ---
 
 ## The gap
 
-ARGUS's adverse media today is synthetic, plus a small public file that is due to be removed.
-Witness would publish allegations about real people and organisations, which the
-synthetic-data rule in [`AGENTS.md`](../../AGENTS.md) forbids. It would need a rule decision,
+ARGUS's adverse media is synthetic. Witness would publish allegations about real people and
+organisations, which the data rule in [`AGENTS.md`](../../AGENTS.md) forbids. It would need a rule decision,
 legal review in each jurisdiction and a moderation process before any work starts.
 
 ARGUS has no mechanism for:

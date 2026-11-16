@@ -1,6 +1,6 @@
 # Roadmap: Open Knowledge Graph
 
-**Status:** idea, not scheduled. Licences below were corrected on 2026-11-11 and still need checking.
+**Status:** idea, not scheduled. Licences below were corrected on 2026-11-11 and still need checking; the data-rule reference was updated on 2026-11-16.
 **Goal:** Publish the ARGUS regulatory knowledge corpus as structured, versioned, open data.
 
 ---
@@ -9,7 +9,7 @@
 
 The knowledge that determines who gets a bank account is currently locked behind:
 
-- Licensed compliance data providers ($10k–$100k/year)
+- Licensed compliance data providers
 - Proprietary risk scoring models (opaque, unauditable)
 - Vendor-specific knowledge bases
 
@@ -23,8 +23,9 @@ The ARGUS Open KG makes the base regulatory layer a public good.
 
 ### v1 Open KG (launch target)
 
-No source has been approved. Each needs its reuse terms and personal-data basis recorded first
-(see [`../research/data-rule-proposal.md`](../research/data-rule-proposal.md)); the reuse column
+No source has been approved. Each needs its reuse terms and personal-data basis recorded in
+[`../DATA-SOURCES.md`](../DATA-SOURCES.md) first, as the data rule in
+[`AGENTS.md`](../../AGENTS.md) requires; the reuse column
 is the current understanding from [`../research/related-work.md`](../research/related-work.md)
 and [`../research/study-data-design.md`](../research/study-data-design.md), not a legal check.
 

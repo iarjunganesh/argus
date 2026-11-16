@@ -1,7 +1,7 @@
 # ARGUS architecture (current runtime)
 
-This page describes how ARGUS runs **today**, including the typed-findings change of
-15 November 2026. The branch and checked revision are recorded in the handoff. The next work is planned in
+This page describes how ARGUS runs **today**: `v0.1.0` (16 November 2026) and what has
+merged since. The next work is planned in
 [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md). The original hackathon design spec
 is archived in [`archive/hackathon-2026/docs/`](../archive/hackathon-2026/docs/ARGUS_Architecture.md)
 and is no longer maintained.

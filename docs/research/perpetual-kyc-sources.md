@@ -76,14 +76,17 @@ are named is unconfirmed; check the API spec. Fits: Swedish registry_lookup, leg
 as an AMLA 27(a) trigger. Refs: <https://bolagsverket.se/apierochoppnadata/hamtaforetagsinformation/vardefulladatamangder/apiforvardefulladatamangder.5513.html> ,
 <https://www.dataportal.se/en> (national catalogue).
 
-Real personal data (PSC, Wikidata PEPs) collides with AGENTS.md "Synthetic data only"; the v0.2.0
-rule change must decide how that is scoped (e.g. entities only, or public officials only).
+Real personal data (PSC, Wikidata PEPs) is outside the data rule accepted on 2026-11-13
+(`AGENTS.md`): it admits legal entities only, and natural persons, PEP data and company officers
+each need their own reviewed decision.
 
 ## Implications for ARGUS
 
 1. **Sanctions should gate, not weigh.** A potential sanctions match should force the outcome to
    "hold for human disposition" regardless of the weighted score; a weighted 30% term (today's
    design, scoring ~18 = LOW for a sanctions-only case) is inconsistent with R.6 and Wolfsberg.
+   (Implemented since: a potential match holds the case at CRITICAL for a person to confirm or
+   clear.)
 2. pKYC maps onto the existing agents: (a) identity + corporate, (b) transaction, (c) screening,
    (d) transaction/corporate. What's missing is a trigger source, a re-run on trigger, a diff
    against the previous report, and the 1-year/5-year periodic floor.
@@ -104,7 +107,8 @@ rule change must decide how that is scoped (e.g. entities only, or public offici
   posing a higher risk"; don't decline merely for PEP status; >= 12 months after leaving office.
   <https://www.fca.org.uk/publication/finalised-guidance/fg25-3.pdf>
 - Conclusion: PEP status mandates MEASURES (EDD), not a RISK TIER. Recommend: no tier floor; an
-  EDD-required flag + recommendation whatever the tier. Later: classify foreign vs domestic with
+  EDD-required flag + recommendation whatever the tier (implemented since). Later: classify
+  foreign vs domestic with
   the EU prominent-public-functions lists (5AMLD Art 20a; OJ C/2023/724) + Wikidata; FATF's
   foreign-PEP rule could then set HIGH for foreign PEPs.
 

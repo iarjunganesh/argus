@@ -1,15 +1,15 @@
 # Study data design: working draft
 
 Status: **working draft, last revised 2026-10-04; partly deferred on 2026-11-11;
-typed-record implementation merged on 2026-11-16 (#31).** It was
-revised after three review passes (not published). This is a research design, not an
-implementation specification or a claim of legal or screening effectiveness. Legal readings
-here are the author's and have not been reviewed by a lawyer.
+typed-record implementation merged on 2026-11-16 (#31); finished work condensed on
+2026-11-16.** It was revised after three review passes (not published). This is a research
+design, not an implementation specification or a claim of legal or screening effectiveness.
+Legal readings here are the author's and have not been reviewed by a lawyer.
 
 What is in use now, for the study in [`../ARGUS-V2-PLAN.md`](../ARGUS-V2-PLAN.md): the
-stand-in migration inventory in the first section, and the typed-findings design in "Shared
-rule and decision record". The two papers below ("Paper 1" and "Paper 2"), the public
-legal-entity cohort and the source-feasibility steps are deferred until that study is
+typed-findings design in "Shared rule and decision record". The first section records the data
+rule and the stand-in migration, both done. The two papers below ("Paper 1" and "Paper 2"), the
+public legal-entity cohort and the source-feasibility steps are deferred until that study is
 written up.
 
 Both papers use Sweden as the primary setting. The [Swedish AML Act](https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/lag-2017630-om-atgarder-mot-penningtvatt-och_sfs-2017-630/)
@@ -19,53 +19,26 @@ prospective until their applicable/final versions are checked. UK law is a label
 
 ## First decision: source-data rule and study boundary
 
-Approve a narrow change to the repo's `AGENTS.md` **before importing public records**:
-generated customers, transactions, finances and documents stay synthetic. Permit
-unmodified, source-attributed official list entries and public legal-entity records as
-reference data after a source-specific reuse and privacy assessment. Do not turn a real
-person or company into a generated record, fabricate a relationship with a synthetic
-customer, or publish raw personal data. The current `AGENTS.md` rule still governs until
-its own reviewed change lands. **Maintainer decision (2026-10-04): approved
-in principle** — synthetic stand-ins for the three real-company profiles, removal of the
-public media file and the +12 boost, and a narrow AGENTS.md change permitting unmodified,
-attributed official list entries and public legal-entity records as reference data. The
-maintainer accepted the exact rule text and the stand-in names on 2026-11-13
-([`data-rule-proposal.md`](data-rule-proposal.md)); it ships on its own branch with the
-stand-ins.
+**Done.** The data rule in `AGENTS.md` keeps every case synthetic and admits unmodified,
+attributed official list entries and public legal-entity records as reference data once each
+source is recorded in `docs/DATA-SOURCES.md` (accepted 2026-11-13, merged in #29; reasons in
+[`data-rule-proposal.md`](data-rule-proposal.md)). Do not turn a real person or company into a
+generated record, fabricate a relationship with a synthetic customer, or publish raw personal
+data.
 
-**Demo migration is part of that rule-change branch.** Replace the recorded Wirecard AG,
-Danske Bank A/S and Westpac Banking Corporation assessment profiles with three clearly
-fictional corporate stand-ins. Their registry matches, scores and 2026 transaction
-histories are invented; keeping the real names would attach fictional conduct to real
-companies. Preserve the six scenario roles with generated facts and derive their tiers
-from the live rules; do not copy the hard-coded screening scores into the stand-ins.
-Do not retain aliases to the real names or a recognisable one-to-one retelling. Update
-the README scenario table, web examples, shared e2e fixture, local demo scripts, tests,
-`AGENTS.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and docs in the same change. Remove
-`adverse_media_public.jsonl` from local retrieval and both Azure upload paths, including
-its fourth real company, Binance; its unsourced paraphrases do not meet the proposed
-source rule. Give the stand-ins synthetic articles and remove "Public High/Medium Risk"
-labels. Remove the demo-only +12 boost, its test and architecture sentence together;
-search the whole repository for the old names and remove demo aliases. Historical
-enforcement facts about those companies may remain only as separately sourced
-background, never as generated assessment cases.
+**The stand-in migration is done (#29).** The three real-company demo profiles became clearly
+fictional corporate stand-ins whose registry matches, scores and transaction histories are
+invented and whose tiers follow the live rules, with no aliases to the old names. The public
+adverse-media file left local retrieval and both Azure upload paths, and the demo-only
+adverse-media boost was removed. Historical enforcement facts about real companies may appear
+only as separately sourced background, never as generated assessment cases.
 
-PR 5's shared smoke script now uses the existing Cayman Synth Capital scenario on
-the deployment branch, with the live rules' CRITICAL tier. Its workflow comment, deployment docs
-and changelog changed in the same commit (merged with the deployment work in October 2026). This small fix does not approve the broader rule/demo migration.
-
-**Hosted-demo boundary, proposed before public deployment:** accept only the explicitly
-synthetic demo cases at the API boundary until a reviewed input policy exists; a visitor
-notice alone cannot enforce the synthetic-data rule. Show the synthetic-only purpose and
-report retention before submission. Proposed retention is 24 hours: set Cosmos report
-and event expiry, reject expired report/status/stream reads even before asynchronous
-deletion, and document cleanup of existing records. Verify actual deletion and avoid
-logging visitor names or report contents. This retention value and deployment scope are
-proposals awaiting the maintainer's decision, not implemented settings. **Update 2026-10-04:
-decided (demo cases only + 24 hours) and implemented with the deployment work**:
-`ARGUS_DEMO_ONLY` (on in Bicep), `NEXT_PUBLIC_ARGUS_DEMO_ONLY` for the site, Cosmos default
-TTL 86400 on `kyc_reports` and the same expiry in the memory store, no names in logs. Cosmos
-already hides expired items from reads, so no extra read check was needed there.
+**The hosted demo is bounded (decided and implemented on 2026-10-04 with the deployment work).**
+A visitor notice alone cannot enforce the synthetic-data rule, so a public deployment accepts
+only the synthetic demo cases at the API boundary (`ARGUS_DEMO_ONLY`, on in Bicep;
+`NEXT_PUBLIC_ARGUS_DEMO_ONLY` for the site). Reports and their events expire after 24 hours
+(Cosmos default time to live 86400 on `kyc_reports`, and the same expiry in the memory store),
+and no names are logged.
 
 One replay may combine synthetic customer cases with public reference events, but every
 field and event records its origin. Allowed synthetic exposure kinds are **closed**:
@@ -260,5 +233,5 @@ look-ahead. Do not claim observed improvements in real-world AML effectiveness.
    or publishing test users as negative controls. Record the compute/API cost and approval
    route for each candidate explanation model.
 
-The implementation spec follows these gates. `AGENTS.md` needs a separate reviewed rule
-change first (proposed in [`data-rule-proposal.md`](data-rule-proposal.md)).
+The implementation spec follows these gates. The rule change they needed is in `AGENTS.md`
+(#29); natural persons, PEP data and company officers still need their own reviewed decision.
