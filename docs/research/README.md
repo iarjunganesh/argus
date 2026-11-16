@@ -6,9 +6,9 @@ peer reviewed.
 
 | Document | What it is | Status |
 | --- | --- | --- |
-| [data-rule-proposal.md](data-rule-proposal.md) | Proposed wording for the data rule and the synthetic stand-in migration | Accepted by the maintainer on 2026-11-13; carried out by the stand-in branch |
+| [data-rule-proposal.md](data-rule-proposal.md) | Why the data rule reads as it does, what changed with it, and the check of the stand-in names | Accepted on 2026-11-13 and carried out (#29); condensed to the record on 2026-11-16 |
 | [study-protocol.md](study-protocol.md) | Procedures for the matched explanation study: cases, arms, reference, failure conditions, measures and analysis | Draft, 2026-11-16; binding only once the maintainer freezes it, before the first study model call |
-| [study-data-design.md](study-data-design.md) | Stand-in migration inventory, typed findings as the scoring reference, and the design of two later studies | Working draft; the two later studies are deferred |
+| [study-data-design.md](study-data-design.md) | The data rule and stand-in migration (done), typed findings as the scoring reference, and the design of two later studies | Working draft; the two later studies are deferred |
 | [related-work.md](related-work.md) | Papers, regulation and data licences surveyed on 2026-09-30 | Dated notes; recheck before citing |
 | [perpetual-kyc-sources.md](perpetual-kyc-sources.md) | Sources on ongoing monitoring, sanctions and PEP rules, and free public company data (2026-09-27) | Dated notes; the monitoring work is deferred |
 
