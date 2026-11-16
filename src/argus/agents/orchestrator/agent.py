@@ -268,6 +268,9 @@ async def synthesise_report(
         "risk_summary": comp_result.get("risk_summary", {}),
         "dimension_scores": comp_result.get("dimension_scores", {}),
         "key_findings": comp_result.get("key_findings", []),
+        "findings": comp_result.get("findings", []),
+        "evidence": comp_result.get("evidence", {}),
+        "decision_record": comp_result.get("decision_record", {}),
         "regulatory_triggers": comp_result.get("regulatory_triggers", []),
         "recommended_actions": comp_result.get("recommended_actions", []),
         "audit_trace": {

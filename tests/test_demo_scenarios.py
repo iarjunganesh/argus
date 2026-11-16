@@ -9,6 +9,8 @@ Unchanged when the five agent services became one in-process Agent Framework wor
 The three scenarios that named real companies were replaced by synthetic stand-ins (Synthetic
 Payments AG, Synthetic Nordic Bank A/S, Synthetic Pacific Banking Corporation) and recorded new,
 from facts whose scores follow the live agents; the other three did not change.
+Re-recorded for typed findings: Jane 3.0, Holdings 44.0, Cayman 76.0; all tiers and actions stayed,
+as did the stand-ins' dimension scores. Display findings now include the previously omitted facts.
 A change that moves a tier, a score, a finding or a recommended action shows up here. Regulatory
 triggers are checked for citations only: they come from knowledge-base retrieval, which the
 refactor made real.

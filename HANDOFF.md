@@ -7,32 +7,27 @@ This file is tracked and public. It holds project state only. Drafts and researc
 [`docs/research/`](docs/research/README.md). Only account, billing and machine notes stay in
 the ignored `.local/` folder.
 
-Resume prompt (paste into any agent, with this repository open):
+Copy/paste initialization prompt (with this repository open):
 
 ```text
 Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
 ```
 
-Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, and Codex reads
-`AGENTS.md`; all three point here. Conversation history does not move between tools or sessions.
+## Current state — 16 November 2026
 
-## Current state — 14 November 2026
-
-- **Source.** `main` is at `6cd749d`. The maintainer merged #27 (security refresh), #28 (root
-  handoff, research drafts, revised plan) and #29 (stand-ins and data rule) on 13 and 14
-  November; Dependabot closed #25 and #26 as superseded. Every merged branch was deleted locally
-  and on GitHub.
-- **Security alerts.** One Dependabot alert was left: deepmerge 4.3.1 (low, no fixed release),
-  reachable only through the `shadcn` command-line package. The pull request that carries this
-  update removes that package (the site keeps its stylesheet as a copied file), so the alert
-  closes when it is merged; `npm audit` then finds nothing, development tools included.
+- **Source.** `main` is at `e10e59d`, including merged #30 (the `shadcn` package removal).
+  The typed-findings implementation is one commit on `feat/typed-findings`, based on that
+  revision. With the maintainer's approval on 16 November, the branch was pushed and its pull
+  request opened for review. It is not merged. No tag, deployment or paid model run was made.
+- **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
+  found no npm advisories. The live Dependabot alert count has not been rechecked in this session.
 - **Stand-ins and data rule: merged (#29).** Synthetic Payments AG (HIGH,
   56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
   (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
   agents compute from their facts (a test recomputes them). All six demo cases are invented, so
   demo-only mode accepts all six. `AGENTS.md` carries the accepted data rule, with an empty
   `docs/DATA-SOURCES.md`. The public adverse-media file and the 12-point adverse-media boost are
-  removed. The other three scenarios' recorded outcomes did not move.
+  removed. The typed-findings change below updates the other three scenarios' scores.
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier; a language model only
   writes the explanation. The default is the local data plane with synthetic data and no cloud
@@ -43,31 +38,35 @@ Claude Code reads `CLAUDE.md`, Copilot reads `.github/copilot-instructions.md`, 
 - **v2 plan revised on 11 November.** The study leads with a matched comparison: the same
   rule-determined findings explained from raw and from minimised input, then injection and
   missing-step conditions. Simplifying the wording is the follow-up question.
-- **What the study still needs from the code:** typed findings. `key_findings` are free-text
-  strings that can carry names and do not record everything that sets the score (identity
-  confidence, layering, typology hits and ownership depth move the score without appearing).
-  The customer-facing explanation variant is tested but not wired in.
-- **Checks on 14 November, on #29's branch:** 380 tests at 100% line and branch coverage (also
-  at its first commit alone), ruff, format, mypy, the three repository checks and markdownlint
-  pass; with Node.js 24 the web lint, format, typecheck, unit tests, build and the 30 Playwright
-  tests against a local API pass. CI passed on the pull request before it was merged.
+- **Typed findings: in review (pull request open, not merged).** Canonical facts
+  and explicit assessment states are the only case inputs to one shared score/obligation
+  policy. Reports add `findings`, retained `evidence` and a versioned `decision_record`, pending
+  human review; cached numeric agent scores cannot affect decisions. Existing display fields
+  remain derived outputs. Jane now scores 3.0 (LOW), Synthetic Holdings 44.0 (MEDIUM), Cayman
+  76.0 (CRITICAL); all six tiers and recommended actions are unchanged. The analyst prompt
+  template is unchanged; typed records still contain raw strings, so minimised input remains
+  study work. The customer-facing variant is still not wired in.
+- **Verification.** On 16 November, just before the push, 412 Python tests passed at 100% line
+  and branch coverage, and mypy, ruff, formatting, markdownlint and the three repository checks
+  passed. On 15 November, with Node.js 24, web lint, format, typecheck, 30 unit tests, the build
+  and all 30 Playwright tests against a local API passed; that code is unchanged. The
+  independent review's two evidence-retention findings are fixed and regression-tested. CI
+  results on the pull request are not recorded here.
 
 ## Next step
 
-Maintainer decisions that block work:
+Maintainer decisions still open (neither blocks local protocol preparation):
 
-1. Merge the pull request that drops the `shadcn` package (it closes the last alert).
-2. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
+1. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
    original cleanup exit gate), or is tagged first because the study does not need hosting.
-3. A model budget for the study, and which model configuration is pinned.
+2. A model budget for the study, and which model configuration is pinned; required before runs.
 
 Then, in order:
 
-1. Typed findings as the only inputs to scoring (one pull request, in a fresh session),
-   fact-level as decided below, with the demo scenarios' tiers unchanged.
-   Design: "Shared rule and decision record" in
-   [`docs/research/study-data-design.md`](docs/research/study-data-design.md).
-2. v2 Week 1: write and commit the study protocol, then capture the baseline.
+1. Maintainer review of the typed-findings pull request and its CI results. Merging needs the
+   maintainer's separate approval; merge commits only on `main`.
+2. v2 Week 1: write and commit the study protocol before any study model call, then capture the
+   baseline with the approved budget and pinned configuration. Keep fallback outputs separate.
 
 **The typed-findings choice (decided 14 November: fact-level).** The design asks for
 fact-level findings (each discrepancy, screening hit, high-risk ownership node, deep ownership
@@ -124,7 +123,7 @@ keep the protocol date.
   durable execution, Fabric IQ and Work IQ are deferred until the first study is written up.
 - 14 November 2026: typed findings are fact-level (one finding per fact, agent scores computed
   from them by the live formulas); the three original recorded profiles' scores may move, their
-  tiers may not. The work starts in a fresh session.
+  tiers may not.
 - 13 November 2026: the data-rule wording is accepted as written, the empty
   `docs/DATA-SOURCES.md` register is added with it, and the stand-ins are Synthetic Payments AG,
   Synthetic Nordic Bank A/S and Synthetic Pacific Banking Corporation (all on the stand-in
@@ -152,6 +151,65 @@ keep the protocol date.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
+### 16 November 2026 (latest) — typed-findings pull request
+
+- The maintainer approved folding this handoff update into the single typed-findings commit,
+  pushing `feat/typed-findings` and opening its pull request with the prepared description.
+  Merging was not approved and has not happened.
+- Before the push, reran ruff, formatting, mypy, the three repository checks, markdownlint and
+  412 Python tests (100% line and branch coverage); all passed. The web code is unchanged since
+  its 15 November checks.
+
+### 16 November 2026 (evening) — review preparation
+
+- Verified that the squashed commit has the same file tree as the two original commits
+  combined. The implementation and its recorded Python/web validation are unchanged.
+- Read-only GitHub searches found no published `feat/typed-findings` branch or pull request.
+  Prepared the pull-request description locally. Publishing remains subject to explicit
+  maintainer approval; the Week 1 protocol and model runs have not started.
+- Corrected the superseded commit reference in Current state. The initialization prompt and
+  project decisions remain intact. No GitHub mutation, deployment or paid model call was made.
+
+### 16 November 2026 (later) — initialization prompt restored
+
+- Restored the reusable copy/paste initialization prompt near the top of this file. Removing
+  it with the temporary pause reminders was too broad; the temporary reminders stay removed.
+- Checked the documentation links and Markdown formatting. The implementation and next work
+  are unchanged.
+
+### 16 November 2026 — documentation cleanup and local completion
+
+- Removed the temporary pause/resume reminders and copy/paste resume prompt. The handoff keeps
+  the current project state, actual next steps and verification history.
+- Completed the final diff review, including the three new Python files. The typed-findings
+  implementation and the two independent-review fixes are complete; no further code change
+  was needed. Verified 412 Python tests at 100% line and branch coverage, ruff, formatting,
+  mypy, docs/version/asset checks and markdownlint. The unchanged web code retains the
+  15 November verification above. The completed change is kept on the local feature branch;
+  no push, pull request, deployment or model study was performed.
+
+### 15 November 2026 — fact-level findings and decision record
+
+- Read the root instructions, handoff and v2 plan; verified that #30 is merged at `e10e59d`.
+  The maintainer approved the additive report contract and then the implementation plan.
+- Implemented canonical facts, retained evidence and a pending-review machine decision record.
+  All scoring and obligation mappings use those facts; the live agents share the formulas.
+  Missing/skipped assessments and individual tool fallbacks are explicit.
+- Re-recorded the six demo scenarios only after asserting the approved scores and unchanged
+  tiers/actions; all stand-in dimension scores also stayed unchanged. String summaries now
+  include discrepancies, layering, deep chains, typologies and missing assessments.
+- The independent review found two missing supporting observations: layering-only detector
+  evidence and ownership nodes behind corporate flags. Regression tests first reproduced both;
+  live records now retain history/detector metrics and node/jurisdiction assessments. Recorded
+  demo claims remain explicitly recorded rather than inventing those observations.
+- Python: 412 tests pass at 100% line and branch coverage, including actual local OCR. Mypy,
+  ruff, formatting, markdownlint, docs/version checks and asset/contrast checks pass. Node.js 24:
+  web lint, formatting, typecheck, 30 unit tests, build and all 30 Playwright tests pass. The final
+  browser run exited successfully in 14.7 seconds against the final-code local API with explicitly
+  managed local servers; earlier incomplete/timed-out attempts were not counted as passes.
+- Stopped the local API and web test servers. No model study, GitHub mutation or deployment
+  occurred.
+
 ### 14 November 2026 (later) — last alert, merged branches
 
 - The maintainer merged #29; deleted `feat/synthetic-stand-ins` locally and on GitHub.
@@ -178,8 +236,7 @@ requests.
   GitHub, at the maintainer's request.
 - Updated this file on #29 after the Codex review pointed out that it still described the
   migration as pending.
-- Asked the maintainer about typed findings, because the choice changes recorded scores:
-  fact-level, started in a fresh session.
+- The maintainer chose fact-level findings, accepting the resulting recorded score changes.
 
 ### 13 November 2026 — security advisories, data-rule answers
 

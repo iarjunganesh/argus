@@ -59,7 +59,7 @@ DEMO_PROFILES = {
             "registry_match": True,
             "ocr_documents": 0,
             "discrepancies": [],
-            "identity_score": 96,
+            "identity_score": 100,
             "verified_fields": ["name"],
         },
         "screening": {
@@ -67,7 +67,7 @@ DEMO_PROFILES = {
             "adverse_media_hit": False,
             "pep_hit": False,
             "findings": [],
-            "screening_risk_score": 5,
+            "screening_risk_score": 0,
         },
         "transaction": {
             "transaction_count": 8,
@@ -76,7 +76,7 @@ DEMO_PROFILES = {
             "layering_flag": False,
             "anomalous_transactions": [],
             "typology_hits": [],
-            "transaction_risk_score": 5,
+            "transaction_risk_score": 0,
         },
     },
     ("synthetic holdings b.v.", "corporate", "NL"): {
@@ -91,7 +91,7 @@ DEMO_PROFILES = {
                     "severity": "medium",
                 }
             ],
-            "identity_score": 75,
+            "identity_score": 90,
             "verified_fields": ["name"],
         },
         "screening": {
@@ -136,7 +136,7 @@ DEMO_PROFILES = {
             "risk_flags": [
                 "Layered ownership chain requires enhanced review of beneficial ownership documentation"
             ],
-            "corporate_score": 55,
+            "corporate_score": 85,
         },
         "transaction": {
             "transaction_count": 26,
@@ -147,7 +147,7 @@ DEMO_PROFILES = {
                 {"id": "TX-MED-01", "amount": 22000, "note": "rapid multi-hop transfer pattern"},
             ],
             "typology_hits": ["Rapid movement through intermediary accounts"],
-            "transaction_risk_score": 20,
+            "transaction_risk_score": 40,
         },
     },
     ("cayman synth capital", "corporate", "KY"): {
@@ -162,7 +162,7 @@ DEMO_PROFILES = {
                     "severity": "high",
                 }
             ],
-            "identity_score": 55,
+            "identity_score": 70,
             "verified_fields": ["name"],
         },
         "screening": {
@@ -201,7 +201,7 @@ DEMO_PROFILES = {
                     },
                 },
             ],
-            "screening_risk_score": 85,
+            "screening_risk_score": 100,
         },
         "corporate": {
             "registry": {
@@ -221,7 +221,7 @@ DEMO_PROFILES = {
                 "High-risk jurisdiction node: Blue Reef Nominees (PA)",
                 "High-risk jurisdiction node: Harbor Frontier SPC (KY)",
             ],
-            "corporate_score": 40,
+            "corporate_score": 60,
         },
         "transaction": {
             "transaction_count": 54,
@@ -240,7 +240,7 @@ DEMO_PROFILES = {
                 "Structuring below reporting threshold",
                 "Rapid offshore layering activity",
             ],
-            "transaction_risk_score": 50,
+            "transaction_risk_score": 90,
         },
     },
     # The three cases below are invented companies; no GLEIF record matches their names (checked

@@ -1,6 +1,6 @@
 # ARGUS v2: a matched explanation study
 
-Revised 2026-11-11. The earlier version of this plan asked only whether explanations could be
+Study design revised 2026-11-11; prerequisite status updated 2026-11-15. The earlier version asked only whether explanations could be
 made simpler. This version puts a controlled comparison first and keeps simplification as the
 follow-up question. The platform sections are unchanged.
 
@@ -42,19 +42,23 @@ behaviour in the code before relying on anything written here.
 
 ## Starting evidence and uncertainties
 
-Checked against the code on 2026-11-11 (`main` at `b75d14c`):
+Checked against the local typed-findings implementation on 2026-11-15
+(`feat/typed-findings`, based on `e10e59d`; not yet merged):
 
 - **The analyst explanation receives the raw case.** `explain_decision()` in
   `src/argus/agents/compliance/tools/explain_decision.py` is wired into the Compliance agent. Its
   prompt contains the entity name, type and jurisdiction, the score, tier and tier basis, the
   sanctions and enhanced-due-diligence status, the first five `key_findings` strings, the first
   three regulatory triggers cut to 100 characters, and the five dimension scores.
-- **Findings are free text and can carry names.** `_extract_findings()` in the Compliance agent
-  builds `key_findings` as strings. A PEP finding includes the matched name from screening.
-- **`key_findings` is not a complete record of what set the score.** The scorer also uses
-  identity confidence, the corporate score and the transaction risk score (until the stand-in
-  change it also added a fixed boost for adverse-media-only cases). None of these appears as a
-  finding, so the strings cannot serve as the reference for what an explanation must preserve.
+- **Display findings still carry raw strings and can include names.** `key_findings` is now
+  generated from canonical typed findings. A PEP summary still includes the screening text.
+  The typed records and their evidence have not been minimised for a model.
+- **Typed findings are the scoring reference.** Each discrepancy, match, ownership risk flag,
+  deep chain, structuring/layering flag and typology hit is recorded, with assessment states,
+  evidence, uncertainty, pending review and policy version. Cached agent scores are ignored.
+  The report's `findings`, `evidence` and `decision_record` provide the exact reference; the
+  string summaries do not preserve all of those fields. See
+  [the runtime record](ARCHITECTURE.md#typed-findings-and-decision-record).
 - **The explanation records who wrote it.** The result carries `explanation_source` (`model` or
   `fallback`). Without a configured model the fixed template is used and labelled.
 - **The customer-facing variant is not wired in.** `explain_decision_plain_language()` has tests
@@ -74,18 +78,17 @@ Still unverified:
 
 ## Before Week 1
 
-Two pieces of work come first, because the study's reference data depends on them:
+Two prerequisites establish the study's reference data:
 
-1. **Synthetic stand-ins and the data rule.** Three recorded demo profiles carry real company
-   names with generated fields. They are replaced by clearly fictional stand-ins, the
-   public adverse-media file and the adverse-media boost are removed, and the data rule in
-   `AGENTS.md` is reworded. Decided on 2026-10-04; wording and stand-in names accepted on
-   2026-11-13; implemented on the stand-in branch on 2026-11-14. Wording:
+1. **Synthetic stand-ins and the data rule: merged (#29).** Clearly fictional stand-ins replace
+   the three real-company demo profiles, the public adverse-media file and boost are removed,
+   and `AGENTS.md` carries the accepted rule. Decided on 2026-10-04; wording and stand-in names
+   accepted on 2026-11-13; implemented on 2026-11-14. Wording:
    [`research/data-rule-proposal.md`](research/data-rule-proposal.md).
-2. **Typed findings.** Each finding becomes a typed record with a stable identifier, a category,
-   evidence references, an uncertainty marker and a human-review state, and typed findings become
-   the only inputs to scoring. The score, tier and obligations for a case are then a function of
-   its finding set, which gives every explanation an exact reference to be checked against.
+2. **Typed findings: implemented locally on 2026-11-15, awaiting review and merge.** Typed facts
+   are the only case inputs to the shared scoring and obligation policy. All six demo tiers are
+   unchanged; the three older hand-set scores now follow the live formulas. The analyst prompt
+   template is unchanged. Protocol, baseline capture and experimental arms have not started.
    Design: "Shared rule and decision record" in
    [`research/study-data-design.md`](research/study-data-design.md).
 

@@ -26,6 +26,54 @@ export interface AuditTrace {
   [status: `${string}_status`]: string | undefined;
 }
 
+export interface Finding {
+  id: string;
+  category: "identity" | "screening" | "corporate" | "transaction";
+  kind:
+    | "assessment"
+    | "discrepancy"
+    | "sanctions_match"
+    | "pep_match"
+    | "adverse_media_match"
+    | "corporate_flag"
+    | "ownership_depth"
+    | "structuring"
+    | "layering"
+    | "typology";
+  scope: string;
+  value: string | number | boolean;
+  summary: string;
+  evidence_refs: string[];
+  source: string;
+  source_at: string | null;
+  observed_at: string;
+  uncertainty: "observed" | "potential" | "unknown";
+  review_status: "pending";
+  policy_version: "argus-risk-v1";
+}
+
+export interface EvidenceRecord {
+  id: string;
+  source: string;
+  reference: Record<string, unknown>;
+  data: unknown;
+  source_at: string | null;
+}
+
+export interface DecisionRecord {
+  policy_version: "argus-risk-v1";
+  finding_ids: string[];
+  risk_summary: NonNullable<Report["risk_summary"]>;
+  dimension_scores: Record<string, Dimension>;
+  obligations: string[];
+  recommended_actions: string[];
+  evaluated_at: string;
+  review_status: "pending";
+  reviewer: null;
+  decided_at: null;
+  rationale: null;
+}
+
 export interface Report {
   report_id?: string;
   generated_at?: string;
@@ -44,6 +92,9 @@ export interface Report {
   };
   dimension_scores?: Record<string, Dimension>;
   key_findings?: string[];
+  findings?: Finding[];
+  evidence?: Record<string, EvidenceRecord>;
+  decision_record?: DecisionRecord;
   regulatory_triggers?: { rule?: string; citation?: Citation | null }[];
   recommended_actions?: string[];
   audit_trace?: AuditTrace;

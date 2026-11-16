@@ -7,7 +7,7 @@
     },
     "risk_summary": {
       "overall_risk_tier": "LOW",
-      "overall_risk_score": 5.8,
+      "overall_risk_score": 3.0,
       "tier_basis": "score",
       "sanctions_screening": "no_match",
       "edd_required": false,
@@ -15,12 +15,12 @@
     },
     "dimension_scores": {
       "identity": {
-        "score": 4,
+        "score": 0,
         "tier": "LOW",
         "weight": "20%"
       },
       "screening": {
-        "score": 5,
+        "score": 0,
         "tier": "LOW",
         "weight": "30%"
       },
@@ -30,18 +30,18 @@
         "weight": "15%"
       },
       "regulatory": {
-        "score": 0.0,
+        "score": 0,
         "tier": "LOW",
         "weight": "25%"
       },
       "transaction": {
-        "score": 5,
+        "score": 0,
         "tier": "LOW",
         "weight": "10%"
       }
     },
     "key_findings": [
-      "No high-risk indicators found across all screening dimensions"
+      "⚠️ Corporate assessment did not run"
     ],
     "recommended_actions": [
       "Continue standard periodic review cycle"
@@ -55,7 +55,7 @@
     },
     "risk_summary": {
       "overall_risk_tier": "MEDIUM",
-      "overall_risk_score": 49.5,
+      "overall_risk_score": 44.0,
       "tier_basis": "score",
       "sanctions_screening": "no_match",
       "edd_required": true,
@@ -63,7 +63,7 @@
     },
     "dimension_scores": {
       "identity": {
-        "score": 25,
+        "score": 10,
         "tier": "LOW",
         "weight": "20%"
       },
@@ -73,25 +73,28 @@
         "weight": "30%"
       },
       "corporate_ubo": {
-        "score": 45,
-        "tier": "MEDIUM",
+        "score": 15,
+        "tier": "LOW",
         "weight": "15%"
       },
       "regulatory": {
-        "score": 95.0,
+        "score": 95,
         "tier": "CRITICAL",
         "weight": "25%"
       },
       "transaction": {
-        "score": 20,
-        "tier": "LOW",
+        "score": 40,
+        "tier": "MEDIUM",
         "weight": "10%"
       }
     },
     "key_findings": [
       "PEP identified: Director identified as a domestic PEP with elevated scrutiny requirements",
       "Adverse media coverage found — review required",
-      "Layered ownership chain requires enhanced review of beneficial ownership documentation"
+      "Layered ownership chain requires enhanced review of beneficial ownership documentation",
+      "Identity discrepancy: address (medium)",
+      "Transaction layering pattern detected",
+      "Transaction typology: Rapid movement through intermediary accounts"
     ],
     "recommended_actions": [
       "Obtain source of wealth and source of funds declaration",
@@ -110,7 +113,7 @@
     },
     "risk_summary": {
       "overall_risk_tier": "CRITICAL",
-      "overall_risk_score": 73.5,
+      "overall_risk_score": 76.0,
       "tier_basis": "sanctions_match",
       "sanctions_screening": "potential_match",
       "edd_required": true,
@@ -118,18 +121,18 @@
     },
     "dimension_scores": {
       "identity": {
-        "score": 45,
-        "tier": "MEDIUM",
+        "score": 30,
+        "tier": "LOW",
         "weight": "20%"
       },
       "screening": {
-        "score": 85,
+        "score": 100,
         "tier": "CRITICAL",
         "weight": "30%"
       },
       "corporate_ubo": {
-        "score": 60,
-        "tier": "HIGH",
+        "score": 40,
+        "tier": "MEDIUM",
         "weight": "15%"
       },
       "regulatory": {
@@ -138,8 +141,8 @@
         "weight": "25%"
       },
       "transaction": {
-        "score": 50,
-        "tier": "MEDIUM",
+        "score": 90,
+        "tier": "CRITICAL",
         "weight": "10%"
       }
     },
@@ -149,7 +152,12 @@
       "⚠️ Potential sanctions match: a person must confirm or clear it",
       "High-risk jurisdiction node: Blue Reef Nominees (PA)",
       "High-risk jurisdiction node: Harbor Frontier SPC (KY)",
-      "Transaction structuring pattern detected"
+      "Transaction structuring pattern detected",
+      "Identity discrepancy: incorporation_status (high)",
+      "Ownership chain depth exceeds three levels (4)",
+      "Transaction layering pattern detected",
+      "Transaction typology: Structuring below reporting threshold",
+      "Transaction typology: Rapid offshore layering activity"
     ],
     "recommended_actions": [
       "Obtain source of wealth and source of funds declaration",
@@ -210,7 +218,11 @@
       "Adverse media coverage found — review required",
       "High-risk jurisdiction node: Synth Trust Nominees Ltd. (VG)",
       "High-risk jurisdiction node: Synth Harbour SPC (KY)",
-      "Transaction structuring pattern detected"
+      "Transaction structuring pattern detected",
+      "Identity discrepancy: name (high)",
+      "Transaction layering pattern detected",
+      "Transaction typology: Structuring below reporting threshold",
+      "Transaction typology: Rapid movement through intermediary accounts"
     ],
     "recommended_actions": [
       "Obtain source of wealth and source of funds declaration",
@@ -254,7 +266,7 @@
         "weight": "15%"
       },
       "regulatory": {
-        "score": 80.0,
+        "score": 80,
         "tier": "CRITICAL",
         "weight": "25%"
       },
@@ -266,7 +278,9 @@
     },
     "key_findings": [
       "PEP identified: Board chair identified as a former minister requiring enhanced due diligence",
-      "Adverse media coverage found — review required"
+      "Adverse media coverage found — review required",
+      "Transaction layering pattern detected",
+      "Transaction typology: Rapid movement through intermediary accounts"
     ],
     "recommended_actions": [
       "Obtain source of wealth and source of funds declaration",
@@ -307,7 +321,7 @@
         "weight": "15%"
       },
       "regulatory": {
-        "score": 35.0,
+        "score": 35,
         "tier": "MEDIUM",
         "weight": "25%"
       },
@@ -319,7 +333,8 @@
     },
     "key_findings": [
       "Adverse media coverage found — review required",
-      "Transaction structuring pattern detected"
+      "Transaction structuring pattern detected",
+      "Transaction typology: Structuring below reporting threshold"
     ],
     "recommended_actions": [
       "Consider filing Suspicious Activity Report (SAR)",

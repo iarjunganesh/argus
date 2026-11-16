@@ -95,6 +95,11 @@ async def test_typology_matcher_cites_retrieved_guidance(use_plane):
             "fatf_ref": "fatf.pdf",
             "score": 0.6,
             "source": "retrieved",
+            "citation": {
+                "knowledge_base": "regulations",
+                "document": "fatf.pdf",
+                "snippet_id": "fatf-rec-20",
+            },
         }
     ]
 

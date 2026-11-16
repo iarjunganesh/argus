@@ -1,6 +1,7 @@
 # Study data design: working draft
 
-Status: **working draft, last revised 2026-10-04; partly deferred on 2026-11-11.** It was
+Status: **working draft, last revised 2026-10-04; partly deferred on 2026-11-11;
+typed-record implementation noted on 2026-11-15.** It was
 revised after three review passes (not published). This is a research design, not an
 implementation specification or a claim of legal or screening effectiveness. Legal readings
 here are the author's and have not been reviewed by a lawyer.
@@ -119,14 +120,18 @@ need their own purpose, lawful basis and minimisation review before any import.
 
 ## Shared rule and decision record
 
-Today's `key_findings` strings are not an exact reference: identity confidence,
-transaction layering and typology hits, and corporate ownership depth can change the
-score without appearing there. The scorer also caps dimensions, counts a PEP in more
-than one dimension, applies an adverse-media boost, and lets a sanctions match override
-the tier. The research implementation must make **typed findings the only inputs to
-scoring and obligations**, retaining stable IDs, raw evidence IDs, uncertainty,
-source/observed time, rule-policy version and human-review state. A separate decision
-record stores outcome, finding IDs relied on, reviewer, decision time and rationale.
+Before the typed-findings prerequisite, `key_findings` omitted identity discrepancies,
+transaction layering/typologies and ownership depth that affected the score. The policy
+caps dimensions, counts PEP in multiple dimensions and lets a sanctions match override
+the tier; the adverse-media boost was removed with the stand-ins. **Implemented locally
+on 2026-11-15:** typed findings are the only case inputs to scoring and obligations,
+with stable IDs, retained source evidence and citations, uncertainty, source/observation
+times, policy version and pending human review. A separate machine decision record stores
+the evaluation and input IDs; human reviewer, decision time and rationale remain null.
+The string list is a compatibility projection, and the analyst prompt template is unchanged.
+The [runtime documentation](../ARCHITECTURE.md#typed-findings-and-decision-record) describes
+the implementation. No minimised input, exact-set benchmark or study model run is implemented
+by this prerequisite; the subset-analysis requirements below remain planned.
 
 Never claim additive contributions. Declare and version an empty-finding reference
 case with fixed structural metadata; missing evidence stays unknown, not verified or

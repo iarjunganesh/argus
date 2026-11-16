@@ -5,8 +5,10 @@ from types import SimpleNamespace
 import argus.agents.compliance.agent as comp
 import argus.agents.compliance.tools.explain_decision as ed
 import argus.agents.compliance.tools.regulations_rag as rr
+from argus import decision
 from argus.agents.compliance.tools.gap_analyzer import gap_analyzer
 from argus.agents.compliance.tools.risk_scorer import risk_scorer
+from argus.findings import collect_findings
 
 
 def _payload(upstream: dict) -> dict:
@@ -80,30 +82,38 @@ async def test_every_risk_indicator_reaches_findings_and_actions():
 
 async def test_medium_tier_and_non_pep_findings_are_skipped():
     upstream = {
-        "identity": {"identity_score": 80},
+        "identity": {"discrepancies": [{"field": "name", "severity": "high"}] * 3},
         "screening": {
             "pep_hit": True,
             "screening_risk_score": 60,
             "findings": [{"type": "adverse_media", "match": "ignored"}, {"type": "pep"}],
         },
-        "corporate": {"corporate_score": 80},
-        "transaction": {},
+        "corporate": {"risk_flags": []},
+        "transaction": {"structuring_flag": False},
     }
 
     result = (await comp.assess(_payload(upstream), "t"))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "MEDIUM"
-    assert result["key_findings"] == ["PEP identified: "]
+    assert result["risk_summary"]["overall_risk_score"] == 36.8
+    assert result["key_findings"][0] == "PEP identified: "
+    assert not any(f["kind"] == "adverse_media_match" for f in result["findings"])
 
 
 async def test_clean_entity_is_low_risk_with_default_action():
-    result = (await comp.assess(_payload({"screening": {"sanctions_hit": False}}), "t"))["result"]
+    upstream = {
+        "identity": {"discrepancies": []},
+        "screening": {"sanctions_hit": False},
+        "corporate": {"risk_flags": []},
+        "transaction": {"structuring_flag": False},
+    }
+    result = (await comp.assess(_payload(upstream), "t"))["result"]
 
     assert result["risk_summary"]["overall_risk_tier"] == "LOW"
     assert result["risk_summary"]["sanctions_screening"] == "no_match"
     assert result["risk_summary"]["decision_recommendation"].startswith("Standard onboarding")
     assert result["key_findings"] == [
-        "No high-risk indicators found across all screening dimensions"
+        "No high-risk indicators found in the assessed checks; human review remains pending"
     ]
     assert result["recommended_actions"] == ["Continue standard periodic review cycle"]
 
@@ -166,9 +176,9 @@ async def test_a_case_without_a_pep_match_does_not_require_edd_by_rule():
 
 
 def test_the_sanctions_hold_and_critical_tier_outrank_the_edd_recommendation():
-    assert comp._recommendation("LOW", comp.POTENTIAL_MATCH, True).startswith("Hold:")
-    assert comp._recommendation("LOW", comp.NOT_RUN, True).startswith("Incomplete:")
-    assert comp._recommendation("CRITICAL", comp.NO_MATCH, True).startswith("Do not onboard")
+    assert decision.recommendation("LOW", decision.POTENTIAL_MATCH, True).startswith("Hold:")
+    assert decision.recommendation("LOW", decision.NOT_RUN, True).startswith("Incomplete:")
+    assert decision.recommendation("CRITICAL", decision.NO_MATCH, True).startswith("Do not onboard")
 
 
 def test_every_score_band_maps_to_its_tier():
@@ -186,7 +196,7 @@ def test_every_score_band_maps_to_its_tier():
 
 
 def test_unknown_tier_recommendation():
-    assert comp._recommendation("UNKNOWN") == "Review required."
+    assert decision.recommendation("UNKNOWN") == "Review required."
 
 
 # ── risk scorer and gap analyzer ──────────────────────────────────────────────
@@ -194,13 +204,22 @@ def test_unknown_tier_recommendation():
 
 def test_adverse_media_only_case_gets_no_boost():
     screening = {"adverse_media_hit": True, "screening_risk_score": 70}
-    adverse_only = risk_scorer({}, screening, {}, {})
-    with_pep = risk_scorer({}, {**screening, "pep_hit": True}, {}, {})
+    adverse_only = risk_scorer(
+        collect_findings(_payload({"screening": screening})["upstream_results"]).findings
+    )
+    with_pep = risk_scorer(
+        collect_findings(
+            _payload(
+                {
+                    "screening": {**screening, "pep_hit": True},
+                }
+            )["upstream_results"]
+        ).findings
+    )
 
-    # identity 4 + screening 21 + corporate 3 + regulatory; nothing is added for an
-    # adverse-media-only case. The score is rounded to one decimal.
-    assert adverse_only["overall"] == 36.8  # 4 + 21 + 3 + 8.75
-    assert with_pep["overall"] == 48.0  # 4 + 21 + 3 + 20
+    # Cached screening score 70 is ignored: the media flag scores 15. No extra boost.
+    assert adverse_only["overall"] == 20.2  # identity 4 + screening 4.5 + corporate 3 + reg 8.75
+    assert with_pep["overall"] == 39.0  # 4 + 12 + 3 + 20
     assert adverse_only["dimensions"]["regulatory"]["tier"] == "MEDIUM"
 
 
@@ -417,12 +436,6 @@ async def test_compliance_agent_invoke(monkeypatch):
         return {"regulations": []}
 
     monkeypatch.setattr(comp, "regulations_rag", fake_reg)
-    monkeypatch.setattr(
-        comp,
-        "risk_scorer",
-        lambda i, s, c, t: {"overall": 60, "dimensions": {}},
-    )
-    monkeypatch.setattr(comp, "gap_analyzer", lambda ri, regs, scores: ["gap1"])
 
     async def fake_explain(*args, **kwargs):
         return {"text": "explanation", "source": "model"}
@@ -443,7 +456,7 @@ async def test_compliance_agent_invoke(monkeypatch):
         },
     }
     res = await comp.assess(payload, "t3")
-    assert res["result"]["risk_summary"]["overall_risk_tier"] == "HIGH"
+    assert res["result"]["risk_summary"]["overall_risk_tier"] == "LOW"
     assert res["result"]["explanation"] == "explanation"
     assert res["result"]["explanation_source"] == "model"
     assert res["source"] == "computed" and res["result"]["retrieval_queries"] == 1
@@ -452,35 +465,49 @@ async def test_compliance_agent_invoke(monkeypatch):
 def test_risk_scorer_high_risk():
     from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
-    identity = {"identity_score": 80}
+    identity = {"discrepancies": [{"field": "name", "severity": "high"}] * 3}
     screening = {
         "screening_risk_score": 90,
         "pep_hit": True,
         "adverse_media_hit": True,
         "sanctions_hit": False,
     }
-    corporate = {"corporate_score": 40, "risk_flags": ["High-risk jurisdiction: KY"]}
-    transaction = {"transaction_risk_score": 60, "structuring_flag": True}
-    result = risk_scorer(identity, screening, corporate, transaction)
-    assert result["overall"] > 50
+    corporate = {"risk_flags": ["High-risk node: Synthetic Owner A", "High-risk node: Synthetic B"]}
+    transaction = {"structuring_flag": True, "layering_flag": True, "typology_hits": ["A", "B"]}
+    records = collect_findings(
+        _payload(
+            {
+                "identity": identity,
+                "screening": screening,
+                "corporate": corporate,
+                "transaction": transaction,
+            }
+        )["upstream_results"]
+    )
+    result = risk_scorer(records.findings)
+    assert result["overall"] == 68.5
     assert "screening" in result["dimensions"]
 
 
 def test_risk_scorer_low_risk():
     from argus.agents.compliance.tools.risk_scorer import risk_scorer
 
-    result = risk_scorer(
-        {"identity_score": 95},
-        {
-            "screening_risk_score": 0,
-            "pep_hit": False,
-            "adverse_media_hit": False,
-            "sanctions_hit": False,
-        },
-        {"corporate_score": 90, "risk_flags": []},
-        {"transaction_risk_score": 0, "structuring_flag": False},
+    records = collect_findings(
+        _payload(
+            {
+                "identity": {"discrepancies": [{"field": "date_of_birth", "severity": "medium"}]},
+                "screening": {
+                    "screening_risk_score": 0,
+                    "pep_hit": False,
+                    "adverse_media_hit": False,
+                    "sanctions_hit": False,
+                },
+                "corporate": {"risk_flags": []},
+                "transaction": {"structuring_flag": False},
+            }
+        )["upstream_results"]
     )
-    assert result["overall"] < 40
+    assert risk_scorer(records.findings)["overall"] == 2.0
 
 
 def test_gap_analyzer_pep():

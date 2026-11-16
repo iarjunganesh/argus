@@ -1,5 +1,7 @@
 """identity_validator — Cross-references OCR output against registry record."""
 
+from argus.agents.compliance.tools.risk_scorer import agent_score
+
 
 async def identity_validator(registry_result: dict, ocr_results: list[dict]) -> dict:
     record = registry_result.get("record") or {}
@@ -41,10 +43,7 @@ async def identity_validator(registry_result: dict, ocr_results: list[dict]) -> 
                     }
                 )
 
-    # Confidence score: penalise discrepancies
-    high_count = sum(1 for d in discrepancies if d["severity"] == "high")
-    medium_count = sum(1 for d in discrepancies if d["severity"] == "medium")
-    confidence = max(0, 100 - (high_count * 30) - (medium_count * 10))
+    confidence = agent_score("identity", {"discrepancies": discrepancies})
 
     return {
         "verified_fields": verified_fields,
