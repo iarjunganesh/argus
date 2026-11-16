@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: If you use ARGUS, please cite it with these metadata.
+type: software
+title: "ARGUS: Agentic Risk & Governance Unified Screening"
+abstract: >-
+  A research prototype for multi-agent KYC (know-your-customer) risk screening on synthetic
+  data. Five agents run as one Microsoft Agent Framework workflow. Fixed rules compute the risk
+  score and tier from typed findings, and a language model only writes the explanation for a
+  human reviewer. ARGUS is not a compliance tool and makes no claim about real-world screening
+  outcomes.
+authors:
+  - given-names: Arjun
+    family-names: Ganesh
+repository-code: "https://github.com/iarjunganesh/argus"
+license: GPL-3.0-only
+keywords:
+  - KYC
+  - AML
+  - compliance
+  - multi-agent systems
+  - explainable AI
+  - Microsoft Agent Framework
+  - synthetic data

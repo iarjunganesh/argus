@@ -1,7 +1,7 @@
 # Releases and dependency refreshes
 
-Release automation is merged and ready for `v0.1.0`. No release has been published yet.
-Only an explicitly approved tag push publishes a release. Once Azure is set up for GitHub
+Release automation is merged. The first release is `v0.1.0`, and its changelog section is
+dated 2026-11-16. Only an explicitly approved tag push publishes a release. Once Azure is set up for GitHub
 ([DEPLOYMENT.md](DEPLOYMENT.md)), the same tag also deploys the API.
 
 ## Before the first tag

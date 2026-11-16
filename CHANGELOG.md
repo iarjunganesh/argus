@@ -13,7 +13,25 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16
+
+The first release since the Microsoft Agents League 2026 submission, whose versions are archived.
+ARGUS was rebuilt as one FastAPI process that runs its five agents as a Microsoft Agent Framework
+workflow, with a Next.js web UI. Fixed rules compute the risk score and tier from typed findings;
+a language model only writes the explanation, and a labelled template writes it when no model is
+configured. Every tool reads through a data plane: the local implementation, on synthetic data,
+is the default and needs no cloud account; the Azure implementation and the deployment workflow
+exist but have not run against live services (see "Known issues"). Every case is synthetic.
+ARGUS is a research prototype that makes recommendations for a human reviewer; it is not a
+compliance tool and makes no claim about real-world screening outcomes. The next work is the
+matched explanation study in
+[`docs/ARGUS-V2-PLAN.md`](https://github.com/iarjunganesh/argus/blob/main/docs/ARGUS-V2-PLAN.md).
+
 ### Added
+
+- **Citation metadata for the release archive.** `CITATION.cff` gives the title, author,
+  licence, abstract and keywords that GitHub's "Cite this repository" and the Zenodo archive of
+  each release read. Checked: `cffconvert --validate` accepts it.
 
 - **A draft protocol fixes how the matched explanation study will run.**
   `docs/research/study-protocol.md` sets the 24-case design (eight strata, tuning cases separate
@@ -87,7 +105,7 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   template locally; the Cayman smoke passed against an isolated local API, checking its CRITICAL
   tier, agent provenance and regulatory citations. The workflow itself has not run, because
   Azure is not set up for it yet.
-- **An Azure deployment that follows decision D1** (`infra/main.bicep`, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)),
+- **An Azure deployment that follows decision D1** (`infra/main.bicep`, [`docs/DEPLOYMENT.md`](https://github.com/iarjunganesh/argus/blob/main/docs/DEPLOYMENT.md)),
   replacing the hackathon template (AI Search Basic, a `gpt-4o` deployment, a machine learning
   hub). One resource group: Container Apps (Consumption profile, 0 to 1 replicas) pulling the image from
   GitHub Container Registry; Log Analytics with a 0.1 GB daily cap and 30-day retention; AI Search
@@ -606,6 +624,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   called directly with `documents`, as the tests do.
 - **The Azure data plane has not run against live services.** AI Search, Cosmos DB and Document
   Intelligence are tested against stand-ins for their SDKs; they are verified during deployment.
+- **No live model has written an explanation since the rebuild.** The model factory and the
+  explanation prompts are tested against stand-in clients, not yet by a call to Azure OpenAI,
+  OpenAI or GitHub Models. Without a configured model, the labelled template writes the
+  explanation.
 - **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
   every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
   in lower-risk relationships.

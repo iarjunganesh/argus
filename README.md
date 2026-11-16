@@ -25,7 +25,7 @@
 <!-- Row 1 — repository state: these six, in this order.
      Nothing may be inserted between the badge lines of a row: a comment breaks the paragraph
      and drops the badge after it onto a row of its own.
-     Release opens the latest release; until v0.1.0 is tagged GitHub shows the empty list. -->
+     Release opens the latest release (the first is v0.1.0). -->
 [![CI](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml)
 [![SonarQube Cloud](https://img.shields.io/sonar/quality_gate/iarjunganesh_argus?server=https%3A%2F%2Fsonarcloud.io&logo=sonarqubecloud&label=SonarQube%20Cloud)](https://sonarcloud.io/summary/new_code?id=iarjunganesh_argus)
 [![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)
@@ -126,7 +126,7 @@ ARGUS was rebuilt after the hackathon. This table describes the current code; th
 | --- | --- |
 | Orchestrator fan-out and fan-in across five agents | ✅ Works, as one in-process Microsoft Agent Framework workflow inside the API. `GET /api/v1/kyc/stream/{id}` follows each agent's progress as server-sent events. |
 | Deterministic risk scoring, tiering and gap analysis | ✅ Works |
-| Plain-English decision explanation | ✅ Works with the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models); without one, a fixed template, labelled as such |
+| Plain-English decision explanation | ⚠️ Built for the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models) and tested against stand-in clients; **not yet run against a live model**. Without one, a fixed template writes it, labelled as such. |
 | **Local data plane** (default): knowledge-base search, entities, ownership, transactions, reports | ✅ Works with no cloud account, on the synthetic data in `data/`. A clone without generated data finds nothing, and says so. |
 | **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ Built and tested against stand-ins for the Azure SDKs; **not yet run against live services**. That happens with the deployment work. |
 | OCR without Azure | ✅ Tesseract reads the synthetic identity documents (PNG and PDF) when it is installed (the `ocr` dependency group and the Tesseract program); without it, documents are reported as unread, labelled `fallback`. ⚠️ The API does not accept documents yet: OCR runs when the Identity agent is called directly. |
@@ -245,7 +245,7 @@ The browser calls the API directly, so `ARGUS_CORS_ORIGINS` must list the web UI
 
 Or run one assessment without either: `uv run python scripts/dev/run_demo_inprocess.py`.
 
-Or run the API in a container (no UI; the local backend with the public demo data only):
+Or run the API in a container (no UI; the local backend holds no data in the image, so the six demo scenarios run from their recorded profiles):
 
 ```bash
 docker build -t argus .

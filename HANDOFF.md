@@ -15,14 +15,13 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Current state — 16 November 2026
 
-- **Source.** `main` is at `927c3f2`: the maintainer merged #31 (typed findings) on 16 November,
-  after all 16 of its CI checks passed. The branch `docs/study-protocol`, one commit on top of
-  `main`, holds the draft study protocol, the plan and research-index status updates, a
-  changelog entry and this handoff; with the maintainer's approval it was pushed and its pull
-  request opened for review. It is not merged. No tag, deployment or paid model run.
+- **Source.** `main` is at `debe8ef`. On 16 November the maintainer merged #31 (typed
+  findings) and #32 (the draft study protocol), each after all 16 CI checks passed. The
+  release-prep branch `chore/release-v0.1.0` is pushed and its pull request is open, not
+  merged. No tag, deployment or paid model run.
 - **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
-  found no npm advisories. #31's dependency audit passed; the Dependabot alert count itself has
-  not been rechecked.
+  found no npm advisories. On 16 November there were no open Dependabot, code scanning or
+  secret scanning alerts.
 - **Stand-ins and data rule: merged (#29).** Synthetic Payments AG (HIGH,
   56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
   (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
@@ -33,10 +32,13 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier; a language model only
   writes the explanation. The default is the local data plane with synthetic data and no cloud
-  account. The Azure data plane exists but is not verified against live services.
-- **Not released, not deployed.** `pyproject.toml` says 0.1.0, but there is no tag and no GitHub
-  Release. The deployment workflow and Bicep template are merged; no Azure or Vercel resource has
-  been created.
+  account. The Azure data plane exists but is not verified against live services, and no live
+  model has written an explanation since the rebuild (both are known issues).
+- **Release prepared, not tagged; not deployed.** The release-prep pull request dates the
+  changelog section `[0.1.0] - 2026-11-16`; `pyproject.toml` already says 0.1.0. There is no tag and
+  no GitHub Release yet. The `deps-broken` label now exists. Zenodo archives this repository's
+  releases, so the tag will get a DOI; `CITATION.cff` supplies its metadata. The deployment
+  workflow and Bicep template are merged; no Azure or Vercel resource has been created.
 - **Typed findings: merged (#31).** Canonical facts and explicit assessment states are the only
   case inputs to one shared score/obligation policy. Reports add `findings`, retained
   `evidence` and a versioned `decision_record`, pending human review; cached numeric agent
@@ -45,7 +47,7 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   prompt template is unchanged; typed records still contain raw strings, so the minimised input
   is study work. The customer-facing variant is still not wired in.
 - **Study protocol: drafted, not frozen.** [`docs/research/study-protocol.md`](docs/research/study-protocol.md)
-  (in review, not merged) fixes 24 synthetic cases in eight strata (8 tuning, 16 held out), arms A
+  (merged as a draft in #32) fixes 24 synthetic cases in eight strata (8 tuning, 16 held out), arms A
   (today's raw prompt), B (minimised typed findings, no entity name or free text) and C (the fixed
   template), the per-case reference written before outputs are read, two injection and two
   missing-step variants on six cases each with their expected behaviour, the structural and
@@ -53,34 +55,48 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   configuration and budget ceiling are left open. No case, model call or result exists.
 - **Verification.** #31's CI passed every check (tests and 100% coverage, type check, lint,
   documentation, web UI, container image, dependency audit, CodeQL, SonarQube Cloud, Codecov,
-  attribution, secret scan). The protocol branch changes documentation only; `check_docs.py`
-  and markdownlint pass on it.
+  attribution, secret scan), and so did #32's.
 
 ## Next step
 
 Maintainer decisions still open:
 
-1. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
-   original cleanup exit gate), or is tagged first because the study does not need hosting.
-2. The study's model configuration and budget ceiling (protocol section 8). Required to freeze
+1. The study's model configuration and budget ceiling (protocol section 8). Required to freeze
    the protocol and before any study model call.
-3. Whether a second annotator is sought, and whether the optional uncapped raw arm is included
+2. Whether a second annotator is sought, and whether the optional uncapped raw arm is included
    (protocol section 16).
 
 Then, in order:
 
-1. Maintainer review of the draft protocol's pull request (`docs/study-protocol`). Merging it
-   as a draft is a separate approval. Once decisions 2 and 3 are made and the text is approved,
-   mark it frozen with the date and get that version into `main` before any study model call.
-2. Week 1 code, which can start before the freeze because it makes no model call: a documented
+1. Release `v0.1.0`: the maintainer merges the release-prep pull request; then, with explicit
+   approval, push the tag on the changelog section's date (or redate the section first), check
+   that the release workflow publishes the notes, and review `deps: refresh after v0.1.0`. The
+   release is finished only when that pull request exists and is reviewed.
+2. Freeze the protocol once decisions 2 and 3 are made and the text is approved: its status
+   line says "frozen" with the date, and that version reaches `main` before any study model
+   call.
+3. Week 1 code, which can start before the freeze because it makes no model call: a documented
    baseline command that takes the analyst prompt from the production code path (split
    `explain_decision()` into a prompt builder and the call) and writes the run records in
    protocol section 13. Exercise it with `ARGUS_MODEL_PROVIDER=none`; those outputs are
    labelled fallback and are not a model baseline.
-3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
+4. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
    repeats), then week 2 (case generator, per-case references, minimised input).
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
+
+**Release, then the first live run (tag first decided 16 November).** The tag comes first
+(step 1 above). The first live run is proposed for 23 to 25 November, before the protocol
+freeze and baseline in calendar week 3; it still needs its own approvals.
+
+- *Tag:* the deploy job is skipped while `AZURE_RESOURCE_GROUP` is unset. Branch protection is
+  off and needs its own approval.
+- *Live run:* approve the resources in `docs/DEPLOYMENT.md`; create the workflow identity (a
+  user-assigned managed identity with a federated credential avoids the unknown
+  app-registration permission), the `azure` environment and the variable; run Deploy on the tag,
+  fill the data plane, run the smoke check, confirm zero replicas after 30 idle minutes, read one
+  idle day's cost; then the Vercel project, its origin in `corsOrigins` and the docs updates
+  listed under "Open items". Fixes the live run needs ship as `v0.1.1`.
 
 ### Proposed schedule (11 November 2026; not yet confirmed by the maintainer)
 
@@ -101,7 +117,7 @@ write-up. If the typed-findings change takes longer than one week, cut the case 
 keep the protocol date.
 
 Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a week early; the
-`v0.1.0` tag waits on decision 1), and the week 3 protocol is drafted.
+`v0.1.0` release is being prepared), and the week 3 protocol is drafted.
 
 ## Decisions already made
 
@@ -124,6 +140,8 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
   its summary. A workshop submission is decided only after the results are in.
 - 11 November 2026: the two later studies, the public legal-entity cohort, event replay,
   durable execution, Fabric IQ and Work IQ are deferred until the first study is written up.
+- 16 November 2026: `v0.1.0` is tagged before the first Azure deployment; the study does not
+  need hosting. The live run follows, and the fixes it needs ship as `v0.1.1`.
 - 14 November 2026: typed findings are fact-level (one finding per fact, agent scores computed
   from them by the live formulas); the three original recorded profiles' scores may move, their
   tiers may not.
@@ -141,20 +159,44 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
   30 idle minutes and observe one idle day's cost. Then the Vercel project (root `web`, variables
   `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`). When live, update the README
   hosting badges, the ARCHITECTURE hosting heading and the CHANGELOG known issue.
-- CodeQL alert #1 (Faker `tax_id`) is a false positive, to dismiss in the GitHub UI.
 - `eslint-config-next` matches Next.js (16.4.6) on `main`. ESLint 9 and
   TypeScript 6.0 are held back by peer limits. Remove the minimatch `overrides` entry in
   `web/package.json` once typescript-eslint and ts-morph depend on minimatch 11. Move `web/.nvmrc` and `@types/node` by hand when
   Node 26 is the LTS.
-- Undecided: add a `documents` field to the API, or keep "the API takes no documents" as a
-  known issue for `v0.1.0`.
+- `v0.1.0` ships with "the API takes no documents" as a known issue. Whether to add a
+  `documents` field later is undecided.
 
 ## Session log
 
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 16 November 2026 (latest) — typed findings merged, protocol drafted
+### 16 November 2026 (latest) — protocol merged; v0.1.0 release prepared
+
+- The maintainer merged #32 (all 16 checks passed); deleted the local branch.
+- Asked when to tag and go live, checked the release and deployment setup read-only: no tag,
+  no `deps-broken` label, `DEPS_BOT_TOKEN` present, no branch protection, no `azure` environment
+  or `AZURE_RESOURCE_GROUP` variable, no `rg-argus` resource group. Proposed tagging `v0.1.0`
+  first and the first live run the week after (Next step).
+- The maintainer approved the tag plan. Created the `deps-broken` label, dated the changelog
+  section `[0.1.0] - 2026-11-16` under a new empty `[Unreleased]`, made the release wording in
+  `docs/RELEASING.md` and a README comment true once tagged, and opened the release-prep pull
+  request. `uv lock --check`, the release-notes extraction and every check passed. No tag yet.
+- At the maintainer's request, scouted the whole repository before merging the release-prep
+  pull request (read-only): docs against code, the release and deploy workflows, settings and
+  alerts. No blocker; open Dependabot, code scanning and secret scanning alerts were all zero
+  (CodeQL alert #1 had already been dismissed as a false positive).
+- With the maintainer's approval, added to the release-prep pull request: a summary at the top
+  of the `[0.1.0]` notes, a known issue that no live model has written an explanation since the
+  rebuild (and the README status row to match), an absolute link in place of the notes' one
+  relative link, the README container wording, a `.env.example` without the unused
+  `AZURE_RESOURCE_GROUP`, the budget amounts removed from `docs/ARCHITECTURE.md` (earlier
+  versions keep them in history), and `CITATION.cff`. The maintainer switched on the Zenodo
+  archive for this repository, so the release gets a DOI. Updated the repository description
+  and topics (no A2A or Semantic Kernel) and deleted the merged `feat/typed-findings` and
+  `docs/study-protocol` branches on GitHub.
+
+### 16 November 2026 (evening) — typed findings merged, protocol drafted
 
 - With the maintainer's approval, reran the Python checks (412 tests at 100% line and branch
   coverage, ruff, formatting, mypy, the three repository checks, markdownlint), folded the
