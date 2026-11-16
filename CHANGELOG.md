@@ -13,6 +13,25 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependencies refreshed after `v0.1.0`.** The Python lock and its minimums (FastAPI 0.163,
+  Pydantic 2.14, OpenAI 3.51 and others), the container's Python 3.14.10 and uv 0.13.8 base
+  images, the GitHub Actions pins and the web UI's packages moved to their latest releases within
+  their major versions; `docs/DEPENDENCY-REFRESH.md` lists every version. Microsoft Agent
+  Framework moved from 1.19.0 to 1.26.0 by hand, because the refresh keeps an exact pin at its
+  locked version. ESLint 10, TypeScript 7 and Node.js 26 wait for manual updates. Checked: every
+  gate in the refresh report; on Agent Framework 1.26.0, 412 tests (including the orchestrator
+  workflow and API contract tests) pass with 100% line and branch coverage, and ruff and mypy
+  pass; the pull request's CI, including the Playwright tests.
+
+### Fixed
+
+- **The dependency-refresh report passes its own Markdown check.** The release workflow appended
+  the run link as a bare URL after the refresh's Markdown gate had run, so the refresh pull
+  request's Documentation job failed (MD034). The link is now written as `<…>`. Checked:
+  markdownlint passes on the report.
+
 ## [0.1.0] - 2026-11-16
 
 The first release since the Microsoft Agents League 2026 submission, whose versions are archived.

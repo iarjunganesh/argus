@@ -150,7 +150,7 @@ jobs:
           grep -qF "Refresh after \`$RELEASE_TAG\`." docs/DEPENDENCY-REFRESH.md 2>/dev/null ||
             printf '# Dependency refresh\n\nRefresh after `%s` failed before it could write its report. See the run log.\n' "$RELEASE_TAG" > docs/DEPENDENCY-REFRESH.md
           printf '\nWorkflow checks: refresh=%s, markdown=%s, secrets=%s.\n' "$REFRESH" "$MARKDOWN" "$SECRETS" >> docs/DEPENDENCY-REFRESH.md
-          printf '\nRun: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> docs/DEPENDENCY-REFRESH.md
+          printf '\nRun: <%s/%s/actions/runs/%s>\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> docs/DEPENDENCY-REFRESH.md
           cp docs/DEPENDENCY-REFRESH.md .tmp/dependency-pr.md
       - name: Read interpreter candidate
         id: candidate

@@ -40,7 +40,7 @@
      Fixed rules set the score and tier; the model only writes the explanation (no model is the
      default: a labelled template). The Azure services are optional: the local data plane, the
      default, needs none of them. -->
-[![Microsoft Agent Framework](https://img.shields.io/badge/Agent_Framework-1.19.0-0078D4)](https://github.com/microsoft/agent-framework)
+[![Microsoft Agent Framework](https://img.shields.io/badge/Agent_Framework-1.26.0-0078D4)](https://github.com/microsoft/agent-framework)
 [![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-explanation_only-412991)](https://azure.microsoft.com/en-us/pricing/details/azure-openai/)
 [![Foundry IQ](https://img.shields.io/badge/Foundry_IQ-cited_knowledge_bases-0078D4)](https://azure.microsoft.com/en-us/products/ai-foundry/iq)
 [![Azure AI Search](https://img.shields.io/badge/Azure_AI_Search-knowledge_base_indexes-0078D4)](https://azure.microsoft.com/en-us/products/ai-services/ai-search)

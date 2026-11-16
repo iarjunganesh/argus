@@ -293,4 +293,8 @@ a MAJOR row needs a manual update. The end-to-end tests run in this PR's CI.
 
 Workflow checks: refresh=success, markdown=success, secrets=success.
 
-Run: https://github.com/iarjunganesh/argus/actions/runs/43953039691
+Run: <https://github.com/iarjunganesh/argus/actions/runs/43953039691>
+
+After the run, `agent-framework-core` was moved by hand from 1.19.0 to 1.26.0 in the same pull
+request: the refresh keeps an exact pin at its locked version. The tables above show the run's
+state.
