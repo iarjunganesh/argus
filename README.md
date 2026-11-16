@@ -25,7 +25,7 @@
 <!-- Row 1 — repository state: these six, in this order.
      Nothing may be inserted between the badge lines of a row: a comment breaks the paragraph
      and drops the badge after it onto a row of its own.
-     Release opens the latest release; until v0.1.0 is tagged GitHub shows the empty list. -->
+     Release opens the latest release (the first is v0.1.0). -->
 [![CI](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/argus/actions/workflows/ci.yml)
 [![SonarQube Cloud](https://img.shields.io/sonar/quality_gate/iarjunganesh_argus?server=https%3A%2F%2Fsonarcloud.io&logo=sonarqubecloud&label=SonarQube%20Cloud)](https://sonarcloud.io/summary/new_code?id=iarjunganesh_argus)
 [![Codecov](https://codecov.io/gh/iarjunganesh/argus/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/argus)

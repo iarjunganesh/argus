@@ -13,6 +13,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-16
+
 ### Added
 
 - **A draft protocol fixes how the matched explanation study will run.**
