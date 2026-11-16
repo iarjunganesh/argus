@@ -1,6 +1,6 @@
 # ARGUS v2: a matched explanation study
 
-Study design revised 2026-11-11; prerequisite status updated 2026-11-15. The earlier version asked only whether explanations could be
+Study design revised 2026-11-11; prerequisite status updated and protocol drafted 2026-11-16. The earlier version asked only whether explanations could be
 made simpler. This version puts a controlled comparison first and keeps simplification as the
 follow-up question. The platform sections are unchanged.
 
@@ -19,8 +19,8 @@ The research questions:
 1. **Preservation.** When a model explains a fixed, rule-determined outcome, does the explanation
    keep the findings, the evidence references, the uncertainty and the human-review status?
 2. **Input minimisation.** Does that change when the model receives only minimised, typed findings
-   (stable identifiers, categories, bounded scores) instead of the raw case (entity name,
-   free-text findings)? What does the model see in each case?
+   (categories, kinds and bounded values, each traced to a stable identifier) instead of the
+   raw case (entity name, free-text findings)? What does the model see in each case?
 3. **Failure conditions.** What happens to the explanation when case data carries an injected
    instruction, and when one workflow step's result is missing?
 
@@ -42,8 +42,8 @@ behaviour in the code before relying on anything written here.
 
 ## Starting evidence and uncertainties
 
-Checked against the local typed-findings implementation on 2026-11-15
-(`feat/typed-findings`, based on `e10e59d`; not yet merged):
+Checked against the typed-findings implementation on 2026-11-15; it was merged unchanged on
+2026-11-16 (#31):
 
 - **The analyst explanation receives the raw case.** `explain_decision()` in
   `src/argus/agents/compliance/tools/explain_decision.py` is wired into the Compliance agent. Its
@@ -85,10 +85,11 @@ Two prerequisites establish the study's reference data:
    and `AGENTS.md` carries the accepted rule. Decided on 2026-10-04; wording and stand-in names
    accepted on 2026-11-13; implemented on 2026-11-14. Wording:
    [`research/data-rule-proposal.md`](research/data-rule-proposal.md).
-2. **Typed findings: implemented locally on 2026-11-15, awaiting review and merge.** Typed facts
-   are the only case inputs to the shared scoring and obligation policy. All six demo tiers are
-   unchanged; the three older hand-set scores now follow the live formulas. The analyst prompt
-   template is unchanged. Protocol, baseline capture and experimental arms have not started.
+2. **Typed findings: merged on 2026-11-16 (#31).** Typed facts are the only case inputs to the
+   shared scoring and obligation policy. All six demo tiers are unchanged; the three older
+   hand-set scores now follow the live formulas. The analyst prompt template is unchanged. The
+   protocol is drafted ([`research/study-protocol.md`](research/study-protocol.md)) but not yet
+   frozen; baseline capture and the experimental arms have not started.
    Design: "Shared rule and decision record" in
    [`research/study-data-design.md`](research/study-data-design.md).
 
@@ -100,6 +101,10 @@ through the local data plane.
 Keep the existing ARGUS flow as the baseline. Hold the deterministic findings, score and tier fixed in every comparison; only the model's input and the injected conditions vary. Improve one explanation path. Preserve the underlying finding, evidence references, uncertainty, and human-review status.
 
 ### Core: the matched explanation study
+
+The procedures, case strata, arms, measures and analysis are fixed in the study protocol,
+[`research/study-protocol.md`](research/study-protocol.md) (a draft until the maintainer
+freezes it). Where it is more specific than this outline, the protocol governs.
 
 1. **Baseline.** Capture today's analyst explanation for every case, with the exact prompt, model
    configuration and `explanation_source`.

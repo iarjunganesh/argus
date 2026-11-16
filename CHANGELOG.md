@@ -15,6 +15,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Added
 
+- **A draft protocol fixes how the matched explanation study will run.**
+  `docs/research/study-protocol.md` sets the 24-case design (eight strata, tuning cases separate
+  from held-out ones), the raw, minimised and template arms, the per-case reference written
+  before any output is read, the injection and missing-step pairs with their expected behaviour,
+  the structural and annotated measures, the analysis, exclusions and run records. It is a
+  draft: the model configuration, budget ceiling and second annotator are open, and no case,
+  model call or result exists. Checked: `check_docs.py` and markdownlint pass; the arm
+  descriptions and the injection fields were checked against `explain_decision.py`,
+  `findings.py` and `decision.py`.
+
 - **Typed facts are the only case inputs to scores and obligations.** Every discrepancy,
   screening hit, corporate risk flag, deep ownership chain, structuring/layering flag and
   typology hit has a stable record with evidence, provenance, uncertainty and pending human
