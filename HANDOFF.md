@@ -15,10 +15,11 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Current state — 16 November 2026
 
-- **Source.** `main` is at `f1977b7`. On 16 November the maintainer merged #31 (typed
-  findings), #32 (the draft study protocol) and #33 (the `v0.1.0` release prep), each after all
-  16 CI checks passed; `main`'s own CI, Attribution and CodeQL runs on `f1977b7` passed too. No
-  tag, deployment or paid model run.
+- **Source.** `main` is at `874ef46`, tagged `v0.1.0`. On 16 November the maintainer merged
+  #31 (typed findings), #32 (the draft study protocol), #33 (the release prep) and #34 (a
+  handoff note), each after all CI checks passed. The release workflow's `deps: refresh after
+  v0.1.0` pull request (#35) is open, with follow-up commits for the review comments; it is not
+  merged. No deployment or paid model run.
 - **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
   found no npm advisories. On 16 November there were no open Dependabot, code scanning or
   secret scanning alerts.
@@ -34,11 +35,13 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   writes the explanation. The default is the local data plane with synthetic data and no cloud
   account. The Azure data plane exists but is not verified against live services, and no live
   model has written an explanation since the rebuild (both are known issues).
-- **Release prepared (#33), not tagged; not deployed.** `main` carries the changelog section
-  `[0.1.0] - 2026-11-16`, and `pyproject.toml` says 0.1.0. There is no tag and no GitHub Release
-  yet; the tag waits for the maintainer's go-ahead. The `deps-broken` label now exists. Zenodo archives this repository's
-  releases, so the tag will get a DOI; `CITATION.cff` supplies its metadata. The deployment
-  workflow and Bicep template are merged; no Azure or Vercel resource has been created.
+- **Released: `v0.1.0` (16 November); not deployed.** With the maintainer's go-ahead, the
+  annotated tag was pushed on `874ef46`. The release workflow validated it, reran CI, published
+  the [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) with the
+  changelog notes, skipped the deploy job (no `AZURE_RESOURCE_GROUP`) and opened #35. Zenodo
+  archived it as 10.5281/zenodo.24292414 (concept DOI 10.5281/zenodo.24292413), with the author and metadata from
+  `CITATION.cff`. The release is finished once #35 is merged. The deployment workflow and Bicep
+  template are merged; no Azure or Vercel resource has been created.
 - **Typed findings: merged (#31).** Canonical facts and explicit assessment states are the only
   case inputs to one shared score/obligation policy. Reports add `findings`, retained
   `evidence` and a versioned `decision_record`, pending human review; cached numeric agent
@@ -53,9 +56,12 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   missing-step variants on six cases each with their expected behaviour, the structural and
   annotated measures, the analysis and the run records. About 770 model calls in all. Its model
   configuration and budget ceiling are left open. No case, model call or result exists.
-- **Verification.** #31's CI passed every check (tests and 100% coverage, type check, lint,
-  documentation, web UI, container image, dependency audit, CodeQL, SonarQube Cloud, Codecov,
-  attribution, secret scan), and so did #32's.
+- **Verification.** #31 to #34 each passed every CI check (tests and 100% coverage, type
+  check, lint, documentation, web UI, container image, dependency audit, CodeQL, SonarQube Cloud,
+  Codecov, attribution, secret scan). On #35 every check passed except Documentation, a bare run
+  link the release workflow appends after its own Markdown gate; that and the two review comments
+  are fixed in its follow-up commits. Agent Framework 1.26.0 passes all 412 tests locally at
+  100% coverage.
 - **Editor integration reviewed.** Python formatting uses Ruff in CI and the recommended VS
   Code extensions. The local formatter-log review found no need for an application change.
 
@@ -70,10 +76,8 @@ Maintainer decisions still open:
 
 Then, in order:
 
-1. Release `v0.1.0`: with the maintainer's explicit approval, push the tag on the changelog
-   section's date (or redate the section first), check that the release workflow publishes the
-   notes and that Zenodo mints the DOI, and review `deps: refresh after v0.1.0`. The release is
-   finished only when that pull request exists and is reviewed.
+1. Finish `v0.1.0`: once #35's CI is green and its review comments are answered, the
+   maintainer merges it.
 2. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
    line says "frozen" with the date, and that version reaches `main` before any study model
    call.
@@ -87,16 +91,14 @@ Then, in order:
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
-**Release, then the first live run (tag first decided 16 November).** The tag comes first
-(step 1 above). The first live run is proposed for 23 to 25 November, before the protocol
-freeze and baseline in calendar week 3; it still needs its own approvals.
+**The first live run (proposed for 23 to 25 November).** Before the protocol freeze and
+baseline in calendar week 3; it still needs its own approvals.
 
-- *Tag:* the deploy job is skipped while `AZURE_RESOURCE_GROUP` is unset. Branch protection is
-  off and needs its own approval.
 - *Live run:* approve the resources in `docs/DEPLOYMENT.md`; create the workflow identity (a
   user-assigned managed identity with a federated credential avoids the unknown
   app-registration permission), the `azure` environment and the variable; run Deploy on the tag,
-  fill the data plane, run the smoke check, confirm zero replicas after 30 idle minutes, read one
+  fill the data plane (the first deploy's smoke step fails until it is filled), run the smoke
+  check, confirm zero replicas after 30 idle minutes, read one
   idle day's cost; then the Vercel project, its origin in `corsOrigins` and the docs updates
   listed under "Open items". Fixes the live run needs ship as `v0.1.1`.
 
@@ -119,7 +121,7 @@ write-up. If the typed-findings change takes longer than one week, cut the case 
 keep the protocol date.
 
 Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a week early; the
-`v0.1.0` release is being prepared), and the week 3 protocol is drafted.
+`v0.1.0` released on 16 November), and the week 3 protocol is drafted.
 
 ## Decisions already made
 
@@ -169,10 +171,13 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
   30 idle minutes and observe one idle day's cost. Then the Vercel project (root `web`, variables
   `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`). When live, update the README
   hosting badges, the ARCHITECTURE hosting heading and the CHANGELOG known issue.
-- `eslint-config-next` matches Next.js (16.4.6) on `main`. ESLint 9 and
-  TypeScript 6.0 are held back by peer limits. Remove the minimatch `overrides` entry in
-  `web/package.json` once typescript-eslint and ts-morph depend on minimatch 11. Move `web/.nvmrc` and `@types/node` by hand when
-  Node 26 is the LTS.
+- **Manual upgrades the refresh reported.** Node.js 26 is now the LTS: move `web/.nvmrc` and
+  `@types/node` by hand. ESLint 10 and TypeScript 7 are major versions, held back by peer limits
+  (`eslint-config-next` matches Next.js 16.4.6). Python 3.15 waits for wheels of msgspec,
+  pyyaml and uvloop. The minimatch override is removed in #35.
+- **The refresh does not move Agent Framework.** It keeps the exact pin at its locked version, so
+  each refresh moves it by hand (documented in `docs/RELEASING.md`); automating that step is
+  open.
 - `v0.1.0` ships with "the API takes no documents" as a known issue. Whether to add a
   `documents` field later is undecided.
 
@@ -181,7 +186,23 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 16 November 2026 (latest) — editor formatter diagnosis, #33 merged
+### 16 November 2026 (latest) — v0.1.0 released, refresh reviewed
+
+- With the maintainer's go-ahead, pushed the annotated `v0.1.0` tag on `874ef46` after #34 was
+  merged. The release workflow passed: validate, the full CI rerun, publish; deploy was skipped;
+  the refresh opened #35. GitHub's webhook log showed Zenodo accepting the release, and its
+  public record lists DOI 10.5281/zenodo.24292414 (concept 10.5281/zenodo.24292413) with only the maintainer as author.
+- Deleted the merged `chore/release-v0.1.0` and `docs/handoff-editor-note` branches.
+- #35: its Documentation job failed on a bare run link that the release workflow appends after
+  its Markdown gate. Codex's two review comments asked for the exact Agent Framework pin to move
+  and for a changelog entry. Added commits: Agent Framework 1.19.0 → 1.26.0 (412 tests, ruff and
+  mypy pass locally), the run link written as `<…>` in the report and in `release.yml`, the
+  `[Unreleased]` entries, the redundant web minimatch override removed, and, at the maintainer's
+  request, a docs pass: the citation DOI in the README and `CITATION.cff`, the Agent Framework
+  step and finished one-time setup in `docs/RELEASING.md` and `AGENTS.md`, the first-deploy
+  smoke failure in `docs/DEPLOYMENT.md`, and this handoff.
+
+### 16 November 2026 (night) — editor formatter diagnosis, #33 merged
 
 - Reviewed the supplied formatter log against the installed extension and the repository's
   Ruff configuration, CI and test fixtures. Recorded machine-specific findings in `.local/`;

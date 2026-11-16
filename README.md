@@ -278,6 +278,15 @@ The post-hackathon cleanup is done and the next work is the study above. Issues 
 
 ---
 
+## Citing ARGUS
+
+Every GitHub release is archived on Zenodo. To cite ARGUS, use its concept DOI, which always
+resolves to the latest version: [10.5281/zenodo.24292413](https://doi.org/10.5281/zenodo.24292413). Version 0.1.0 is
+[10.5281/zenodo.24292414](https://doi.org/10.5281/zenodo.24292414). GitHub's "Cite this repository" button reads
+[`CITATION.cff`](CITATION.cff).
+
+---
+
 ## License
 
 Copyright (c) 2026 iarjunganesh.

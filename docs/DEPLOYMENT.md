@@ -138,7 +138,8 @@ progress events expire 24 hours after their last change (the `kyc_reports` conta
 time to live), and the logs, kept 30 days, record report IDs but not entity names.
 
 The workflow deploys with the template's defaults; filling the data plane stays a step you run
-yourself.
+yourself. On a first deployment the workflow's smoke step therefore fails with "no regulatory
+triggers": fill the data plane, then run the smoke check again (or rerun the workflow).
 
 ## The web UI
 

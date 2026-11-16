@@ -1,29 +1,33 @@
 # Releases and dependency refreshes
 
-Release automation is merged. The first release is `v0.1.0`, and its changelog section is
-dated 2026-11-16. Only an explicitly approved tag push publishes a release. Once Azure is set up for GitHub
-([DEPLOYMENT.md](DEPLOYMENT.md)), the same tag also deploys the API.
+Release automation is merged. The first release, `v0.1.0`, was published on 2026-11-16. Only
+an explicitly approved tag push publishes a release. Zenodo archives every published release and
+gives it a DOI, with the metadata in `CITATION.cff`; the concept DOI 10.5281/zenodo.24292413 always resolves to
+the latest version. Once Azure is set up for GitHub ([DEPLOYMENT.md](DEPLOYMENT.md)), the same
+tag also deploys the API.
 
-## Before the first tag
+## Before a tag
 
-1. Confirm the three setup items below exist; they are repository settings, so this page cannot
-   tell whether they were done.
-2. Create the repository secret `DEPS_BOT_TOKEN`. Use a fine-grained PAT restricted to this
-   repository, with Contents, Pull requests and Workflows read/write permissions. Workflows
-   permission is needed because the refresh updates action pins. Never put the token in a file.
-   Regenerate it before it expires and update the secret; an expired token fails only the
-   refresh, which can then be retried (see below).
-3. Create the `deps-broken` label. These are repository setup actions requiring the maintainer's
-   approval. Branch protection also needs separate approval: require every CI job and a PR,
-   and prohibit force pushes to `main`.
-4. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
+1. Check the one-time setup, which exists since `v0.1.0`. These are repository settings, so this
+   page cannot tell whether they are still in place:
+   - the repository secret `DEPS_BOT_TOKEN`: a fine-grained PAT restricted to this repository,
+     with Contents, Pull requests and Workflows read/write permissions. Workflows permission is
+     needed because the refresh updates action pins. Never put the token in a file. Regenerate it
+     before it expires and update the secret; an expired token fails only the refresh, which can
+     then be retried (see below);
+   - the `deps-broken` label;
+   - the repository's Zenodo archiving, switched on in the maintainer's Zenodo account.
+
+   Changing them needs the maintainer's approval. Branch protection needs its own approval and is
+   not set yet: require every CI job and a PR, and prohibit force pushes to `main`.
+2. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    (the date you tag), add a new empty `## [Unreleased]` above it, set `version` in
    `pyproject.toml` to `X.Y.Z` and run `uv lock`. Merge it before tagging, so the tagged commit
    carries its own dated notes.
-5. Run all commands in `AGENTS.md`, plus
+3. Run all commands in `AGENTS.md`, plus
    `uv run python scripts/ci/check_versions.py --check` and
-   `uv run python scripts/ci/release_notes.py v0.1.0` (it writes `.tmp/release-notes.md`).
-6. Obtain the maintainer's explicit approval to create and push the release tag.
+   `uv run python scripts/ci/release_notes.py vX.Y.Z` (it writes `.tmp/release-notes.md`).
+4. Obtain the maintainer's explicit approval to create and push the release tag.
 
 ## What the tag runs
 
@@ -70,8 +74,11 @@ existing published tag. Manual dispatch retries the refresh without republishing
   `rebuilt` under the same tag, usually for base-OS security fixes. `--write` moves the pins, and
   the interpreter PR moves the Python image to the new minor. A tag the registry has not published
   yet stays as it is and is reported.
-- **Agent Framework** is pinned exactly, and `--write` keeps it exact. The orchestrator and API
-  contract tests run the workflow on the refreshed version.
+- **Agent Framework** is pinned exactly, and `--write` keeps it exact at its locked version, so the
+  refresh does not move it. Move it by hand in the refresh pull request: the new version in
+  `pyproject.toml` and the README badge, then `uv lock --upgrade-package agent-framework-core`;
+  the orchestrator and API contract tests then run the workflow on it. After `v0.1.0` it moved
+  from 1.19.0 to 1.26.0 this way.
 
 The build backend is reported separately because it is outside the lock; the refresh raises
 its minimum to the latest release and retains an upper bound at the next minor.
