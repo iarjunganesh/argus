@@ -15,19 +15,21 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Current state — 16 November 2026
 
-- **Source.** `main` is at `e10e59d`, including merged #30 (the `shadcn` package removal).
-  The typed-findings implementation is one commit on `feat/typed-findings`, based on that
-  revision. With the maintainer's approval on 16 November, the branch was pushed and its pull
-  request opened for review. It is not merged. No tag, deployment or paid model run was made.
+- **Source.** `main` is at `927c3f2`: the maintainer merged #31 (typed findings) on 16 November,
+  after all 16 of its CI checks passed. The branch `docs/study-protocol`, one commit on top of
+  `main`, holds the draft study protocol, the plan and research-index status updates, a
+  changelog entry and this handoff; with the maintainer's approval it was pushed and its pull
+  request opened for review. It is not merged. No tag, deployment or paid model run.
 - **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
-  found no npm advisories. The live Dependabot alert count has not been rechecked in this session.
+  found no npm advisories. #31's dependency audit passed; the Dependabot alert count itself has
+  not been rechecked.
 - **Stand-ins and data rule: merged (#29).** Synthetic Payments AG (HIGH,
   56.5), Synthetic Nordic Bank A/S (MEDIUM, 36.0) and Synthetic Pacific Banking Corporation
   (LOW, 18.2) replace the three real-company profiles. Their profile scores are what the live
   agents compute from their facts (a test recomputes them). All six demo cases are invented, so
   demo-only mode accepts all six. `AGENTS.md` carries the accepted data rule, with an empty
   `docs/DATA-SOURCES.md`. The public adverse-media file and the 12-point adverse-media boost are
-  removed. The typed-findings change below updates the other three scenarios' scores.
+  removed.
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier; a language model only
   writes the explanation. The default is the local data plane with synthetic data and no cloud
@@ -35,50 +37,48 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 - **Not released, not deployed.** `pyproject.toml` says 0.1.0, but there is no tag and no GitHub
   Release. The deployment workflow and Bicep template are merged; no Azure or Vercel resource has
   been created.
-- **v2 plan revised on 11 November.** The study leads with a matched comparison: the same
-  rule-determined findings explained from raw and from minimised input, then injection and
-  missing-step conditions. Simplifying the wording is the follow-up question.
-- **Typed findings: in review (pull request open, not merged).** Canonical facts
-  and explicit assessment states are the only case inputs to one shared score/obligation
-  policy. Reports add `findings`, retained `evidence` and a versioned `decision_record`, pending
-  human review; cached numeric agent scores cannot affect decisions. Existing display fields
-  remain derived outputs. Jane now scores 3.0 (LOW), Synthetic Holdings 44.0 (MEDIUM), Cayman
-  76.0 (CRITICAL); all six tiers and recommended actions are unchanged. The analyst prompt
-  template is unchanged; typed records still contain raw strings, so minimised input remains
-  study work. The customer-facing variant is still not wired in.
-- **Verification.** On 16 November, just before the push, 412 Python tests passed at 100% line
-  and branch coverage, and mypy, ruff, formatting, markdownlint and the three repository checks
-  passed. On 15 November, with Node.js 24, web lint, format, typecheck, 30 unit tests, the build
-  and all 30 Playwright tests against a local API passed; that code is unchanged. The
-  independent review's two evidence-retention findings are fixed and regression-tested. CI
-  results on the pull request are not recorded here.
+- **Typed findings: merged (#31).** Canonical facts and explicit assessment states are the only
+  case inputs to one shared score/obligation policy. Reports add `findings`, retained
+  `evidence` and a versioned `decision_record`, pending human review; cached numeric agent
+  scores cannot affect decisions. Jane now scores 3.0 (LOW), Synthetic Holdings 44.0 (MEDIUM),
+  Cayman 76.0 (CRITICAL); all six tiers and recommended actions are unchanged. The analyst
+  prompt template is unchanged; typed records still contain raw strings, so the minimised input
+  is study work. The customer-facing variant is still not wired in.
+- **Study protocol: drafted, not frozen.** [`docs/research/study-protocol.md`](docs/research/study-protocol.md)
+  (in review, not merged) fixes 24 synthetic cases in eight strata (8 tuning, 16 held out), arms A
+  (today's raw prompt), B (minimised typed findings, no entity name or free text) and C (the fixed
+  template), the per-case reference written before outputs are read, two injection and two
+  missing-step variants on six cases each with their expected behaviour, the structural and
+  annotated measures, the analysis and the run records. About 770 model calls in all. Its model
+  configuration and budget ceiling are left open. No case, model call or result exists.
+- **Verification.** #31's CI passed every check (tests and 100% coverage, type check, lint,
+  documentation, web UI, container image, dependency audit, CodeQL, SonarQube Cloud, Codecov,
+  attribution, secret scan). The protocol branch changes documentation only; `check_docs.py`
+  and markdownlint pass on it.
 
 ## Next step
 
-Maintainer decisions still open (neither blocks local protocol preparation):
+Maintainer decisions still open:
 
 1. Whether `v0.1.0` still waits for a first Azure deployment and an observed idle-day cost (the
    original cleanup exit gate), or is tagged first because the study does not need hosting.
-2. A model budget for the study, and which model configuration is pinned; required before runs.
+2. The study's model configuration and budget ceiling (protocol section 8). Required to freeze
+   the protocol and before any study model call.
+3. Whether a second annotator is sought, and whether the optional uncapped raw arm is included
+   (protocol section 16).
 
 Then, in order:
 
-1. Maintainer review of the typed-findings pull request and its CI results. Merging needs the
-   maintainer's separate approval; merge commits only on `main`.
-2. v2 Week 1: write and commit the study protocol before any study model call, then capture the
-   baseline with the approved budget and pinned configuration. Keep fallback outputs separate.
-
-**The typed-findings choice (decided 14 November: fact-level).** The design asks for
-fact-level findings (each discrepancy, screening hit, high-risk ownership node, deep ownership
-chain, structuring and layering flag and typology hit as its own record), with the agent scores
-computed from them by the live formulas.
-Live runs then score exactly as today. The three original recorded profiles (Jane Synthetic,
-Synthetic Holdings B.V., Cayman Synth Capital) carry hand-set scores that those formulas do not
-reproduce, so their scores would move while their tiers stay: about 5.8 → 3.0 (LOW), 49.5 → 44
-(MEDIUM) and 73.5 → 76 (CRITICAL, held by the sanctions match either way). The maintainer chose
-this over recording each agent's score as a finding of its own, which would keep every score but
-is coarser for the study's subset analysis. A dimension whose agent did not run keeps today's
-default and is recorded as not assessed, not as clear.
+1. Maintainer review of the draft protocol's pull request (`docs/study-protocol`). Merging it
+   as a draft is a separate approval. Once decisions 2 and 3 are made and the text is approved,
+   mark it frozen with the date and get that version into `main` before any study model call.
+2. Week 1 code, which can start before the freeze because it makes no model call: a documented
+   baseline command that takes the analyst prompt from the production code path (split
+   `explain_decision()` into a prompt builder and the call) and writes the run records in
+   protocol section 13. Exercise it with `ARGUS_MODEL_PROVIDER=none`; those outputs are
+   labelled fallback and are not a model baseline.
+3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
+   repeats), then week 2 (case generator, per-case references, minimised input).
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
@@ -99,6 +99,9 @@ because the two prerequisites come first.
 January 2027: the injection and missing-step pairs, the one improvement and its rerun, then the
 write-up. If the typed-findings change takes longer than one week, cut the case set to 20 and
 keep the protocol date.
+
+Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a week early; the
+`v0.1.0` tag waits on decision 1), and the week 3 protocol is drafted.
 
 ## Decisions already made
 
@@ -151,42 +154,33 @@ keep the protocol date.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 16 November 2026 (latest) — typed-findings pull request
+### 16 November 2026 (latest) — typed findings merged, protocol drafted
 
-- The maintainer approved folding this handoff update into the single typed-findings commit,
-  pushing `feat/typed-findings` and opening its pull request with the prepared description.
-  Merging was not approved and has not happened.
-- Before the push, reran ruff, formatting, mypy, the three repository checks, markdownlint and
-  412 Python tests (100% line and branch coverage); all passed. The web code is unchanged since
-  its 15 November checks.
+- With the maintainer's approval, reran the Python checks (412 tests at 100% line and branch
+  coverage, ruff, formatting, mypy, the three repository checks, markdownlint), folded the
+  handoff into the single typed-findings commit, pushed it and opened #31 with the prepared
+  description. All 16 CI checks passed; the maintainer merged it (`927c3f2`). Deleted the
+  local `feat/typed-findings` branch; the remote branch is left for the maintainer.
+- Drafted the study protocol on the new local branch `docs/study-protocol`: cases and strata,
+  arms, reference, failure conditions with expected behaviour, measures, analysis, exclusions,
+  run records and an amendment log. Checked the arm and injection details against
+  `explain_decision.py`, `findings.py`, `decision.py` and `risk_scorer.py`; for example, only
+  the first 100 characters of a PEP match reach the prompt, so the injection uses a corporate
+  flag or typology label, and a missing transaction assessment scores 0, the same as clear.
+- Brought the plan, the study data design and the research index up to date with the merge and
+  the draft; the plan's minimised-input wording now matches the protocol (identifiers stay in the
+  saved request, not the prompt). Merged three earlier 16 November log entries into one.
+- At the maintainer's request, pushed `docs/study-protocol` and opened its pull request; it is
+  not merged. No model call, deployment or paid resource.
 
-### 16 November 2026 (evening) — review preparation
+### 16 November 2026 (earlier) — cleanup and review preparation
 
-- Verified that the squashed commit has the same file tree as the two original commits
-  combined. The implementation and its recorded Python/web validation are unchanged.
-- Read-only GitHub searches found no published `feat/typed-findings` branch or pull request.
-  Prepared the pull-request description locally. Publishing remains subject to explicit
-  maintainer approval; the Week 1 protocol and model runs have not started.
-- Corrected the superseded commit reference in Current state. The initialization prompt and
-  project decisions remain intact. No GitHub mutation, deployment or paid model call was made.
-
-### 16 November 2026 (later) — initialization prompt restored
-
-- Restored the reusable copy/paste initialization prompt near the top of this file. Removing
-  it with the temporary pause reminders was too broad; the temporary reminders stay removed.
-- Checked the documentation links and Markdown formatting. The implementation and next work
-  are unchanged.
-
-### 16 November 2026 — documentation cleanup and local completion
-
-- Removed the temporary pause/resume reminders and copy/paste resume prompt. The handoff keeps
-  the current project state, actual next steps and verification history.
-- Completed the final diff review, including the three new Python files. The typed-findings
-  implementation and the two independent-review fixes are complete; no further code change
-  was needed. Verified 412 Python tests at 100% line and branch coverage, ruff, formatting,
-  mypy, docs/version/asset checks and markdownlint. The unchanged web code retains the
-  15 November verification above. The completed change is kept on the local feature branch;
-  no push, pull request, deployment or model study was performed.
+- Removed the temporary pause/resume reminders, then restored the reusable initialization
+  prompt, which that removal had taken out too.
+- Completed the final diff review of the typed-findings change (no further code change
+  needed), squashed it into one commit with an identical file tree, and prepared the pull
+  request description. Verified 412 Python tests at 100% line and branch coverage, ruff,
+  formatting, mypy, the docs/version/asset checks and markdownlint.
 
 ### 15 November 2026 — fact-level findings and decision record
 
