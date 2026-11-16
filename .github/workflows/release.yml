@@ -35,7 +35,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Validate release metadata and main ancestry
         id: release
         env:
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Extract release notes
         env:
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
@@ -109,9 +109,9 @@ jobs:
           ref: main
           persist-credentials: false
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       # No npm cache: this job holds a token that can open pull requests.
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: web/.nvmrc
           package-manager-cache: false
@@ -127,7 +127,7 @@ jobs:
       - name: Markdown gate
         id: markdown
         continue-on-error: true
-        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        uses: DavidAnson/markdownlint-cli2-action@696eb3f2509270d7b882d2aa68347bc676e7af34 # v25.0.0
         with:
           globs: '**/*.md'
       - name: Secret gate
@@ -161,7 +161,7 @@ jobs:
           fi
       - name: Open the dependency review PR even when checks fail
         if: always()
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           token: ${{ secrets.DEPS_BOT_TOKEN }}
           branch: deps/after-${{ needs.validate.outputs.tag }}
@@ -193,7 +193,7 @@ jobs:
         with:
           ref: main
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Prepare the separate interpreter change
         env:
           PYTHON_MINOR: ${{ needs.refresh-deps.outputs.python }}
@@ -204,7 +204,7 @@ jobs:
           .venv/bin/python scripts/ci/check_versions.py --check-python-wheels "$PYTHON_MINOR"
           uv sync --locked --python "$PYTHON_MINOR" --no-build --no-install-project
       - name: Open interpreter PR for the full CI gate
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           token: ${{ secrets.DEPS_BOT_TOKEN }}
           branch: deps/python-${{ needs.refresh-deps.outputs.python }}

@@ -56,18 +56,18 @@
 [![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-Radix-000000?logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.63-2EAD33)](https://playwright.dev/)
-[![axe](https://img.shields.io/badge/axe-4.13_WCAG_2.2_AA-663399)](https://github.com/dequelabs/axe-core)
+[![Playwright](https://img.shields.io/badge/Playwright-1.65-2EAD33)](https://playwright.dev/)
+[![axe](https://img.shields.io/badge/axe-4.14_WCAG_2.2_AA-663399)](https://github.com/dequelabs/axe-core)
 [![Vercel Hobby](https://img.shields.io/badge/Vercel-Hobby-000000?logo=vercel&logoColor=white)](https://vercel.com/pricing)
 
 <!-- Row 4 — backend and toolchain. -->
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Pydantic](https://img.shields.io/badge/Pydantic-2.13_contracts-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.163-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-2.14_contracts-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
 [![uv](https://img.shields.io/badge/uv-locked-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Ruff](https://img.shields.io/badge/Ruff-lint%20%2B%20format-D7FF64?logo=ruff&logoColor=111827)](https://docs.astral.sh/ruff/)
 [![Mypy](https://img.shields.io/badge/Mypy-type_checked-2A6DB2?logo=python&logoColor=white)](https://mypy-lang.org/)
-[![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![pytest](https://img.shields.io/badge/pytest-9.2-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
 [![Docker](https://img.shields.io/badge/Docker-non--root,_digest--pinned-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Tesseract](https://img.shields.io/badge/Tesseract-local_OCR-3C8DBC)](https://github.com/tesseract-ocr/tesseract)
 

@@ -5,9 +5,9 @@
 # Base images are pinned by tag and digest; scripts/ci/check_versions.py checks the pins and the
 # post-release dependency refresh moves them (docs/RELEASING.md).
 
-FROM ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.8@sha256:5cc1805e2426484abca4ad46ea783bab281fdb225fd82d8ce6d66a81254bac85 AS uv
 
-FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS build
+FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -21,7 +21,7 @@ RUN uv sync --locked --no-default-groups --no-install-project --no-editable --no
 COPY src ./src
 RUN uv sync --locked --no-default-groups --no-editable --no-build
 
-FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS runtime
+FROM python:3.14.10-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS runtime
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin argus
 COPY --from=build /app/.venv /app/.venv
 # No data is baked in: synthetic data is generated, so the local backend finds nothing and says
