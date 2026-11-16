@@ -15,10 +15,10 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Current state — 16 November 2026
 
-- **Source.** `main` is at `debe8ef`. On 16 November the maintainer merged #31 (typed
-  findings) and #32 (the draft study protocol), each after all 16 CI checks passed. The
-  release-prep branch `chore/release-v0.1.0` is pushed and its pull request is open, not
-  merged. No tag, deployment or paid model run.
+- **Source.** `main` is at `f1977b7`. On 16 November the maintainer merged #31 (typed
+  findings), #32 (the draft study protocol) and #33 (the `v0.1.0` release prep), each after all
+  16 CI checks passed; `main`'s own CI, Attribution and CodeQL runs on `f1977b7` passed too. No
+  tag, deployment or paid model run.
 - **Security refresh.** #30 removed the package that brought in deepmerge; its recorded checks
   found no npm advisories. On 16 November there were no open Dependabot, code scanning or
   secret scanning alerts.
@@ -34,9 +34,9 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   writes the explanation. The default is the local data plane with synthetic data and no cloud
   account. The Azure data plane exists but is not verified against live services, and no live
   model has written an explanation since the rebuild (both are known issues).
-- **Release prepared, not tagged; not deployed.** The release-prep pull request dates the
-  changelog section `[0.1.0] - 2026-11-16`; `pyproject.toml` already says 0.1.0. There is no tag and
-  no GitHub Release yet. The `deps-broken` label now exists. Zenodo archives this repository's
+- **Release prepared (#33), not tagged; not deployed.** `main` carries the changelog section
+  `[0.1.0] - 2026-11-16`, and `pyproject.toml` says 0.1.0. There is no tag and no GitHub Release
+  yet; the tag waits for the maintainer's go-ahead. The `deps-broken` label now exists. Zenodo archives this repository's
   releases, so the tag will get a DOI; `CITATION.cff` supplies its metadata. The deployment
   workflow and Bicep template are merged; no Azure or Vercel resource has been created.
 - **Typed findings: merged (#31).** Canonical facts and explicit assessment states are the only
@@ -56,6 +56,8 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 - **Verification.** #31's CI passed every check (tests and 100% coverage, type check, lint,
   documentation, web UI, container image, dependency audit, CodeQL, SonarQube Cloud, Codecov,
   attribution, secret scan), and so did #32's.
+- **Editor integration reviewed.** Python formatting uses Ruff in CI and the recommended VS
+  Code extensions. The local formatter-log review found no need for an application change.
 
 ## Next step
 
@@ -68,11 +70,11 @@ Maintainer decisions still open:
 
 Then, in order:
 
-1. Release `v0.1.0`: the maintainer merges the release-prep pull request; then, with explicit
-   approval, push the tag on the changelog section's date (or redate the section first), check
-   that the release workflow publishes the notes, and review `deps: refresh after v0.1.0`. The
-   release is finished only when that pull request exists and is reviewed.
-2. Freeze the protocol once decisions 2 and 3 are made and the text is approved: its status
+1. Release `v0.1.0`: with the maintainer's explicit approval, push the tag on the changelog
+   section's date (or redate the section first), check that the release workflow publishes the
+   notes and that Zenodo mints the DOI, and review `deps: refresh after v0.1.0`. The release is
+   finished only when that pull request exists and is reviewed.
+2. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
    line says "frozen" with the date, and that version reaches `main` before any study model
    call.
 3. Week 1 code, which can start before the freeze because it makes no model call: a documented
@@ -153,6 +155,14 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
 
 ## Open items
 
+- **Editor setup.** Use Ruff as the Python formatter, to match the project's formatting checks
+  (the recommended VS Code extensions include it); machine-specific diagnostics and suggested
+  settings are recorded locally.
+- **A stale contributor entry.** The repository sidebar lists an AI assistant as a contributor.
+  The cause is two commits brought in by #1 (June 2026) with co-author trailers; `main` was later
+  rewritten and no longer contains them, and GitHub's contributor data for `main` lists only the
+  maintainer and Dependabot. Only GitHub Support can remove the leftover commits from #1 and
+  refresh the list; the maintainer has the request text.
 - **Deployment, when approved.** Steps are in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md): approve
   the resources it lists, set up the workflow identity and the GitHub `azure` environment, deploy,
   fill the data plane, run the smoke check with its cold-start time, confirm zero replicas after
@@ -171,7 +181,16 @@ Status on 16 November: calendar weeks 1 and 2 are done (typed findings merged a 
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 16 November 2026 (latest) — protocol merged; v0.1.0 release prepared
+### 16 November 2026 (latest) — editor formatter diagnosis, #33 merged
+
+- Reviewed the supplied formatter log against the installed extension and the repository's
+  Ruff configuration, CI and test fixtures. Recorded machine-specific findings in `.local/`;
+  recommended aligning editor formatting with Ruff. No application or editor setting changed.
+- The maintainer merged #33 (`f1977b7`). This note was absorbed into a small follow-up pull
+  request, since #33 could no longer take it. Traced the AI assistant in the repository's
+  contributor sidebar to #1's leftover commits (Open items). The `v0.1.0` tag is not pushed yet.
+
+### 16 November 2026 (late evening) — protocol merged; v0.1.0 release prepared
 
 - The maintainer merged #32 (all 16 checks passed); deleted the local branch.
 - Asked when to tag and go live, checked the release and deployment setup read-only: no tag,
