@@ -53,10 +53,8 @@ export function FindingItem({
                   <summary className="cursor-pointer text-xs text-muted-foreground">
                     Raw record
                   </summary>
-                  <pre
-                    tabIndex={0}
-                    className="mt-1 max-h-64 overflow-auto font-mono text-xs leading-relaxed whitespace-pre-wrap"
-                  >
+                  {/* Wrapped, not scrolled: a scrolling box would need keyboard focus. */}
+                  <pre className="mt-1 font-mono text-xs leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
                     {JSON.stringify(record, null, 2)}
                   </pre>
                 </details>
