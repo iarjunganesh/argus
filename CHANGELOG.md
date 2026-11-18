@@ -79,6 +79,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **Each session starts by checking the recorded facts.** `HANDOFF.md` has a start-of-session
+  check, named in its initialization prompt, in `AGENTS.md` and in the Claude Code and Copilot
+  pointers: the recorded state against git, GitHub and the live site, and the changelog, README,
+  guides and diagrams against every pull request opened or merged since the last session; each
+  deviation is reported and fixed. It was added after a review found the handoff, the v2 plan
+  and the guides behind #38 and #39. Checked: `check_docs.py` and markdownlint pass.
 - **The web UI runs on Node.js 26, the current LTS.** `web/.nvmrc`, the `engines` field and
   `@types/node` (26.6.6, with `undici-types` 8.9.0) move from 24; CI and the release workflow
   read the version from `web/.nvmrc`, and the three Vercel projects' Node.js setting is 26.x. The

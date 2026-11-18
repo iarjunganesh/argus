@@ -1,7 +1,8 @@
 # ARGUS handoff
 
-Read [AGENTS.md](AGENTS.md), this file, then the [v2 plan](docs/ARGUS-V2-PLAN.md). Update Current
-state, Next step and Session log before stopping.
+Read [AGENTS.md](AGENTS.md), this file, then the [v2 plan](docs/ARGUS-V2-PLAN.md). Run the
+start-of-session check below before any other work. Update Current state, Next step and Session
+log before stopping.
 
 This file is tracked and public. It holds project state only. Drafts and research notes are in
 [`docs/research/`](docs/research/README.md). Only account, billing and machine notes stay in
@@ -10,8 +11,30 @@ the ignored `.local/` folder.
 Copy/paste initialization prompt (with this repository open):
 
 ```text
-Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
+Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md. Before anything else, run the start-of-session check in HANDOFF.md: check every fact it records against git, GitHub and the live site, review each pull request opened or merged since the last session-log entry, report every deviation you find, and fix the documents that no longer match. Then continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
 ```
+
+## Start-of-session check
+
+Pull requests move faster than the documents that describe them. Before other work, check the
+grounded facts and report what deviates, with file and line:
+
+1. **Git and GitHub.** `git fetch --prune`; `main`'s commit and CI result
+   (`gh run list --branch main --limit 3`); pull requests merged and open since the last
+   session-log entry (`gh pr list --state all --limit 10`), each with its check results; merged
+   branches not yet deleted. Compare all of it with Current state and Next step.
+2. **Each of those pull requests.** It has a changelog entry that says what became true and how
+   it was checked; this file, the README, `docs/`, `web/README.md` and the diagrams describe the
+   code it merged; and no earlier entry or page now contradicts it (search for the old value:
+   a version, a status such as "not deployed", a count, a name).
+3. **The checks that read facts.** `check_docs.py`, `check_versions.py --check` and markdownlint
+   (the commands in `AGENTS.md`).
+4. **The live deployment.** <https://argus.arjunganesh.dev> answers, and so does the API's
+   `/health` (the request wakes it; it scales back to zero about 12 minutes later). Compare with
+   "Live since" below.
+
+Fix each deviation in the documents, or record it under Open items when it needs the
+maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, like any change.
 
 ## Current state — 19 November 2026
 
@@ -213,7 +236,8 @@ requests.
   Pacific Banking Corporation: 18.25 against 18.2) the page says the score keeps one.
 - The maintainer pointed out that the handoff and guides had fallen behind the merged work.
   Corrected every stale statement found in a review of all tracked Markdown files; shortening
-  the long ones waits for the maintainer's answer.
+  the long ones waits for the maintainer's answer. At the maintainer's request, added the
+  start-of-session check above and put it in the initialization prompt and `AGENTS.md`.
 
 ### 18 November 2026 — Azure readiness, the deploy identity and the live demo
 
