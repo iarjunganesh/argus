@@ -7,6 +7,7 @@ import {
   NOT_REPORTED,
   type AuditTrace,
   type Dimension,
+  type EvidenceRecord,
   type Finding,
   type Report,
 } from "./report";
@@ -181,4 +182,30 @@ export function sanctionsListing(report: Report): ListingSide | undefined {
     sourceScore: typeof data.confidence === "number" ? data.confidence : undefined,
     document: text(reference.document),
   };
+}
+
+function fieldLabel(key: string): string {
+  const words = key.replace(/_/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function fieldValue(value: unknown): string {
+  if (value === null || value === undefined) return "None";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return JSON.stringify(value);
+}
+
+/** An evidence record's reference and data fields, labelled for people, in their order. */
+export function evidenceFields(record: EvidenceRecord): { label: string; value: string }[] {
+  const reference = Object.entries(record.reference ?? {});
+  const data =
+    record.data !== null && typeof record.data === "object" && !Array.isArray(record.data)
+      ? Object.entries(record.data as Record<string, unknown>)
+      : [["data", record.data] as const];
+  return [...reference, ...data].map(([key, value]) => ({
+    label: fieldLabel(key),
+    value: fieldValue(value),
+  }));
 }

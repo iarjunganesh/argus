@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   actionsBesidesObligations,
+  evidenceFields,
   checkLabel,
   findingTitle,
   formatTime,
@@ -229,5 +230,35 @@ describe("sanctionsListing", () => {
   it("is undefined without a sanctions finding", () => {
     expect(sanctionsListing({ findings: [finding({ kind: "pep_match" })] })).toBeUndefined();
     expect(sanctionsListing({})).toBeUndefined();
+  });
+});
+
+describe("evidenceFields", () => {
+  it("lists a record's reference and data as labelled values", () => {
+    expect(
+      evidenceFields({
+        id: "evidence-s",
+        source: "demo_profile",
+        reference: { snippet_id: "demo-high-001", is_active: true },
+        data: {
+          confidence: 0.93,
+          reason: null,
+          transactions: [{ id: "TX-HIGH-01", amount: 9850 }],
+        },
+        source_at: null,
+      }),
+    ).toEqual([
+      { label: "Snippet id", value: "demo-high-001" },
+      { label: "Is active", value: "Yes" },
+      { label: "Confidence", value: "0.93" },
+      { label: "Reason", value: "None" },
+      { label: "Transactions", value: '[{"id":"TX-HIGH-01","amount":9850}]' },
+    ]);
+  });
+
+  it("shows data that is not an object as one value", () => {
+    expect(
+      evidenceFields({ id: "e", source: "computed", reference: {}, data: "text", source_at: null }),
+    ).toEqual([{ label: "Data", value: "text" }]);
   });
 });
