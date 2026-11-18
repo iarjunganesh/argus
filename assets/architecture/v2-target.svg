@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080"
      role="img" aria-labelledby="title desc">
-  <title id="title">ARGUS v2 target architecture (partly built, not deployed)</title>
-  <desc id="desc">The v2 runtime, partly built and not deployed. Built, drawn with solid outlines: a
-  Next.js web UI, to be hosted on Vercel, calls one FastAPI container, to be hosted on Azure
-  Container Apps scaling to zero. Inside it, a Microsoft Agent Framework workflow runs the
+  <title id="title">ARGUS v2 target architecture (partly built, deployed)</title>
+  <desc id="desc">The v2 runtime, partly built; the built part was deployed on 18 November 2026.
+  Built, drawn with solid outlines: a Next.js web UI, hosted on Vercel, calls one FastAPI container,
+  hosted on Azure Container Apps scaling to zero. Inside it, a Microsoft Agent Framework workflow runs the
   orchestrator, the four specialist agents concurrently, and the Compliance and Risk agent. Models
   sit behind one provider setting. The data plane has four interfaces, Retriever, EntityStore,
   ReportStore and OCR, each with an Azure implementation and a local one; Foundry IQ is the Azure
-  retriever, not yet run against live services. Planned, drawn dashed: the explanation study, which
+  retriever, which the deployment runs live. Planned, drawn dashed: the explanation study, which
   explains the same findings from raw and from minimised input and measures what is preserved;
   human review of every explanation; Fabric IQ and Work IQ reached as MCP tools, after the
   study; and OpenTelemetry.</desc>
@@ -15,7 +15,8 @@
   <!-- Hand-placed master; scripts/ci/render_assets.py writes the -light and -dark variants.
        This is the plan in docs/ARGUS-V2-PLAN.md, drawn. It must say "planned" wherever it could
        be mistaken for the current runtime (see system-overview.svg for that): solid outlines
-       are built, dashed ones planned. Static on purpose: nothing here is deployed yet. -->
+       are built, dashed ones planned. Static on purpose. The built part was deployed on
+       18 November 2026. -->
   <style>
 /* PALETTE:LIGHT */
 svg {
@@ -82,7 +83,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <rect class="bg" width="1920" height="1080"/>
   <text class="h1" x="60" y="86">ARGUS v2 — Target architecture</text>
   <rect class="plan" x="760" y="52" width="420" height="44" rx="22"/>
-  <text class="plantxt" x="970" y="81">PARTLY BUILT · NOT DEPLOYED</text>
+  <text class="plantxt" x="970" y="81">PARTLY BUILT · DEPLOYED</text>
   <text class="h2" x="60" y="126">Where the rebuild is heading: one container on Azure, Microsoft Agent Framework, neutral at the boundaries.</text>
   <line class="grid" x1="60" y1="152" x2="1860" y2="152"/>
 
@@ -90,14 +91,14 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <rect class="built" x="60" y="180" width="480" height="130" rx="14"/>
   <text class="tag" x="84" y="214">WEB UI</text>
   <text class="label" x="84" y="252">Next.js on Vercel</text>
-  <text class="body" x="84" y="284">built: live investigation view · Vercel planned</text>
+  <text class="body" x="84" y="284">deployed: argus.arjunganesh.dev · demo cases only</text>
 
   <path class="edge" d="M540 245 H594" marker-end="url(#arrow)"/>
 
   <rect class="built" x="600" y="180" width="700" height="130" rx="14"/>
   <text class="tag" x="624" y="214">API · ONE CONTAINER</text>
   <text class="label" x="624" y="252">FastAPI on Azure Container Apps</text>
-  <text class="body" x="624" y="284">built: the image · planned: 0–1 replicas, managed identity</text>
+  <text class="body" x="624" y="284">deployed: the image, 0–1 replicas, managed identity</text>
 
   <path class="edge" d="M1300 245 H1374" marker-end="url(#arrow)" style="stroke-dasharray:7 6"/>
 
@@ -165,7 +166,7 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <text class="label" x="84" y="808">Cited knowledge</text>
   <text class="body" x="84" y="842">regulations · sanctions ·</text>
   <text class="body" x="84" y="868">adverse media, with citations</text>
-  <text class="small" x="84" y="910">the Azure Retriever · not yet run live</text>
+  <text class="small" x="84" y="910">the Azure Retriever · runs live</text>
 
   <rect class="box" x="470" y="736" width="400" height="210" rx="14"/>
   <text class="tag" x="494" y="770">FABRIC IQ · MCP</text>
@@ -200,6 +201,6 @@ text     { font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 
   <path class="edge" d="M1300 640 H1340 V841 H1374" marker-end="url(#arrow)"/>
 
   <line class="grid" x1="60" y1="990" x2="1860" y2="990"/>
-  <text class="foot" x="60" y="1036">Solid outlines: built, not deployed. Dashed: planned. The current runtime is the system overview.</text>
+  <text class="foot" x="60" y="1036">Solid outlines: built and deployed. Dashed: planned. The current runtime is the system overview.</text>
   <text class="footr" x="1860" y="1036">Plan: docs/ARGUS-V2-PLAN.md</text>
 </svg>
