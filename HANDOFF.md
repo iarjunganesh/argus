@@ -13,10 +13,10 @@ Copy/paste initialization prompt (with this repository open):
 Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
 ```
 
-## Current state — 16 November 2026
+## Current state — 18 November 2026
 
-- **Source.** `main` is at `d4770fa`, and `main` is the only branch. Its CI passes. No
-  deployment or paid model run has happened.
+- **Source.** `main` is at `1c170fa` (#36 merged). Its CI passes. No deployment or paid model
+  run has happened.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -28,8 +28,17 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   synthetic data and no cloud account. Known issues: the Azure data plane has not run against
   live services, no live model has written an explanation since the rebuild, and the API takes
   no documents.
-- **Not deployed.** The deployment workflow and Bicep template are merged; no Azure or Vercel
-  resource exists.
+- **Not deployed; the deploy sign-in is ready (18 November).** The deployment workflow and Bicep
+  template are merged. With the maintainer's go-ahead, the workflow's Azure sign-in was set up:
+  a user-assigned managed identity, `id-argus-deploy`, in its own resource group `rg-argus-ci`,
+  trusted for the GitHub `azure` environment only, with Contributor and a role-assignment right
+  limited to the template's two roles on the empty `rg-argus`. The `azure` environment allows
+  deployments from `main` and `v*` tags and holds the three ID secrets; the
+  `AZURE_RESOURCE_GROUP` variable is `rg-argus`. Deploy can therefore run by hand, and **every
+  published release now deploys automatically**. Neither has run, so no billed resource exists
+  and the sign-in is untested until the first run. A read-only check the same day found the
+  free-tier slots unused, the template's model version offered and its quota free, and no
+  Vercel project.
 - **Every demo case is invented (#29).** The data rule is in `AGENTS.md`, with an empty
   `docs/DATA-SOURCES.md` register. The six scenarios keep their tiers: Jane Synthetic 3.0 (LOW),
   Synthetic Holdings B.V. 44.0 (MEDIUM), Cayman Synth Capital 76.0 (CRITICAL), Synthetic
@@ -76,12 +85,12 @@ Then, in order:
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
-**The first live run (proposed for 23 to 25 November; needs its own approvals).** Approve the
-resources in `docs/DEPLOYMENT.md`; create the workflow identity (a user-assigned managed
-identity with a federated credential avoids the unknown app-registration permission), the
-`azure` environment and the `AZURE_RESOURCE_GROUP` variable; run Deploy on the tag; fill the data
-plane (the first deploy's smoke step fails until it is filled); run the smoke check; confirm zero
-replicas after 30 idle minutes and read one idle day's cost. Then the Vercel project (root
+**The first live run (proposed for 23 to 25 November; needs its own approvals).** The workflow
+identity, the `azure` environment and the `AZURE_RESOURCE_GROUP` variable are in place. Approve
+the resources in `docs/DEPLOYMENT.md`; run Deploy on the tag; make the `argus` package public and
+run it again (Container Apps pulls the image anonymously); fill the data plane (the first
+deploy's smoke step fails until it is filled); run the smoke check; confirm zero replicas after
+30 idle minutes and read one idle day's cost. Then the Vercel project (root
 `web`, variables `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, its origin in
 `corsOrigins`). When live, update the README hosting badges, the ARCHITECTURE hosting heading
 and the CHANGELOG known issue. Fixes the live run needs ship as `v0.1.1`.
@@ -130,6 +139,10 @@ write-up.
   tiers may not.
 - 16 November 2026: `v0.1.0` is tagged before the first Azure deployment, because the study does
   not need hosting. Fixes the live run needs ship as `v0.1.1`.
+- 18 November 2026: the deploy workflow signs in as a user-assigned managed identity, not an app
+  registration (the account's right to create one is unconfirmed). It lives in `rg-argus-ci` so
+  that a teardown of `rg-argus` keeps it; its role assignments are on `rg-argus` only and are
+  repeated after a teardown.
 
 ## Open items
 
@@ -157,7 +170,18 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 16 November 2026 (latest) — Markdown cleanup
+### 18 November 2026 (latest) — Azure readiness and the deploy identity
+
+- Read-only check of the subscription, the GitHub settings and Vercel: nothing blocks the live
+  run. The free-tier slots are unused, the providers the template needs are registered, the
+  template's model version is offered in Sweden Central with its quota free, France Central
+  takes a Free search service with agentic retrieval, and `infra/main.bicep` builds.
+- With the maintainer's go-ahead, created the deploy sign-in (Current state) with the commands
+  now in the guide (plus resource tags); the role assignments read back as expected. The guide
+  describes the managed identity, and what to repeat after a teardown.
+- Deleted the merged `docs/markdown-cleanup` branch.
+
+### 16 November 2026 — Markdown cleanup
 
 - At the maintainer's request, reviewed every tracked Markdown file outside the frozen archive
   for stale or unwanted content. Condensed this handoff (same state, decisions and open items;

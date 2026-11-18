@@ -34,6 +34,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **The web UI no longer overrides minimatch.** `@typescript-eslint/typescript-estree` 8.73.0
   requires minimatch 11 itself, so the override changed nothing; the lock resolves the same
   versions. Checked: `npm install --package-lock-only` with npm 11 and the pull request's web CI.
+- **The deployment guide sets up the workflow's Azure identity as a user-assigned managed
+  identity.** It lives in its own resource group (`rg-argus-ci`), so removing a deployment keeps
+  it, and is trusted for the GitHub `azure` environment only; the guide gives the commands,
+  including the condition that limits role assignment to the two roles the template grants the
+  API, and says what to repeat after a teardown. An app registration still works where the
+  account may create one. Checked: the same commands, with resource tags added, created the
+  identity and its access on 18 November; the role assignments read back as Contributor and a
+  conditioned Role Based Access Control Administrator on `rg-argus`; the role IDs match
+  `infra/main.bicep`. The sign-in itself is first exercised by the first Deploy run.
 
 ### Fixed
 

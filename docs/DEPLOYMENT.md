@@ -116,17 +116,45 @@ image's digest, and runs the smoke test against the result. It runs when started
 → Deploy → Run workflow) and after every published release (`release.yml`). It signs in to Azure
 with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
 
-1. **An identity for the workflow.** Create an app registration (Microsoft Entra ID → App
-   registrations → New), and on it a federated credential for GitHub Actions: organization
-   `iarjunganesh`, repository `argus`, entity **Environment**, name `azure`.
-2. **Its access, on the resource group only.** Contributor, plus Role Based Access Control
-   Administrator constrained to assigning the two roles the template grants the API (Cognitive
-   Services OpenAI User and Cognitive Services User; the portal's "Allow user to only assign
-   selected roles" condition does this).
+1. **An identity for the workflow.** A user-assigned managed identity with a federated
+   credential for GitHub Actions, trusted only for the `azure` environment. It lives in its own
+   resource group, so removing the deployment ("Remove it") leaves it in place. Both are free.
+
+   ```sh
+   az group create --name rg-argus-ci --location swedencentral --query name --output tsv
+   az identity create --resource-group rg-argus-ci --name id-argus-deploy --query name --output tsv
+   az identity federated-credential create --resource-group rg-argus-ci \
+     --identity-name id-argus-deploy --name github-argus-environment-azure \
+     --issuer https://token.actions.githubusercontent.com \
+     --subject repo:iarjunganesh/argus:environment:azure \
+     --audiences api://AzureADTokenExchange --query name --output tsv
+   ```
+
+   An app registration with the same federated credential also works, where the account may
+   create one.
+2. **Its access, on `rg-argus` only.** Create the resource group (see "Deploy"), then give the
+   identity Contributor, plus Role Based Access Control Administrator constrained to assigning
+   the two roles the template grants the API: Cognitive Services OpenAI User (`5e0bd9bd-…`) and
+   Cognitive Services User (`a97b65f3-…`). In the portal, the "Allow user to only assign selected
+   roles" condition does this; from the command line (bash):
+
+   ```sh
+   id=$(az identity show --resource-group rg-argus-ci --name id-argus-deploy --query principalId --output tsv)
+   scope=$(az group show --name rg-argus --query id --output tsv)
+   roles='5e0bd9bd-7b93-4f28-af87-19fc36ad61bd, a97b65f3-24c7-4388-baec-2e87135dc908'
+   az role assignment create --assignee-object-id "$id" --assignee-principal-type ServicePrincipal \
+     --role Contributor --scope "$scope" --query id --output none
+   az role assignment create --assignee-object-id "$id" --assignee-principal-type ServicePrincipal \
+     --role "Role Based Access Control Administrator" --scope "$scope" --condition-version 2.0 \
+     --condition "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$roles})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$roles}))" \
+     --query id --output none
+   ```
+
+   In Git Bash on Windows, set `MSYS_NO_PATHCONV=1` first, or it rewrites the scope path.
 3. **The GitHub environment.** Settings → Environments → `azure`: allow deployments from `main`
    and `v*` tags only (optionally require a reviewer), and add the environment secrets
-   `AZURE_CLIENT_ID` (the app's client ID), `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`. They
-   are identifiers, not credentials; as secrets they are masked in the public logs.
+   `AZURE_CLIENT_ID` (the identity's client ID), `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`.
+   They are identifiers, not credentials; as secrets they are masked in the public logs.
 4. **The target.** The repository variable `AZURE_RESOURCE_GROUP` (for example `rg-argus`).
    `release.yml` deploys only when it is set.
 5. **The package.** After the first run, make the `argus` package public (Packages → argus →
@@ -170,3 +198,6 @@ The first command only lists what would be deleted. The second deletes the Log A
 workspace for good, then the resource group with everything in it, then purges the two AI
 accounts, which Azure otherwise keeps soft-deleted for 48 hours with their names and model quota.
 Use a resource group that holds nothing but ARGUS.
+
+The workflow identity in `rg-argus-ci` stays, but its role assignments go with `rg-argus`. Before
+deploying from GitHub again, create the resource group and repeat step 2 of "Deploy from GitHub".
