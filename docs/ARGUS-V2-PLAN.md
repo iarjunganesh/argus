@@ -1,6 +1,7 @@
 # ARGUS v2: a matched explanation study
 
-Study design revised 2026-11-11; prerequisite status updated and protocol drafted 2026-11-16. The earlier version asked only whether explanations could be
+Study design revised 2026-11-11; prerequisite status updated and protocol drafted 2026-11-16;
+deployment status corrected 2026-11-19. The earlier version asked only whether explanations could be
 made simpler. This version puts a controlled comparison first and keeps simplification as the
 follow-up question. The platform sections are unchanged.
 
@@ -67,7 +68,9 @@ Checked against the typed-findings implementation on 2026-11-15; it was merged u
   decides. Its fallback promises contact "within 5 business days", which nothing supports, and it
   does not record whether the model or the fallback wrote the text.
 - **The demo scenarios use recorded demo profiles** for the parallel agents, not live calls.
-- **Nothing is deployed.** The Azure data plane has not been verified against live services.
+- **Deployed for the demo cases only (18 November 2026).** The Azure data plane has run live in
+  part: the regulations search and the report store. The entity store, the sanctions and
+  adverse-media searches and Document Intelligence have not.
 
 Still unverified:
 
@@ -94,8 +97,7 @@ Two prerequisites establish the study's reference data:
    [`research/study-data-design.md`](research/study-data-design.md).
 
 Deployment (Azure Container Apps and Vercel, live since 18 November 2026) is not needed for the
-study. The study runs locally
-through the local data plane.
+study. The study runs locally through the local data plane.
 
 ## Scope and architecture
 

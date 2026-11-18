@@ -4,7 +4,7 @@
 | --- | --- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How ARGUS runs today: processes, request flow, external services and their fallbacks |
 | [ARGUS-V2-PLAN.md](ARGUS-V2-PLAN.md) | The next work: the matched explanation study, the two changes before it, the later integrations and the platform stance |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Deploying the API to Azure, filling its data plane, checking it and removing it |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Deploying the API to Azure and the web UI to Vercel, filling the data plane, checking it and removing it |
 | [RELEASING.md](RELEASING.md) | Release approval, automation setup, dependency refreshes and retries |
 | [DEPENDENCY-REFRESH.md](DEPENDENCY-REFRESH.md) | Latest automated dependency inventory and validation report |
 | [DATA-SOURCES.md](DATA-SOURCES.md) | The register of official public sources read as reference data, and what was checked before each was added (none yet) |

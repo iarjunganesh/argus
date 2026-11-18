@@ -1,7 +1,7 @@
-# Deploying ARGUS to Azure
+# Deploying ARGUS
 
-How to put the API on Azure the way decision D1 describes it ("Hosting" in
-[ARCHITECTURE.md](ARCHITECTURE.md)), fill its data plane, check it, and remove it again. Nothing here is needed to run ARGUS locally:
+How to put the API on Azure and the web UI on Vercel the way decision D1 describes it ("Hosting"
+in [ARCHITECTURE.md](ARCHITECTURE.md)), fill the data plane, check it, and remove it again. Nothing here is needed to run ARGUS locally:
 the local data plane, the default, uses no cloud service at all.
 
 Every command runs the same in PowerShell and bash. None of them prints a key.
