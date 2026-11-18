@@ -157,8 +157,13 @@ with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
    They are identifiers, not credentials; as secrets they are masked in the public logs.
 4. **The target.** The repository variable `AZURE_RESOURCE_GROUP` (for example `rg-argus`).
    `release.yml` deploys only when it is set.
-5. **The package.** After the first run, make the `argus` package public (Packages → argus →
-   Package settings → Change visibility), then run the workflow again.
+5. **Check the sign-in.** Actions → Azure sign-in check → Run workflow, on `main`.
+   [`azure-check.yml`](../.github/workflows/azure-check.yml) signs in as Deploy does, reads the
+   resource group and asks Azure to validate the template there. It creates nothing, so it can
+   run before the deployment is approved. Locally, `az deployment group validate` with the
+   same arguments as the deployment ("Deploy") runs the same validation as your own account.
+6. **The package.** After the first Deploy run, make the `argus` package public (Packages →
+   argus → Package settings → Change visibility), then run Deploy again.
 
 The deployed API runs only the synthetic demo cases (`ARGUS_DEMO_ONLY=true` in the template):
 anything else gets a 403, so visitors can't enter a real person's details. Reports and their

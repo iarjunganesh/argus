@@ -20,6 +20,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   and `CITATION.cff` carry it. Checked: the Zenodo record lists the release's title, version and
   author from `CITATION.cff`; `cffconvert --validate` accepts the file.
 
+- **The Azure sign-in can be checked without deploying.** A manual workflow, Azure sign-in check
+  (`azure-check.yml`), signs in through the `azure` environment as Deploy does, reads the target
+  resource group and has Azure validate `infra/main.bicep` there, creating nothing; the
+  deployment guide lists it as a setup step. Checked: the same validation, run locally on
+  18 November as the subscription owner against the empty `rg-argus`, succeeded for its 16
+  resources and left no resource or deployment record; the workflow's action pins pass
+  `check_versions.py`. The workflow itself runs once it is on `main`.
+
 ### Changed
 
 - **Dependencies refreshed after `v0.1.0`.** The Python lock and its minimums (FastAPI 0.163,

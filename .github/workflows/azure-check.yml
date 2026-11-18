@@ -1,0 +1,45 @@
+name: Azure sign-in check
+
+# Signs in to Azure exactly as deploy.yml does (OpenID Connect through the `azure` environment),
+# reads the target resource group and asks Azure to validate infra/main.bicep there. It creates
+# nothing and leaves no deployment record, so it costs nothing. Run it by hand from `main` before
+# the first deployment and after any change to the identity or the environment. Setup:
+# docs/DEPLOYMENT.md.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Sign in and validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: azure
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # Validation does not pull the image, so a placeholder reference is enough.
+      - name: Read the resource group and validate the template
+        env:
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          test -n "$RESOURCE_GROUP" || { echo '::error::Set the AZURE_RESOURCE_GROUP variable'; exit 1; }
+          az group show --name "$RESOURCE_GROUP" --query name --output tsv --only-show-errors
+          state=$(az deployment group validate --resource-group "$RESOURCE_GROUP" --name argus \
+            --template-file infra/main.bicep \
+            --parameters image="ghcr.io/${GITHUB_REPOSITORY,,}:validate-only" \
+            --query properties.provisioningState --output tsv --only-show-errors)
+          echo "Signed in; \`$RESOURCE_GROUP\` is readable; template validation: $state" >> "$GITHUB_STEP_SUMMARY"
+          test "$state" = Succeeded

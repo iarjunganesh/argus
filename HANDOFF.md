@@ -35,10 +35,11 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   limited to the template's two roles on the empty `rg-argus`. The `azure` environment allows
   deployments from `main` and `v*` tags and holds the three ID secrets; the
   `AZURE_RESOURCE_GROUP` variable is `rg-argus`. Deploy can therefore run by hand, and **every
-  published release now deploys automatically**. Neither has run, so no billed resource exists
-  and the sign-in is untested until the first run. A read-only check the same day found the
-  free-tier slots unused, the template's model version offered and its quota free, and no
-  Vercel project.
+  published release now deploys automatically**. Neither has run, so no billed resource exists.
+  The identity's sign-in is untested until the Azure sign-in check (`azure-check.yml`, which
+  creates nothing) runs from `main`. The same validation, run locally as the subscription owner,
+  accepts the template in `rg-argus`. A read-only check the same day found the free-tier slots
+  unused, the template's model version offered and its quota free, and no Vercel project.
 - **Every demo case is invented (#29).** The data rule is in `AGENTS.md`, with an empty
   `docs/DATA-SOURCES.md` register. The six scenarios keep their tiers: Jane Synthetic 3.0 (LOW),
   Synthetic Holdings B.V. 44.0 (MEDIUM), Cayman Synth Capital 76.0 (CRITICAL), Synthetic
@@ -86,8 +87,9 @@ Then, in order:
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
 **The first live run (proposed for 23 to 25 November; needs its own approvals).** The workflow
-identity, the `azure` environment and the `AZURE_RESOURCE_GROUP` variable are in place. Approve
-the resources in `docs/DEPLOYMENT.md`; run Deploy on the tag; make the `argus` package public and
+identity, the `azure` environment and the `AZURE_RESOURCE_GROUP` variable are in place. Run the
+Azure sign-in check from `main` (free, needs no resource approval). Approve the resources in
+`docs/DEPLOYMENT.md`; run Deploy on the tag; make the `argus` package public and
 run it again (Container Apps pulls the image anonymously); fill the data plane (the first
 deploy's smoke step fails until it is filled); run the smoke check; confirm zero replicas after
 30 idle minutes and read one idle day's cost. Then the Vercel project (root
@@ -179,6 +181,10 @@ requests.
 - With the maintainer's go-ahead, created the deploy sign-in (Current state) with the commands
   now in the guide (plus resource tags); the role assignments read back as expected. The guide
   describes the managed identity, and what to repeat after a teardown.
+- A deploy sign-in can only be tested from a GitHub job in the `azure` environment, which
+  accepts only `main` and tags, and Deploy creates resources as soon as it signs in. Added the
+  Azure sign-in check, which signs in the same way and only validates. Ran the same validation
+  locally as the owner: it succeeded for the template's 16 resources and created nothing.
 - Deleted the merged `docs/markdown-cleanup` branch.
 
 ### 16 November 2026 — Markdown cleanup
