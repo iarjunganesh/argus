@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Public_Sans } from "next/font/google";
+import { DEMO_ONLY } from "@/lib/demo";
+
 import "./globals.css";
 
 const publicSans = Public_Sans({ variable: "--font-public-sans", subsets: ["latin"] });
@@ -39,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 href="/"
                 className="rounded-md px-2 py-1 text-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
               >
-                New assessment
+                {DEMO_ONLY ? "Cases" : "New assessment"}
               </Link>
             </nav>
           </div>

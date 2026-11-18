@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
 
+import { CaseList } from "@/components/case-queue";
 import { InvestigationFlow } from "@/components/investigation-flow";
 import { ReportView } from "@/components/report-view";
 import { API_URL, fetchReport, fetchStatus, streamUrl } from "@/lib/api";
@@ -14,6 +15,7 @@ import {
   type ProgressEvent,
 } from "@/lib/progress";
 import { investigationSummary } from "@/lib/case";
+import { demoCaseIndex, forgetReport, recordRun } from "@/lib/queue";
 import { AGENTS, type Report } from "@/lib/report";
 import { recalledEntityName } from "@/lib/session";
 
@@ -41,14 +43,25 @@ export function Assessment({ reportId }: { reportId: string }) {
     const settle = (next: Outcome) => {
       settled = true;
       source.close();
+      if (next === "not_found") forgetReport(reportId);
       setOutcome(next);
     };
     const finish = async (status: string) => {
       settled = true;
       source.close();
       try {
-        setReport(await fetchReport(reportId));
+        const fetched = await fetchReport(reportId);
+        setReport(fetched);
         setOutcome(status === "completed" ? "completed" : "error");
+        const index = demoCaseIndex(fetched.entity);
+        if (status === "completed" && index !== undefined) {
+          recordRun(index, {
+            reportId,
+            tier: fetched.risk_summary?.overall_risk_tier,
+            score: fetched.risk_summary?.overall_risk_score,
+            at: Date.now(),
+          });
+        }
       } catch {
         setOutcome("unreachable");
       }
@@ -99,67 +112,72 @@ export function Assessment({ reportId }: { reportId: string }) {
   }[outcome];
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight">{name || "Assessment"}</h1>
-      {report?.entity && (
-        <p className="mt-1 text-muted-foreground">
-          {report.entity.type === "individual" ? "Individual" : "Company"},{" "}
-          {report.entity.jurisdiction}
-        </p>
-      )}
+    <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="hidden lg:block">
+        <CaseList currentReportId={reportId} />
+      </aside>
+      <div className="min-w-0">
+        <h1 className="text-3xl font-semibold tracking-tight">{name || "Assessment"}</h1>
+        {report?.entity && (
+          <p className="mt-1 text-muted-foreground">
+            {report.entity.type === "individual" ? "Individual" : "Company"},{" "}
+            {report.entity.jurisdiction}
+          </p>
+        )}
 
-      <p role="status" aria-live="polite" className="mt-6 font-medium">
-        {announcement}
-      </p>
+        <p role="status" aria-live="polite" className="mt-6 font-medium">
+          {announcement}
+        </p>
 
-      {outcome === "not_found" && (
-        <p className="mt-2">
-          Check the link, or{" "}
-          <Link href="/" className="underline underline-offset-4">
-            start a new assessment
-          </Link>
-          .
-        </p>
-      )}
-      {outcome === "unreachable" && (
-        <p className="mt-2 max-w-3xl">
-          The API at {API_URL} did not answer. Check that it is running and that its
-          ARGUS_CORS_ORIGINS setting lists this site.
-        </p>
-      )}
-      {outcome === "error" && (
-        <p role="alert" className="mt-2 max-w-3xl text-destructive">
-          {report?.error || "The API recorded an error for this assessment."}
-        </p>
-      )}
+        {outcome === "not_found" && (
+          <p className="mt-2">
+            Check the link, or{" "}
+            <Link href="/" className="underline underline-offset-4">
+              start a new assessment
+            </Link>
+            .
+          </p>
+        )}
+        {outcome === "unreachable" && (
+          <p className="mt-2 max-w-3xl">
+            The API at {API_URL} did not answer. Check that it is running and that its
+            ARGUS_CORS_ORIGINS setting lists this site.
+          </p>
+        )}
+        {outcome === "error" && (
+          <p role="alert" className="mt-2 max-w-3xl text-destructive">
+            {report?.error || "The API recorded an error for this assessment."}
+          </p>
+        )}
 
-      {outcome === "completed" && report ? (
-        <>
-          <details className="mt-4 rounded-lg border bg-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm">
-              <h2 id="flow-heading" className="inline font-medium">
-                Investigation:
-              </h2>{" "}
-              {investigationSummary(report.audit_trace, report.total_latency_seconds)}
-            </summary>
-            <div className="border-t px-4 py-4">
+        {outcome === "completed" && report ? (
+          <>
+            <details className="mt-4 rounded-lg border bg-card">
+              <summary className="cursor-pointer px-4 py-3 text-sm">
+                <h2 id="flow-heading" className="inline font-medium">
+                  Investigation:
+                </h2>{" "}
+                {investigationSummary(report.audit_trace, report.total_latency_seconds)}
+              </summary>
+              <div className="border-t px-4 py-4">
+                <InvestigationFlow progress={progress} />
+              </div>
+            </details>
+            <div className="mt-6">
+              <ReportView report={report} />
+            </div>
+          </>
+        ) : (
+          <section aria-labelledby="flow-heading" className="mt-8">
+            <h2 id="flow-heading" className="text-xl font-semibold">
+              Investigation
+            </h2>
+            <div className="mt-4">
               <InvestigationFlow progress={progress} />
             </div>
-          </details>
-          <div className="mt-6">
-            <ReportView report={report} />
-          </div>
-        </>
-      ) : (
-        <section aria-labelledby="flow-heading" className="mt-8">
-          <h2 id="flow-heading" className="text-xl font-semibold">
-            Investigation
-          </h2>
-          <div className="mt-4">
-            <InvestigationFlow progress={progress} />
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

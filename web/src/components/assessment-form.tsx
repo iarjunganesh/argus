@@ -1,32 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 
+import { CaseQueue } from "@/components/case-queue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, normaliseRequest, submitAssessment, type AssessmentRequest } from "@/lib/api";
-import { DEMO_CASES, DEMO_ONLY, RETENTION_NOTICE } from "@/lib/demo";
-import { rememberEntityName } from "@/lib/session";
+import { useStartAssessment } from "@/components/use-start-assessment";
+import { normaliseRequest } from "@/lib/api";
+import { DEMO_ONLY, RETENTION_NOTICE } from "@/lib/demo";
 
 export function AssessmentForm() {
-  const router = useRouter();
-  const [error, setError] = useState<string>();
-  const [pending, setPending] = useState<string>();
-
-  async function run(request: AssessmentRequest) {
-    setError(undefined);
-    setPending(request.entity_name);
-    try {
-      const reportId = await submitAssessment(request);
-      rememberEntityName(reportId, request.entity_name);
-      router.push(`/assessments/${encodeURIComponent(reportId)}`);
-    } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "The assessment could not start.");
-      setPending(undefined);
-    }
-  }
+  const { run, pending, error, setError, status } = useStartAssessment();
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,7 +40,7 @@ export function AssessmentForm() {
             so no real person&apos;s or company&apos;s details are entered. {RETENTION_NOTICE}
           </p>
           <p role="status" className="mt-4 text-sm text-muted-foreground">
-            {pending ? `Starting the assessment of ${pending}…` : ""}
+            {status}
           </p>
           <p role="alert" className="text-sm font-medium text-destructive">
             {error}
@@ -122,7 +107,7 @@ export function AssessmentForm() {
                 Run assessment
               </Button>
               <p role="status" className="text-sm text-muted-foreground">
-                {pending ? `Starting the assessment of ${pending}…` : ""}
+                {status}
               </p>
             </div>
             <p id="form-error" role="alert" className="text-sm font-medium text-destructive">
@@ -140,28 +125,10 @@ export function AssessmentForm() {
           Demo cases
         </h2>
         <p className="mt-1 text-muted-foreground">
-          Invented entities, each with recorded agent results.
+          Invented entities, each with recorded agent results. Your runs appear here, riskiest
+          first, for 24 hours in this browser.
         </p>
-        <ul className="mt-6 divide-y rounded-lg border bg-card">
-          {DEMO_CASES.map((demo) => (
-            <li key={demo.entity_name} className="flex items-center gap-4 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{demo.entity_name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {`${demo.entity_type === "corporate" ? "Company" : "Individual"}, ${demo.jurisdiction}`}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                disabled={Boolean(pending)}
-                onClick={() => void run(demo)}
-                aria-label={`Run the assessment of ${demo.entity_name}`}
-              >
-                Run
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <CaseQueue onRun={(request) => void run(request)} disabled={Boolean(pending)} />
       </section>
     </div>
   );
