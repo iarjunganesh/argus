@@ -26,8 +26,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   deployment guide lists it as a setup step. Checked: the same validation, run locally on
   18 November as the subscription owner against the empty `rg-argus`, succeeded for its 16
   resources and left no resource or deployment record; the workflow's action pins pass
-  `check_versions.py`. The workflow itself runs once it is on `main`. It ran on `main` on
-  18 November and passed: the identity signed in and the validation succeeded.
+  `check_versions.py`. On `main` on 18 November the workflow ran and passed: the identity
+  signed in and the validation succeeded.
 
 - **ARGUS runs live, on Azure and Vercel, for the six demo cases.** The API runs on Azure
   Container Apps (Sweden Central; AI Search in France Central) and the web UI at
@@ -58,6 +58,25 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   changes no code yet. Checked: the report fields it relies on were read from a live report;
   `check_docs.py` and markdownlint pass.
 
+- **The web UI reads as an analyst's case file (A of that design).** A finished report opens
+  with the case header: tier, score, what set the tier, the recommendation (a sanctions hold as
+  a blocking notice) and one next step. For a hold, the potential match shows the listing
+  (programme, entry, whether it is active, the list, the match and the score the screening
+  source reported) beside the customer. "Why this score" shows each dimension's score times its
+  weight, exact to two decimals and adding up to the overall score (where the sum has two
+  decimals, the page says the score keeps one), and behind each dimension its findings with
+  their uncertainty, source, time and evidence records, or the obligations for Regulatory. The
+  investigation and the audit trail fold into one-line summaries. The start page lists the six
+  demo cases with their last run in this browser (kept 24 hours, stored by the case's position,
+  never its name), riskiest first, and wide screens keep that list beside an open case. When the
+  API has not answered after three seconds, the page says it is starting up. The API, the scores
+  and the demo profiles are unchanged. Checked: 33 new unit tests (the arithmetic, the finding
+  grouping and labels, the sanctions listing, the queue store's expiry and blocked storage, the
+  queue's order), 63 in all; the 36 end-to-end tests against the local API in light, dark and
+  phone layouts with axe on every page, covering each scenario's tier, score, working total,
+  findings, evidence and hold, the queue after a run, and the notice with a four-second delay;
+  lint, format, type check and build.
+
 ### Changed
 
 - **The web UI runs on Node.js 26, the current LTS.** `web/.nvmrc`, the `engines` field and
@@ -71,7 +90,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   images, the GitHub Actions pins and the web UI's packages moved to their latest releases within
   their major versions; `docs/DEPENDENCY-REFRESH.md` lists every version. Microsoft Agent
   Framework moved from 1.19.0 to 1.26.0 by hand, because the refresh keeps an exact pin at its
-  locked version. ESLint 10, TypeScript 7 and Node.js 26 wait for manual updates. Checked: every
+  locked version. ESLint 10 and TypeScript 7 wait for manual updates (Node.js 26 has since
+  followed; see above). Checked: every
   gate in the refresh report; on Agent Framework 1.26.0, 412 tests (including the orchestrator
   workflow and API contract tests) pass with 100% line and branch coverage, and ruff and mypy
   pass; the pull request's CI, including the Playwright tests.
@@ -86,7 +106,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   account may create one. Checked: the same commands, with resource tags added, created the
   identity and its access on 18 November; the role assignments read back as Contributor and a
   conditioned Role Based Access Control Administrator on `rg-argus`; the role IDs match
-  `infra/main.bicep`. The sign-in itself is first exercised by the first Deploy run.
+  `infra/main.bicep`. The Azure sign-in check and the first Deploy run, both on 18 November,
+  then signed in as that identity.
 
 ### Fixed
 
