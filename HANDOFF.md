@@ -245,6 +245,10 @@ requests.
   rebuild. Pointed the domain at the preview build instead (`vercel alias set`), and checked
   it in a browser: the queue, then Cayman Synth Capital run against the live API, CRITICAL 76
   with the hold notice, the match panel and a working total of 76.
+- Review on #40: Codex found that reopening a report re-recorded it with the current time, so an
+  older report could replace a newer run in the queue and restart its 24 hours. Runs are now
+  dated by the report's `generated_at`, and a newer run is kept. SonarQube flagged `tabIndex` on
+  the raw evidence record; it now wraps instead of scrolling, so it needs no focus.
 
 ### 18 November 2026 — Azure readiness, the deploy identity and the live demo
 

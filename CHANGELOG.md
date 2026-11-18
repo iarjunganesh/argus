@@ -67,12 +67,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   decimals, the page says the score keeps one), and behind each dimension its findings with
   their uncertainty, source, time and evidence records, or the obligations for Regulatory. The
   investigation and the audit trail fold into one-line summaries. The start page lists the six
-  demo cases with their last run in this browser (kept 24 hours, stored by the case's position,
-  never its name), riskiest first, and wide screens keep that list beside an open case. When the
+  demo cases with their last run in this browser (kept 24 hours from when the report was
+  generated, as the API keeps it; stored by the case's position, never its name), riskiest
+  first, and wide screens keep that list beside an open case. Reopening an older report does
+  not replace a newer run. When the
   API has not answered after three seconds, the page says it is starting up. The API, the scores
-  and the demo profiles are unchanged. Checked: 33 new unit tests (the arithmetic, the finding
-  grouping and labels, the sanctions listing, the queue store's expiry and blocked storage, the
-  queue's order), 63 in all; the 36 end-to-end tests against the local API in light, dark and
+  and the demo profiles are unchanged. Checked: 36 new unit tests (the arithmetic, the finding
+  grouping and labels, the sanctions listing, the queue store's expiry, blocked storage, dating
+  by report time and keeping the newer run, the queue's order), 66 in all; the 36 end-to-end tests against the local API in light, dark and
   phone layouts with axe on every page, covering each scenario's tier, score, working total,
   findings, evidence and hold, the queue after a run, and the notice with a four-second delay;
   lint, format, type check and build.
