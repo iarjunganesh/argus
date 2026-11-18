@@ -93,7 +93,8 @@ Two prerequisites establish the study's reference data:
    Design: "Shared rule and decision record" in
    [`research/study-data-design.md`](research/study-data-design.md).
 
-Deployment (Azure Container Apps and Vercel) is not needed for the study. The study runs locally
+Deployment (Azure Container Apps and Vercel, live since 18 November 2026) is not needed for the
+study. The study runs locally
 through the local data plane.
 
 ## Scope and architecture

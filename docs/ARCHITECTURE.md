@@ -259,12 +259,14 @@ or of one alias, to appear in the retrieved passage.
 
 With the local backend, a fresh clone without generated data finds nothing and says so; run the
 generators in `data/synthetic/` for a populated local data set. The Azure implementations are
-covered by tests against stand-ins for the Azure SDKs; they have not yet been run against live
-services (that happens with the deployment work).
+covered by tests against stand-ins for the Azure SDKs. The deployment (18 November 2026) runs the
+retriever and the report store live; the entity store and OCR have not yet run against live
+services, because the public demo takes the four parallel agents' results from recorded
+profiles and the API takes no documents.
 
 The language model is chosen separately by `ARGUS_MODEL_PROVIDER` (`none` by default, or
 `azure-openai`, `openai`, `github-models`) in `src/argus/models.py`. It only writes the
-explanation. Reasoning models (the GPT-5 family, including the planned `gpt-5.4-mini`, and the
+explanation. Reasoning models (the GPT-5 family, including the deployed `gpt-5.4-mini`, and the
 o-series) reject `max_tokens` and `temperature`, so they are called with `max_completion_tokens`
 only; `ARGUS_MODEL_REASONING` (`auto` from the model name, or `true`/`false`) says which kind the
 model is. Settings are read from environment variables, or from `.env` (see `.env.example`).
@@ -274,9 +276,9 @@ in with Microsoft Entra ID through one shared credential (`argus.config.get_azur
 the managed identity when deployed, the developer's `az login` locally. AI Search always takes a
 key, because its Free tier has no keyless access.
 
-## Hosting (decision D1, recorded 2026-09-27; not deployed yet)
+## Hosting (decision D1, recorded 2026-09-27; deployed 2026-11-18)
 
-The planned deployment keeps the idle cost near zero, with a budget alert on the subscription.
+The deployment keeps the idle cost near zero, with a budget alert on the subscription.
 Region: Sweden Central, except AI Search in France Central (Sweden Central takes no new search
 services; both are in the EU).
 
@@ -303,8 +305,8 @@ database and its four containers, sharing 1000 RU/s), a Foundry account with the
 deployment, and Document Intelligence F0. The API's system-assigned managed identity holds the
 data roles it needs (Cognitive Services OpenAI User, Cognitive Services User, and the Cosmos DB
 Built-in Data Contributor on the database), and key authentication is off on those three
-services; AI Search's query key reaches the API as a Container Apps secret. Nothing is deployed
-yet. [`DEPLOYMENT.md`](DEPLOYMENT.md) gives the commands; `infra/populate.py` fills the indexes
+services; AI Search's query key reaches the API as a Container Apps secret. It was deployed on
+18 November 2026. [`DEPLOYMENT.md`](DEPLOYMENT.md) gives the commands; `infra/populate.py` fills the indexes
 and containers (through the `infra/foundry_iq/` scripts and `data/synthetic/upload_to_cosmos.py`),
 and `infra/teardown.py` removes the deployment, purging what Azure would otherwise keep
 soft-deleted. Both call the Azure CLI through `infra/azcli.py`, asking only for the fields they
