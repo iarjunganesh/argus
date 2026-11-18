@@ -76,7 +76,7 @@ uv run python scripts/ci/check_docs.py                   # docs agree with the r
 uv run python scripts/ci/check_versions.py --check        # version pins agree (offline)
 uv run python scripts/ci/render_assets.py --check        # image variants current, WCAG AA contrast
 
-npm ci --prefix web                                   # the web UI (Node.js 24): locked packages
+npm ci --prefix web                                   # the web UI (Node.js 26): locked packages
 npm --prefix web run lint
 npm --prefix web run format:check
 npm --prefix web run typecheck

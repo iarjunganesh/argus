@@ -4,7 +4,7 @@ The browser front end for the ARGUS API: submit an entity, follow the five agent
 then read the report. Next.js (App Router), TypeScript and shadcn/ui. The browser calls the API
 directly, so the API must list this site's origin in `ARGUS_CORS_ORIGINS`.
 
-Requires Node.js 24 (the version in [`.nvmrc`](.nvmrc)).
+Requires Node.js 26 (the version in [`.nvmrc`](.nvmrc)).
 
 ## Run it locally
 

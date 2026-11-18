@@ -60,6 +60,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The web UI runs on Node.js 26, the current LTS.** `web/.nvmrc`, the `engines` field and
+  `@types/node` (26.6.6, with `undici-types` 8.9.0) move from 24; CI and the release workflow
+  read the version from `web/.nvmrc`, and the three Vercel projects' Node.js setting is 26.x. The
+  README, `AGENTS.md` and `web/README.md` say 26. Checked: `check_versions.py --check` (the
+  `.nvmrc`, `engines`, `@types/node` and workflow pins agree); the web UI's lint, type check, unit
+  tests and build; the pull request's CI on Node.js 26, including the Playwright tests.
 - **Dependencies refreshed after `v0.1.0`.** The Python lock and its minimums (FastAPI 0.163,
   Pydantic 2.14, OpenAI 3.51 and others), the container's Python 3.14.10 and uv 0.13.8 base
   images, the GitHub Actions pins and the web UI's packages moved to their latest releases within
