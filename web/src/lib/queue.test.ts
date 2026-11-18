@@ -8,6 +8,7 @@ import {
   queueRows,
   rawQueue,
   recordRun,
+  runEntry,
   type QueueEntry,
 } from "./queue";
 
@@ -52,6 +53,13 @@ describe("the cases queue store", () => {
     const storage = memoryStorage();
     expect(recordRun(2, entry("argus-rpt-a", "CRITICAL"), storage)).toBe(true);
     expect(loadQueue(storage, NOW)).toEqual({ 2: entry("argus-rpt-a", "CRITICAL") });
+  });
+
+  it("keeps the newer run when an older report is reopened", () => {
+    const storage = memoryStorage();
+    recordRun(2, entry("argus-rpt-new", "CRITICAL", NOW), storage);
+    expect(recordRun(2, entry("argus-rpt-old", "LOW", NOW - 60_000), storage)).toBe(false);
+    expect(loadQueue(storage, NOW)[2]?.reportId).toBe("argus-rpt-new");
   });
 
   it("drops a run older than a day, as the API drops its report", () => {
@@ -125,5 +133,25 @@ describe("rawQueue", () => {
     recordRun(2, entry("argus-rpt-a", "CRITICAL"), storage);
     expect(rawQueue(storage)).toContain("argus-rpt-a");
     expect(rawQueue(blockedStorage())).toBe("");
+  });
+});
+
+describe("runEntry", () => {
+  it("dates a run by when its report was generated, not when it was opened", () => {
+    const report = {
+      generated_at: "2026-11-19T10:00:00Z",
+      risk_summary: { overall_risk_tier: "LOW", overall_risk_score: 3 },
+    };
+    expect(runEntry("argus-rpt-a", report, NOW)).toEqual({
+      reportId: "argus-rpt-a",
+      tier: "LOW",
+      score: 3,
+      at: Date.parse("2026-11-19T10:00:00Z"),
+    });
+  });
+
+  it("falls back to now when the report has no usable time", () => {
+    expect(runEntry("argus-rpt-a", {}, NOW).at).toBe(NOW);
+    expect(runEntry("argus-rpt-a", { generated_at: "not a date" }, NOW).at).toBe(NOW);
   });
 });

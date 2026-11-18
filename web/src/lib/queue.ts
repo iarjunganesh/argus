@@ -3,6 +3,7 @@
 
 import type { AssessmentRequest } from "./api";
 import { DEMO_CASES } from "./demo";
+import type { Report } from "./report";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -68,13 +69,37 @@ export function loadQueue(
   );
 }
 
-/** Records a demo case's latest run; false when this browser does not keep it. */
+/**
+ * Records a demo case's latest run; false when this browser does not keep it, either because
+ * storage is unavailable or because a newer run of the case is already kept.
+ */
 export function recordRun(
   caseIndex: number,
   entry: QueueEntry,
   storage: Storage | undefined = browserStorage(),
 ): boolean {
-  return write({ ...read(storage), [caseIndex]: entry }, storage);
+  const entries = read(storage);
+  const kept = entries[caseIndex];
+  if (kept && kept.reportId !== entry.reportId && kept.at > entry.at) return false;
+  return write({ ...entries, [caseIndex]: entry }, storage);
+}
+
+/**
+ * The queue entry for a finished report, dated when the report was generated: reopening an old
+ * report neither restarts its 24 hours nor makes it the case's latest run.
+ */
+export function runEntry(
+  reportId: string,
+  report: Pick<Report, "generated_at" | "risk_summary">,
+  now: number = Date.now(),
+): QueueEntry {
+  const generated = Date.parse(report.generated_at ?? "");
+  return {
+    reportId,
+    tier: report.risk_summary?.overall_risk_tier,
+    score: report.risk_summary?.overall_risk_score,
+    at: Number.isFinite(generated) ? generated : now,
+  };
 }
 
 /** Forgets a report the API no longer has, so its case shows as not run. */

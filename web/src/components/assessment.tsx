@@ -15,7 +15,7 @@ import {
   type ProgressEvent,
 } from "@/lib/progress";
 import { investigationSummary } from "@/lib/case";
-import { demoCaseIndex, forgetReport, recordRun } from "@/lib/queue";
+import { demoCaseIndex, forgetReport, recordRun, runEntry } from "@/lib/queue";
 import { AGENTS, type Report } from "@/lib/report";
 import { recalledEntityName } from "@/lib/session";
 
@@ -55,12 +55,7 @@ export function Assessment({ reportId }: { reportId: string }) {
         setOutcome(status === "completed" ? "completed" : "error");
         const index = demoCaseIndex(fetched.entity);
         if (status === "completed" && index !== undefined) {
-          recordRun(index, {
-            reportId,
-            tier: fetched.risk_summary?.overall_risk_tier,
-            score: fetched.risk_summary?.overall_risk_score,
-            at: Date.now(),
-          });
+          recordRun(index, runEntry(reportId, fetched));
         }
       } catch {
         setOutcome("unreachable");
