@@ -198,12 +198,16 @@ project `argus`, which is connected to this repository:
 - **What it leaves out.** [`web/.vercelignore`](../web/.vercelignore) keeps local settings,
   build output, test results and the Playwright tests out of the deployment.
 
-To show a branch on the live domain before it is merged, promote its preview deployment;
-`vercel rollback` returns to the previous production deployment, and the next merge to `main`
-replaces either:
+To show a branch on the live domain before it is merged, point the domain at its preview
+deployment. That serves the exact build that was checked, with the same settings (both are set
+for Preview too). `vercel promote` would rebuild it as a production deployment instead, and the
+Ignored Build Step skips that rebuild because the branch has not changed since its preview. To
+go back, point the domain at the latest production deployment
+(`vercel ls argus --environment production`); the next merge to `main` takes the domain back on
+its own:
 
 ```sh
-vercel promote https://<the preview deployment's address>
+vercel alias set <the preview deployment's address> argus.arjunganesh.dev
 ```
 
 Deploy through Git, not with `vercel deploy` from a working copy: with the Root Directory set,

@@ -121,8 +121,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   project's Ignored Build Step compared only the last commit (`git diff HEAD^ HEAD`), so it
   skipped #40's preview although the branch changes `web/`. It now compares with the branch's
   last successful deployment (`VERCEL_GIT_PREVIOUS_SHA`), which is empty on a branch's first
-  push, so a new branch always builds; `docs/DEPLOYMENT.md` gives the command. Checked: the
-  project setting reads back with the new command, and #40's next push built a preview.
+  push, so a new branch always builds; `docs/DEPLOYMENT.md` gives the command. The guide now
+  puts a branch on the live domain with `vercel alias set` on its preview build, because
+  `vercel promote` rebuilds it and that rebuild is skipped. Checked: the project setting reads
+  back with the new command; #40's next push built a preview; with the domain pointed at it, a
+  browser ran Cayman Synth Capital on the live site (CRITICAL 76).
 
 - **The dependency-refresh report passes its own Markdown check.** The release workflow appended
   the run link as a bare URL after the refresh's Markdown gate had run, so the refresh pull

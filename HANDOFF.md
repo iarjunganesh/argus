@@ -100,9 +100,9 @@ pull requests:
 
 1. **A**, built on `feat/analyst-workspace-a`: the cases queue, the case header, the score's
    working, findings with their evidence, the sanctions match panel and the cold-start notice.
-   Its pull request, with the design, is next; its preview deployment is then promoted to
-   <https://argus.arjunganesh.dev> (`vercel promote`) for the maintainer's review on the live
-   site, and `vercel rollback` restores the previous one if it is not taken.
+   Pull request #40 (with the design). Its preview build serves <https://argus.arjunganesh.dev>
+   (`vercel alias set`, see `docs/DEPLOYMENT.md`) for the maintainer's review on the live site;
+   merge it, or point the domain back at the latest production deployment.
 2. **B**, after A is merged: the simulated review kept in the browser, reviewed the same way.
 
 Web UI only: the API, the score and the demo profiles do not change.
@@ -240,7 +240,11 @@ requests.
   start-of-session check above and put it in the initialization prompt and `AGENTS.md`.
 - #40 opened (A). Vercel skipped its preview: the Ignored Build Step compared only the last
   commit, which changed only documents. Within the Vercel setup approved earlier, the step now
-  compares with the branch's last successful deployment; the guide says so.
+  compares with the branch's last successful deployment; the guide says so. `vercel promote`
+  then failed too: it rebuilds the preview for production, and the new step skipped that
+  rebuild. Pointed the domain at the preview build instead (`vercel alias set`), and checked
+  it in a browser: the queue, then Cayman Synth Capital run against the live API, CRITICAL 76
+  with the hold notice, the match panel and a working total of 76.
 
 ### 18 November 2026 — Azure readiness, the deploy identity and the live demo
 
