@@ -152,17 +152,22 @@ export function Assessment({ reportId }: { reportId: string }) {
 
         {outcome === "completed" && report ? (
           <>
-            <details className="mt-4 rounded-lg border bg-card">
-              <summary className="cursor-pointer px-4 py-3 text-sm">
-                <h2 id="flow-heading" className="inline font-medium">
-                  Investigation:
-                </h2>{" "}
-                {investigationSummary(report.audit_trace, report.total_latency_seconds)}
-              </summary>
-              <div className="border-t px-4 py-4">
-                <InvestigationFlow progress={progress} />
-              </div>
-            </details>
+            <section aria-labelledby="flow-heading" className="mt-4">
+              <details className="rounded-lg border bg-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm">
+                  <h2 id="flow-heading" className="inline font-medium">
+                    Investigation
+                  </h2>
+                  <span aria-hidden="true">:</span>{" "}
+                  <span>
+                    {investigationSummary(report.audit_trace, report.total_latency_seconds)}
+                  </span>
+                </summary>
+                <div className="border-t px-4 py-4">
+                  <InvestigationFlow progress={progress} />
+                </div>
+              </details>
+            </section>
             <div className="mt-6">
               <ReportView report={report} />
             </div>
