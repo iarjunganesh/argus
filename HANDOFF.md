@@ -61,8 +61,8 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
     `AZURE_RESOURCE_GROUP` is set, **every published release now deploys automatically**.
   - **Vercel.** The web UI runs at <https://argus.arjunganesh.dev> (project `argus`, Hobby),
     connected to this repository: Root Directory `web`, Node.js 26; a push to `main` deploys
-    production, other branches get previews, and commits without changes under `web/` are
-    skipped. The repository's homepage link points to the site.
+    production, other branches get previews, and a push that changes nothing under `web/` since
+    the branch's last build is skipped. The repository's homepage link points to the site.
   - **Checked.** The smoke check passed on the rerun; Cayman Synth Capital came out CRITICAL 76
     with two regulations cited and a model-written explanation (the first since the rebuild);
     the API refuses other origins; it scaled to zero 12 minutes after its last request, and a
@@ -238,6 +238,9 @@ requests.
   Corrected every stale statement found in a review of all tracked Markdown files; shortening
   the long ones waits for the maintainer's answer. At the maintainer's request, added the
   start-of-session check above and put it in the initialization prompt and `AGENTS.md`.
+- #40 opened (A). Vercel skipped its preview: the Ignored Build Step compared only the last
+  commit, which changed only documents. Within the Vercel setup approved earlier, the step now
+  compares with the branch's last successful deployment; the guide says so.
 
 ### 18 November 2026 — Azure readiness, the deploy identity and the live demo
 

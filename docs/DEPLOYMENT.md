@@ -185,9 +185,11 @@ project `argus`, which is connected to this repository:
 - **What it builds.** Root Directory `web`, framework Next.js, and the Node.js major version in
   `web/.nvmrc`.
 - **When it deploys.** A push to `main` deploys production. Every other branch gets a preview
-  deployment, whose status and link appear on its pull request. The Ignored Build Step
-  `git diff HEAD^ HEAD --quiet -- .` skips a deployment when the commit changes nothing under
-  `web/`.
+  deployment, whose status and link appear on its pull request. The Ignored Build Step skips a
+  deployment when nothing under `web/` changed since the branch's last successful deployment
+  (`VERCEL_GIT_PREVIOUS_SHA`, empty on a branch's first push, which therefore always builds).
+  Comparing only the last commit, as Vercel's example does, skipped a whole pull request whose
+  last commit changed only documents.
 - **Its settings.** `NEXT_PUBLIC_API_URL` (the API's address) and
   `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, for Production and Preview. Both are read at build time:
   the site calls that API and offers only the demo cases it accepts. The API accepts calls only
@@ -215,7 +217,8 @@ several teams; in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
 vercel project add argus
 vercel link --yes --project argus
 vercel api /v9/projects/argus -X PATCH -f rootDirectory=web -f framework=nextjs \
-  -f nodeVersion="$(cat .nvmrc).x" -f "commandForIgnoringBuildStep=git diff HEAD^ HEAD --quiet -- ."
+  -f nodeVersion="$(cat .nvmrc).x" \
+  -f 'commandForIgnoringBuildStep=[ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null && git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- .'
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL production
 printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY production
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL preview

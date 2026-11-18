@@ -117,6 +117,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **A pull request whose last commit changes only documents still gets a preview.** The Vercel
+  project's Ignored Build Step compared only the last commit (`git diff HEAD^ HEAD`), so it
+  skipped #40's preview although the branch changes `web/`. It now compares with the branch's
+  last successful deployment (`VERCEL_GIT_PREVIOUS_SHA`), which is empty on a branch's first
+  push, so a new branch always builds; `docs/DEPLOYMENT.md` gives the command. Checked: the
+  project setting reads back with the new command, and #40's next push built a preview.
+
 - **The dependency-refresh report passes its own Markdown check.** The release workflow appended
   the run link as a bare URL after the refresh's Markdown gate had run, so the refresh pull
   request's Documentation job failed (MD034). The link is now written as `<…>`. Checked:
