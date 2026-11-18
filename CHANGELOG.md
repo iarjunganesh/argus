@@ -20,6 +20,14 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   and `CITATION.cff` carry it. Checked: the Zenodo record lists the release's title, version and
   author from `CITATION.cff`; `cffconvert --validate` accepts the file.
 
+- **The Azure sign-in can be checked without deploying.** A manual workflow, Azure sign-in check
+  (`azure-check.yml`), signs in through the `azure` environment as Deploy does, reads the target
+  resource group and has Azure validate `infra/main.bicep` there, creating nothing; the
+  deployment guide lists it as a setup step. Checked: the same validation, run locally on
+  18 November as the subscription owner against the empty `rg-argus`, succeeded for its 16
+  resources and left no resource or deployment record; the workflow's action pins pass
+  `check_versions.py`. The workflow itself runs once it is on `main`.
+
 ### Changed
 
 - **Dependencies refreshed after `v0.1.0`.** The Python lock and its minimums (FastAPI 0.163,
@@ -34,6 +42,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 - **The web UI no longer overrides minimatch.** `@typescript-eslint/typescript-estree` 8.73.0
   requires minimatch 11 itself, so the override changed nothing; the lock resolves the same
   versions. Checked: `npm install --package-lock-only` with npm 11 and the pull request's web CI.
+- **The deployment guide sets up the workflow's Azure identity as a user-assigned managed
+  identity.** It lives in its own resource group (`rg-argus-ci`), so removing a deployment keeps
+  it, and is trusted for the GitHub `azure` environment only; the guide gives the commands,
+  including the condition that limits role assignment to the two roles the template grants the
+  API, and says what to repeat after a teardown. An app registration still works where the
+  account may create one. Checked: the same commands, with resource tags added, created the
+  identity and its access on 18 November; the role assignments read back as Contributor and a
+  conditioned Role Based Access Control Administrator on `rg-argus`; the role IDs match
+  `infra/main.bicep`. The sign-in itself is first exercised by the first Deploy run.
 
 ### Fixed
 
