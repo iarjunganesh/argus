@@ -179,36 +179,52 @@ triggers": fill the data plane, then run the smoke check again (or rerun the wor
 
 ## The web UI
 
-The web UI runs on Vercel (Hobby plan) at `https://argus.arjunganesh.dev`. It is deployed with
-the Vercel CLI from `web/`, so only that folder is uploaded, never the repository root with its
-`.env` and `.local/`. [`web/.vercelignore`](../web/.vercelignore) also leaves out local settings,
-build output, test results and the Playwright tests, which read `tests/fixtures/` outside `web/`
-and would fail the build's type check. The project has no Git connection, so a push does not
-redeploy the site.
+The web UI runs on Vercel (Hobby plan) at `https://argus.arjunganesh.dev`, from the Vercel
+project `argus`, which is connected to this repository:
 
-Once, from `web/`, after `vercel login` (add `--scope <team>` if the account has several teams;
-in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
+- **What it builds.** Root Directory `web`, framework Next.js, Node.js 24.
+- **When it deploys.** A push to `main` deploys production. Every other branch gets a preview
+  deployment, whose status and link appear on its pull request. The Ignored Build Step
+  `git diff HEAD^ HEAD --quiet -- .` skips a deployment when the commit changes nothing under
+  `web/`.
+- **Its settings.** `NEXT_PUBLIC_API_URL` (the API's address) and
+  `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, for Production and Preview. Both are read at build time:
+  the site calls that API and offers only the demo cases it accepts. The API accepts calls only
+  from the origins in `corsOrigins` (the template's default is this domain), so a preview
+  deployment's own address shows the site but cannot run an assessment.
+- **What it leaves out.** [`web/.vercelignore`](../web/.vercelignore) keeps local settings,
+  build output, test results and the Playwright tests out of the deployment.
+
+To show a branch on the live domain before it is merged, promote its preview deployment;
+`vercel rollback` returns to the previous production deployment, and the next merge to `main`
+replaces either:
+
+```sh
+vercel promote https://<the preview deployment's address>
+```
+
+Deploy through Git, not with `vercel deploy` from a working copy: with the Root Directory set,
+a CLI upload starts from the repository root, where untracked files such as `.env` and `.local/`
+live.
+
+Setting it up, once (from `web/`, after `vercel login`; add `--scope <team>` if the account has
+several teams; in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
 
 ```sh
 vercel project add argus
 vercel link --yes --project argus
-vercel api /v9/projects/argus -X PATCH -f framework=nextjs -f nodeVersion=24.x
+vercel api /v9/projects/argus -X PATCH -f rootDirectory=web -f framework=nextjs \
+  -f nodeVersion=24.x -f "commandForIgnoringBuildStep=git diff HEAD^ HEAD --quiet -- ."
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL production
 printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY production
+printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL preview
+printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY preview
 vercel domains add argus.arjunganesh.dev argus
 ```
 
-`vercel link` writes `web/.vercel/` (ignored). It may also write `web/.env.local` with a
-short-lived token and add lines to `web/.gitignore`: delete the first and revert the second,
-since `.env*` is already ignored. The two variables are read at build time: the site calls that
-API and offers only the demo cases it accepts. The API must list the site's origin in
-`corsOrigins`; the template's default is this domain.
-
-To deploy, from `web/`:
-
-```sh
-vercel deploy --prod
-```
+Then connect the repository (the project's Settings → Git). `vercel link` writes `web/.vercel/`
+(ignored). It may also write `web/.env.local` with a short-lived token and add lines to
+`web/.gitignore`: delete the first and revert the second, since `.env*` is already ignored.
 
 ## Limits to know
 

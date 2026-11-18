@@ -33,9 +33,10 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Container Apps (Sweden Central; AI Search in France Central) and the web UI at
   <https://argus.arjunganesh.dev> on Vercel. Both accept the synthetic demo cases only. A live
   model now writes the explanation, which clears the `v0.1.0` known issue that none had since the
-  rebuild. The guide adds how the web UI is deployed: with the Vercel CLI from `web/`, so the
-  repository root's `.env` and `.local/` are never uploaded, and `web/.vercelignore` leaves out
-  local settings, build output and the Playwright tests. The README, the architecture page and
+  rebuild. The guide adds how the web UI is deployed: a Vercel project connected to this
+  repository builds `web/`; a push to `main` deploys production, other branches get previews,
+  and commits that change nothing under `web/` are skipped. `web/.vercelignore` keeps local
+  settings, build output and the Playwright tests out of the deployment. The README, the architecture page and
   the two diagrams that said "not deployed" now say what runs live. Checked on 18 November:
   - The Deploy workflow on the `v0.1.0` tag deployed the template. Its smoke step failed as the
     guide expects, until `infra/populate.py` filled the data plane: 9 regulation documents, 500

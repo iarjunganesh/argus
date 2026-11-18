@@ -1,7 +1,7 @@
-# Files `vercel deploy` (run from web/) leaves out of the upload: local settings and tokens,
-# build output and test results. Vercel installs and builds from the lockfile itself. The
-# Playwright tests stay out too: they read tests/fixtures/ outside web/, which the upload
-# does not contain, and `next build` would fail type-checking them.
+# Files left out of a Vercel deployment of web/: local settings and tokens, build output and
+# test results. Vercel installs and builds from the lockfile itself. The Playwright tests stay
+# out too: the site does not need them, and they read tests/fixtures/ outside web/, which a
+# deployment of web/ alone does not contain, so `next build` would fail type-checking them.
 e2e/
 playwright.config.ts
 .env*

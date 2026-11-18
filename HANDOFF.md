@@ -36,8 +36,8 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
     and `v*` tags). The Azure sign-in check (`azure-check.yml`) passed. Because
     `AZURE_RESOURCE_GROUP` is set, **every published release now deploys automatically**.
   - **Vercel.** The web UI runs at <https://argus.arjunganesh.dev> (project `argus`, Hobby),
-    deployed with `vercel deploy --prod` from `web/`, with no Git connection: merges do not
-    redeploy it.
+    connected to this repository: Root Directory `web`; a push to `main` deploys production,
+    other branches get previews, and commits without changes under `web/` are skipped.
   - **Checked.** The smoke check passed on the rerun; Cayman Synth Capital came out CRITICAL 76
     with two regulations cited and a model-written explanation (the first since the rebuild);
     the API refuses other origins; it scaled to zero 12 minutes after its last request, and a
@@ -72,9 +72,9 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 which reaches `main` with the first of its two pull requests: A (the cases queue, the case
 header, the score's working, findings with their evidence, the sanctions match panel, the cold
 start notice), then B (the simulated review kept in the browser). The maintainer reviews each on
-the live site before it is merged, so each pull request's build is deployed to
-<https://argus.arjunganesh.dev> with `vercel deploy --prod` from its branch, and `main` is
-redeployed if it is not taken. Web UI only: the API, the score and the demo profiles do not
+the live site before it is merged: each pull request's preview deployment is promoted to
+<https://argus.arjunganesh.dev> (`vercel promote`), and `vercel rollback` restores the
+previous one if it is not taken. Web UI only: the API, the score and the demo profiles do not
 change.
 
 The study, after that. Maintainer decisions still open:
@@ -152,9 +152,10 @@ write-up.
   registration (the account's right to create one is unconfirmed). It lives in `rg-argus-ci` so
   that a teardown of `rg-argus` keeps it; its role assignments are on `rg-argus` only and are
   repeated after a teardown.
-- 18 November 2026: the live demo goes up now rather than in the 23 to 25 November slot. The web
-  UI is deployed with the Vercel CLI from `web/` only, with no Git connection, so nothing outside
-  that folder is uploaded and pull requests get no Vercel checks.
+- 18 November 2026: the live demo goes up now rather than in the 23 to 25 November slot. The
+  maintainer connected the Vercel project to this repository, so Vercel builds from GitHub (the
+  Root Directory is `web`) and pull requests get preview deployments; nothing is uploaded from a
+  working copy.
 - 18 November 2026: the web UI becomes an analyst's workspace, for a KYC analyst at a bank who
   works cases all day: the report as a case file and a simulated review kept in the browser,
   built together (options A and B in the design). Accounts and stored decisions (option C) are
@@ -203,9 +204,11 @@ requests.
 - With the maintainer's go-ahead, deployed: Deploy on the `v0.1.0` tag, then
   `infra/populate.py`, then the rerun's smoke step passed. The container package came out public
   on its own, linked to the public repository; the guide now says so. Then the Vercel project,
-  from `web/` with the CLI; its first build failed because `next build` type-checked the
-  Playwright tests, which read `tests/fixtures/` outside `web/`, so `web/.vercelignore` leaves
-  them out. Recorded the deployment in the README, the guides, the two diagrams and the
+  first deployed from `web/` with the CLI; its first build failed because `next build`
+  type-checked the Playwright tests, which read `tests/fixtures/` outside `web/`, so
+  `web/.vercelignore` leaves them out. The maintainer then connected the project to GitHub;
+  its first Git build failed without a Root Directory, now set to `web`, with an Ignored Build
+  Step and the two variables for previews too. Recorded the deployment in the README, the guides, the two diagrams and the
   changelog, which carries the current known issues.
 - Reviewed the live UI as a bank's KYC analyst would. The maintainer chose to build the analyst
   workspace (A and B) and approved its design.
