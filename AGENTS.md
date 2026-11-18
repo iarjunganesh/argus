@@ -17,7 +17,7 @@ explanation study in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md); its prere
 is recorded in [`HANDOFF.md`](HANDOFF.md).
 
 Every tool reads through a data plane with a local implementation (synthetic data, the default,
-no cloud account) and an Azure one that is not yet verified against live services, and every
+no cloud account) and an Azure one that the deployment has run live only in part, and every
 result records where it came from (see "Known issues" in [`CHANGELOG.md`](CHANGELOG.md)).
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) describes the runtime as it is, not as planned.
 The dated current state is in [`HANDOFF.md`](HANDOFF.md), not here.

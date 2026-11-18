@@ -15,8 +15,7 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Current state — 18 November 2026
 
-- **Source.** `main` is at `1c170fa` (#36 merged). Its CI passes. No deployment or paid model
-  run has happened.
+- **Source.** `main` is at `8ac5b3d` (#37 merged). Its CI passes.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -25,21 +24,25 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 - **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
   workflow, and a Next.js web UI. Fixed rules compute the score and tier from typed findings; a
   language model only writes the explanation. The default is the local data plane with
-  synthetic data and no cloud account. Known issues: the Azure data plane has not run against
-  live services, no live model has written an explanation since the rebuild, and the API takes
-  no documents.
-- **Not deployed; the deploy sign-in is ready (18 November).** The deployment workflow and Bicep
-  template are merged. With the maintainer's go-ahead, the workflow's Azure sign-in was set up:
-  a user-assigned managed identity, `id-argus-deploy`, in its own resource group `rg-argus-ci`,
-  trusted for the GitHub `azure` environment only, with Contributor and a role-assignment right
-  limited to the template's two roles on the empty `rg-argus`. The `azure` environment allows
-  deployments from `main` and `v*` tags and holds the three ID secrets; the
-  `AZURE_RESOURCE_GROUP` variable is `rg-argus`. Deploy can therefore run by hand, and **every
-  published release now deploys automatically**. Neither has run, so no billed resource exists.
-  The identity's sign-in is untested until the Azure sign-in check (`azure-check.yml`, which
-  creates nothing) runs from `main`. The same validation, run locally as the subscription owner,
-  accepts the template in `rg-argus`. A read-only check the same day found the free-tier slots
-  unused, the template's model version offered and its quota free, and no Vercel project.
+  synthetic data and no cloud account. Known issues: the Azure data plane has run live only in
+  part (the entity store, sanctions and adverse-media searches and Document Intelligence have
+  not), and the API takes no documents.
+- **Live since 18 November, for the six demo cases.** With the maintainer's go-ahead:
+  - **Azure.** The API runs on Azure Container Apps in `rg-argus`, deployed by the Deploy
+    workflow on the `v0.1.0` tag (Sweden Central; AI Search in France Central; free tiers; the
+    model `gpt-5.4-mini`, pay per token). `infra/populate.py` filled the data plane. Deploy signs
+    in as the user-assigned managed identity `id-argus-deploy`, kept in its own group
+    `rg-argus-ci` and trusted for the GitHub `azure` environment only (deployments from `main`
+    and `v*` tags). The Azure sign-in check (`azure-check.yml`) passed. Because
+    `AZURE_RESOURCE_GROUP` is set, **every published release now deploys automatically**.
+  - **Vercel.** The web UI runs at <https://argus.arjunganesh.dev> (project `argus`, Hobby),
+    deployed with `vercel deploy --prod` from `web/`, with no Git connection: merges do not
+    redeploy it.
+  - **Checked.** The smoke check passed on the rerun; Cayman Synth Capital came out CRITICAL 76
+    with two regulations cited and a model-written explanation (the first since the rebuild);
+    the API refuses other origins; it scaled to zero 12 minutes after its last request, and a
+    report made before that was served afterwards from Cosmos DB. The first request after idle
+    takes 14 to 30 seconds. One idle day's cost is still to be read.
 - **Every demo case is invented (#29).** The data rule is in `AGENTS.md`, with an empty
   `docs/DATA-SOURCES.md` register. The six scenarios keep their tiers: Jane Synthetic 3.0 (LOW),
   Synthetic Holdings B.V. 44.0 (MEDIUM), Cayman Synth Capital 76.0 (CRITICAL), Synthetic
@@ -64,7 +67,17 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
 
 ## Next step
 
-Maintainer decisions still open:
+**The analyst workspace, now (approved 18 November).** The design is in
+[`docs/research/analyst-workspace-design.md`](docs/research/analyst-workspace-design.md),
+which reaches `main` with the first of its two pull requests: A (the cases queue, the case
+header, the score's working, findings with their evidence, the sanctions match panel, the cold
+start notice), then B (the simulated review kept in the browser). The maintainer reviews each on
+the live site before it is merged, so each pull request's build is deployed to
+<https://argus.arjunganesh.dev> with `vercel deploy --prod` from its branch, and `main` is
+redeployed if it is not taken. Web UI only: the API, the score and the demo profiles do not
+change.
+
+The study, after that. Maintainer decisions still open:
 
 1. The study's model configuration and budget ceiling (protocol section 8). Required to freeze
    the protocol and before any study model call.
@@ -86,16 +99,10 @@ Then, in order:
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
-**The first live run (proposed for 23 to 25 November; needs its own approvals).** The workflow
-identity, the `azure` environment and the `AZURE_RESOURCE_GROUP` variable are in place. Run the
-Azure sign-in check from `main` (free, needs no resource approval). Approve the resources in
-`docs/DEPLOYMENT.md`; run Deploy on the tag; make the `argus` package public and
-run it again (Container Apps pulls the image anonymously); fill the data plane (the first
-deploy's smoke step fails until it is filled); run the smoke check; confirm zero replicas after
-30 idle minutes and read one idle day's cost. Then the Vercel project (root
-`web`, variables `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, its origin in
-`corsOrigins`). When live, update the README hosting badges, the ARCHITECTURE hosting heading
-and the CHANGELOG known issue. Fixes the live run needs ship as `v0.1.1`.
+**Keeping the live demo running.** Read one idle day's cost (Cost Management lags by up to a
+day). Redeploy the web UI after a merge that changes `web/`. Fixes the live run needs ship as
+`v0.1.1`; publishing that release redeploys the API automatically. `infra/teardown.py` removes
+the Azure side (see `docs/DEPLOYMENT.md`, "Remove it").
 
 ### Proposed schedule (11 November 2026; not yet confirmed by the maintainer)
 
@@ -145,6 +152,13 @@ write-up.
   registration (the account's right to create one is unconfirmed). It lives in `rg-argus-ci` so
   that a teardown of `rg-argus` keeps it; its role assignments are on `rg-argus` only and are
   repeated after a teardown.
+- 18 November 2026: the live demo goes up now rather than in the 23 to 25 November slot. The web
+  UI is deployed with the Vercel CLI from `web/` only, with no Git connection, so nothing outside
+  that folder is uploaded and pull requests get no Vercel checks.
+- 18 November 2026: the web UI becomes an analyst's workspace, for a KYC analyst at a bank who
+  works cases all day: the report as a case file and a simulated review kept in the browser,
+  built together (options A and B in the design). Accounts and stored decisions (option C) are
+  out of scope.
 
 ## Open items
 
@@ -172,7 +186,7 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 18 November 2026 (latest) — Azure readiness and the deploy identity
+### 18 November 2026 (latest) — Azure readiness, the deploy identity and the live demo
 
 - Read-only check of the subscription, the GitHub settings and Vercel: nothing blocks the live
   run. The free-tier slots are unused, the providers the template needs are registered, the
@@ -185,7 +199,17 @@ requests.
   accepts only `main` and tags, and Deploy creates resources as soon as it signs in. Added the
   Azure sign-in check, which signs in the same way and only validates. Ran the same validation
   locally as the owner: it succeeded for the template's 16 resources and created nothing.
-- Deleted the merged `docs/markdown-cleanup` branch.
+  After #37 merged, the check ran on `main` and passed.
+- With the maintainer's go-ahead, deployed: Deploy on the `v0.1.0` tag, then
+  `infra/populate.py`, then the rerun's smoke step passed. The container package came out public
+  on its own, linked to the public repository; the guide now says so. Then the Vercel project,
+  from `web/` with the CLI; its first build failed because `next build` type-checked the
+  Playwright tests, which read `tests/fixtures/` outside `web/`, so `web/.vercelignore` leaves
+  them out. Recorded the deployment in the README, the guides, the two diagrams and the
+  changelog, which carries the current known issues.
+- Reviewed the live UI as a bank's KYC analyst would. The maintainer chose to build the analyst
+  workspace (A and B) and approved its design.
+- Deleted the merged `docs/markdown-cleanup` and `docs/deploy-managed-identity` branches.
 
 ### 16 November 2026 — Markdown cleanup
 

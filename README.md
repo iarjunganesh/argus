@@ -49,7 +49,7 @@
 [![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-API_host-0078D4)](https://azure.microsoft.com/en-us/products/container-apps)
 [![Azure Monitor](https://img.shields.io/badge/Azure_Monitor-API_logs-0078D4)](https://azure.microsoft.com/en-us/products/monitor)
 
-<!-- Row 3 — frontend (web/). Vercel Hobby is the chosen host (decision D1); not deployed yet. -->
+<!-- Row 3 — frontend (web/), hosted on Vercel Hobby (decision D1). -->
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -72,8 +72,8 @@
 [![Tesseract](https://img.shields.io/badge/Tesseract-local_OCR-3C8DBC)](https://github.com/tesseract-ocr/tesseract)
 
 <!-- Row 5 — the tier of each Azure service in row 2, as chosen in decision D1 (docs/ARCHITECTURE.md,
-     "Hosting"). Nothing is deployed yet, and the Azure data plane has only run against SDK
-     stand-ins. Each badge opens the service's pricing page. -->
+     "Hosting"), deployed on 18 November 2026. The Azure data plane runs live only for search and
+     reports (see "Known issues" in CHANGELOG.md). Each badge opens the service's pricing page. -->
 [![Azure OpenAI tier](https://img.shields.io/badge/Azure_OpenAI-Data_Zone_Standard,_pay_per_token-412991)](https://azure.microsoft.com/en-us/pricing/details/azure-openai/)
 [![Foundry IQ tier](https://img.shields.io/badge/Foundry_IQ-free_retrieval_allowance-0078D4)](https://azure.microsoft.com/en-us/pricing/details/search/)
 [![Azure AI Search tier](https://img.shields.io/badge/Azure_AI_Search-Free-0078D4)](https://azure.microsoft.com/en-us/pricing/details/search/)
@@ -84,11 +84,11 @@
 
 </details>
 
-<!-- Row 6 — live hosting. Not deployed yet: the web UI is planned at https://argus.arjunganesh.dev.
-     When it is live these become Vercel-live_frontend-000000 and the API's own badge, each
-     linking to the running site. -->
-[![Vercel live frontend](https://img.shields.io/badge/Vercel_live_frontend-argus.arjunganesh.dev_not_deployed_yet-6B7280?logo=vercel&logoColor=white)](https://vercel.com)
-[![Azure live API](https://img.shields.io/badge/Azure_Container_Apps_live_API-not_deployed_yet-6B7280)](https://azure.microsoft.com/en-us/products/container-apps)
+<!-- Row 6 — live hosting, deployed on 18 November 2026: the web UI on Vercel and the API on Azure
+     Container Apps, both running the six synthetic demo cases only. Each badge links to the running
+     service (the API's to its health check). -->
+[![Vercel live frontend](https://img.shields.io/badge/Vercel_live_frontend-argus.arjunganesh.dev-000000?logo=vercel&logoColor=white)](https://argus.arjunganesh.dev)
+[![Azure live API](https://img.shields.io/badge/Azure_Container_Apps_live_API-demo_cases_only-0078D4)](https://argus-api.proudbay-27e26eb7.swedencentral.azurecontainerapps.io/health)
 
 ---
 
@@ -126,12 +126,12 @@ ARGUS was rebuilt after the hackathon. This table describes the current code; th
 | --- | --- |
 | Orchestrator fan-out and fan-in across five agents | ✅ Works, as one in-process Microsoft Agent Framework workflow inside the API. `GET /api/v1/kyc/stream/{id}` follows each agent's progress as server-sent events. |
 | Deterministic risk scoring, tiering and gap analysis | ✅ Works |
-| Plain-English decision explanation | ⚠️ Built for the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models) and tested against stand-in clients; **not yet run against a live model**. Without one, a fixed template writes it, labelled as such. |
+| Plain-English decision explanation | ✅ Works. On the deployment Azure OpenAI `gpt-5.4-mini` writes it (first checked on 18 November 2026); elsewhere the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models). Without one, a fixed template writes it, labelled as such. |
 | **Local data plane** (default): knowledge-base search, entities, ownership, transactions, reports | ✅ Works with no cloud account, on the synthetic data in `data/`. A clone without generated data finds nothing, and says so. |
-| **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ Built and tested against stand-ins for the Azure SDKs; **not yet run against live services**. That happens with the deployment work. |
+| **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ The deployment runs the knowledge-base search (regulations) and the report store live. The entity store, the sanctions and adverse-media searches and Document Intelligence have **not yet run live**: the public demo takes the four parallel agents' results from recorded profiles, and the API takes no documents. |
 | OCR without Azure | ✅ Tesseract reads the synthetic identity documents (PNG and PDF) when it is installed (the `ocr` dependency group and the Tesseract program); without it, documents are reported as unread, labelled `fallback`. ⚠️ The API does not accept documents yet: OCR runs when the Identity agent is called directly. |
 | The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
-| Web UI ([`web/`](web/): Next.js, TypeScript, shadcn/ui) | ✅ Works locally: submit an entity or a demo case, follow each agent live, read the report. Tested end to end with Playwright and axe. Not deployed yet. |
+| Web UI ([`web/`](web/): Next.js, TypeScript, shadcn/ui) | ✅ Works locally (submit an entity or a demo case, follow each agent live, read the report) and at [argus.arjunganesh.dev](https://argus.arjunganesh.dev), which offers the six demo cases only. Tested end to end with Playwright and axe. |
 
 Every agent result says where it came from: `computed`, `fallback` (a service was unavailable and a result that asserts nothing was used instead), or `demo_profile`. The report's audit trace lists them, names any tool that fell back, and says whether a model or the template wrote the explanation.
 
@@ -174,14 +174,14 @@ The next piece of work is a study, planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARG
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
-    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built and not deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with the planned explanation study and human review, one model-provider setting, Foundry IQ, the later Fabric IQ and Work IQ integrations, and a data plane with Azure and local implementations."/>
+    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built, with the built part deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with the planned explanation study and human review, one model-provider setting, Foundry IQ, the later Fabric IQ and Work IQ integrations, and a data plane with Azure and local implementations."/>
   </picture>
 </p>
 
 In short:
 
 - **A focused study first.** Fixed rules decide the outcome and a model only explains it. Does the explanation keep the findings, evidence, uncertainty and the need for human review, and does that change when the model is given minimised findings instead of the raw case? It will be measured on a fixed synthetic case set and written up, including failures. Making the wording simpler is the follow-up question.
-- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Deploying them (Azure Container Apps and Vercel) is built but not done, and the study does not need it.
+- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Both are deployed, on Azure Container Apps and Vercel (18 November 2026), though the study does not need them.
 - **All three Microsoft IQs, later.** Foundry IQ for cited regulatory knowledge, then, after the first write-up, Fabric IQ for evaluation data and corporate-ownership relationships and Work IQ for case-handover context.
 - **Neutral where it's cheap.** The model provider, the container host, the tools (MCP) and telemetry can be swapped by configuration. The data plane stays Azure, with a local implementation for tests and self-hosting.
 

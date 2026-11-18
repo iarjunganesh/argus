@@ -26,7 +26,36 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   deployment guide lists it as a setup step. Checked: the same validation, run locally on
   18 November as the subscription owner against the empty `rg-argus`, succeeded for its 16
   resources and left no resource or deployment record; the workflow's action pins pass
-  `check_versions.py`. The workflow itself runs once it is on `main`.
+  `check_versions.py`. The workflow itself runs once it is on `main`. It ran on `main` on
+  18 November and passed: the identity signed in and the validation succeeded.
+
+- **ARGUS runs live, on Azure and Vercel, for the six demo cases.** The API runs on Azure
+  Container Apps (Sweden Central; AI Search in France Central) and the web UI at
+  <https://argus.arjunganesh.dev> on Vercel. Both accept the synthetic demo cases only. A live
+  model now writes the explanation, which clears the `v0.1.0` known issue that none had since the
+  rebuild. The guide adds how the web UI is deployed: with the Vercel CLI from `web/`, so the
+  repository root's `.env` and `.local/` are never uploaded, and `web/.vercelignore` leaves out
+  local settings, build output and the Playwright tests. The README, the architecture page and
+  the two diagrams that said "not deployed" now say what runs live. Checked on 18 November:
+  - The Deploy workflow on the `v0.1.0` tag deployed the template. Its smoke step failed as the
+    guide expects, until `infra/populate.py` filled the data plane: 9 regulation documents, 500
+    sanctions entries and 400 adverse-media articles in three knowledge bases, and 10,000
+    entities, 1,256 ownership links and 6,321 transactions in Cosmos DB. The rerun passed.
+  - Through the deployed API, Cayman Synth Capital came out CRITICAL at 76, as it does locally,
+    with two regulations cited and the explanation written by `gpt-5.4-mini`
+    (`explanation_source: model`).
+  - The site answers at its domain with the demo notice. The API accepts that origin and
+    refuses another. One scripted browser run and two by hand went through the site.
+  - The API had scaled to zero replicas 12 minutes after its last request, and a report made
+    before that was served afterwards from Cosmos DB. The first request after idle waited 14 to
+    30 seconds.
+
+- **A design for the web UI as an analyst's workspace.**
+  `docs/research/analyst-workspace-design.md`, approved on 18 November, describes the report as
+  a case file (the score's working, findings with their evidence, the sanctions match beside the
+  customer) and a simulated review kept in the visitor's browser, built in two pull requests. It
+  changes no code yet. Checked: the report fields it relies on were read from a live report;
+  `check_docs.py` and markdownlint pass.
 
 ### Changed
 
@@ -73,6 +102,19 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   that a first deployment's smoke step fails until the data plane is filled, because it needs
   cited regulations. Checked against `release.yml`, `check_versions.py` and `smoke_api.py`;
   `check_docs.py` and markdownlint pass.
+
+### Known issues
+
+- **The API does not accept identity documents yet.** `POST /api/v1/kyc/assess` has no
+  documents field, so OCR (local or Document Intelligence) runs only when the Identity agent is
+  called directly with `documents`, as the tests do.
+- **The Azure data plane has run live only in part.** The deployment runs the knowledge-base
+  search (regulations) and the report store live. The entity store, the sanctions and
+  adverse-media searches and Document Intelligence have not run live: the public demo takes the
+  four parallel agents' results from recorded profiles, and the API takes no documents.
+- **ARGUS does not tell foreign from domestic PEPs.** It requires enhanced due diligence for
+  every PEP (the EU and UK rule), which is stricter than FATF Recommendation 12 for domestic PEPs
+  in lower-risk relationships.
 
 ## [0.1.0] - 2026-11-16
 

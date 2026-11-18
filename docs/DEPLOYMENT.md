@@ -162,8 +162,11 @@ with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
    resource group and asks Azure to validate the template there. It creates nothing, so it can
    run before the deployment is approved. Locally, `az deployment group validate` with the
    same arguments as the deployment ("Deploy") runs the same validation as your own account.
-6. **The package.** After the first Deploy run, make the `argus` package public (Packages →
-   argus → Package settings → Change visibility), then run Deploy again.
+6. **The package.** The first Deploy run creates the `argus` package on GitHub Container
+   Registry. Linked to this public repository, it was public from the start on 18 November 2026.
+   If yours is private, make it public (Packages → argus → Package settings → Change
+   visibility), then run Deploy again. An anonymous pull token from
+   `https://ghcr.io/token?scope=repository:iarjunganesh/argus:pull` means anonymous pulls work.
 
 The deployed API runs only the synthetic demo cases (`ARGUS_DEMO_ONLY=true` in the template):
 anything else gets a 403, so visitors can't enter a real person's details. Reports and their
@@ -176,10 +179,36 @@ triggers": fill the data plane, then run the smoke check again (or rerun the wor
 
 ## The web UI
 
-The web UI is deployed separately, on Vercel: a project with root directory `web`, framework
-Next.js, and two environment variables: `NEXT_PUBLIC_API_URL`, set to the API's address, and
-`NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, so the site offers only the demo cases the API accepts. The
-API must list the site's origin in `corsOrigins`.
+The web UI runs on Vercel (Hobby plan) at `https://argus.arjunganesh.dev`. It is deployed with
+the Vercel CLI from `web/`, so only that folder is uploaded, never the repository root with its
+`.env` and `.local/`. [`web/.vercelignore`](../web/.vercelignore) also leaves out local settings,
+build output, test results and the Playwright tests, which read `tests/fixtures/` outside `web/`
+and would fail the build's type check. The project has no Git connection, so a push does not
+redeploy the site.
+
+Once, from `web/`, after `vercel login` (add `--scope <team>` if the account has several teams;
+in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
+
+```sh
+vercel project add argus
+vercel link --yes --project argus
+vercel api /v9/projects/argus -X PATCH -f framework=nextjs -f nodeVersion=24.x
+printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL production
+printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY production
+vercel domains add argus.arjunganesh.dev argus
+```
+
+`vercel link` writes `web/.vercel/` (ignored). It may also write `web/.env.local` with a
+short-lived token and add lines to `web/.gitignore`: delete the first and revert the second,
+since `.env*` is already ignored. The two variables are read at build time: the site calls that
+API and offers only the demo cases it accepts. The API must list the site's origin in
+`corsOrigins`; the template's default is this domain.
+
+To deploy, from `web/`:
+
+```sh
+vercel deploy --prod
+```
 
 ## Limits to know
 

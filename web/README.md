@@ -53,6 +53,10 @@ run needs a browser: `npm run e2e:browsers`. CI runs them against the API contai
 | `src/lib/`        | The API client, the report's wording, the progress-stream reducer, the demo cases |
 | `e2e/`            | Playwright tests                                                                  |
 
+The public site runs on Vercel; how it is deployed, and why from this folder only, is in
+[`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) ("The web UI"). `.vercelignore` lists what the
+upload leaves out.
+
 The colours in `src/app/globals.css` are checked by `scripts/ci/render_assets.py --check`: every
 declared text/background pair must pass WCAG AA in both themes. `tests/test_accessibility.py`
 holds the risk colours to the audited palette in `src/argus/accessibility/wcag.py`.
