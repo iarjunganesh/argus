@@ -13,6 +13,7 @@ import {
   initialProgress,
   type ProgressEvent,
 } from "@/lib/progress";
+import { investigationSummary } from "@/lib/case";
 import { AGENTS, type Report } from "@/lib/report";
 import { recalledEntityName } from "@/lib/session";
 
@@ -99,8 +100,7 @@ export function Assessment({ reportId }: { reportId: string }) {
 
   return (
     <div>
-      <p className="text-sm text-muted-foreground">Assessment {reportId}</p>
-      <h1 className="mt-1 text-3xl font-semibold tracking-tight">{name || "Assessment"}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{name || "Assessment"}</h1>
       {report?.entity && (
         <p className="mt-1 text-muted-foreground">
           {report.entity.type === "individual" ? "Individual" : "Company"},{" "}
@@ -133,19 +133,32 @@ export function Assessment({ reportId }: { reportId: string }) {
         </p>
       )}
 
-      <section aria-labelledby="flow-heading" className="mt-8">
-        <h2 id="flow-heading" className="text-xl font-semibold">
-          Investigation
-        </h2>
-        <div className="mt-4">
-          <InvestigationFlow progress={progress} />
-        </div>
-      </section>
-
-      {outcome === "completed" && report && (
-        <div className="mt-12">
-          <ReportView report={report} />
-        </div>
+      {outcome === "completed" && report ? (
+        <>
+          <details className="mt-4 rounded-lg border bg-card">
+            <summary className="cursor-pointer px-4 py-3 text-sm">
+              <h2 id="flow-heading" className="inline font-medium">
+                Investigation:
+              </h2>{" "}
+              {investigationSummary(report.audit_trace, report.total_latency_seconds)}
+            </summary>
+            <div className="border-t px-4 py-4">
+              <InvestigationFlow progress={progress} />
+            </div>
+          </details>
+          <div className="mt-6">
+            <ReportView report={report} />
+          </div>
+        </>
+      ) : (
+        <section aria-labelledby="flow-heading" className="mt-8">
+          <h2 id="flow-heading" className="text-xl font-semibold">
+            Investigation
+          </h2>
+          <div className="mt-4">
+            <InvestigationFlow progress={progress} />
+          </div>
+        </section>
       )}
     </div>
   );
