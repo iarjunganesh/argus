@@ -38,8 +38,11 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 19 November 2026
 
-- **Source.** `main` is at `ef76ace` (#39 merged). Its CI passes. In progress on
-  `feat/analyst-workspace-a`: the analyst workspace's first pull request (Next step).
+- **Source.** `main` is at `2ec6197` (#40 merged). All branches other than `main` are deleted.
+- **Analyst workspace A is live (#40).** The site reads a report as a case file (case header,
+  sanctions match panel, "Why this score" with each finding's evidence) and lists the demo cases
+  with their last run in this browser. Production was redeployed from `2ec6197` and the domain
+  followed it.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -87,7 +90,7 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   result exists.
 - **Web UI on Node.js 26 (#39).** CI, the release workflow and Vercel read the version from
   `web/.nvmrc`.
-- **Checks.** Every pull request merged since 16 November (#31 to #39) passed all its CI checks
+- **Checks.** Every pull request merged since 16 November (#31 to #40) passed all its CI checks
   (16 to 18 each): 412 tests at 100% line and branch coverage, type check, lint, documentation,
   the web UI with its Playwright and axe tests, container image, dependency audit, CodeQL and
   SonarQube Cloud. No Dependabot, code scanning or secret scanning alert is open.
@@ -98,12 +101,18 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 [`docs/research/analyst-workspace-design.md`](docs/research/analyst-workspace-design.md). Two
 pull requests:
 
-1. **A**, built on `feat/analyst-workspace-a`: the cases queue, the case header, the score's
-   working, findings with their evidence, the sanctions match panel and the cold-start notice.
-   Pull request #40 (with the design). Its preview build serves <https://argus.arjunganesh.dev>
-   (`vercel alias set`, see `docs/DEPLOYMENT.md`) for the maintainer's review on the live site;
-   merge it, or point the domain back at the latest production deployment.
-2. **B**, after A is merged: the simulated review kept in the browser, reviewed the same way.
+1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
+   findings with their evidence, the sanctions match panel and the cold-start notice.
+2. **B: next, starting 20 November.** The simulated review kept in the browser (design section
+   8; plan tasks 6 to 9: the review rules, their store, the review panel and role switch, the
+   queue's review states and audit steps, then end-to-end tests and docs). Reviewed the same
+   way: its preview build serves <https://argus.arjunganesh.dev> (`vercel alias set`, see
+   `docs/DEPLOYMENT.md`) until it is merged.
+
+Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
+request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
+this file (the session log to the last few entries; the unconfirmed schedule), the generated
+`docs/DEPENDENCY-REFRESH.md` (only what moved) and `docs/roadmap/durable-execution.md`.
 
 Web UI only: the API, the score and the demo profiles do not change.
 
@@ -217,7 +226,13 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 18 to 19 November 2026 (latest) — Node.js 26 and the analyst workspace (A)
+### 19 November 2026 (latest) — #40 merged
+
+- The maintainer reviewed A on the live site and merged #40 (18 checks passing). Deleted the
+  `feat/analyst-workspace-a` branch; only `main` remains. The merge deployed production from
+  `2ec6197` and the domain moved to it from the preview. B starts on 20 November.
+
+### 18 to 19 November 2026 — Node.js 26 and the analyst workspace (A)
 
 - #38 (the live deployment in the docs) and #39 (the web UI on Node.js 26) merged with every
   check passing. The README's live badges link to the site and the API's health check. The
