@@ -23,6 +23,8 @@ Reviewed main commit: `29d4d8312a8ad0301e4259907bcc6484603f649e`.
 - A container smoke test exercises a recorded demo scenario through the API.
 - Local Tesseract OCR supports synthetic PNG/PDF documents, but the public assessment API has no document input yet.
 - Azure adapters are tested with SDK stand-ins; live Azure verification remains outstanding.
+  (Since 18 November 2026 the deployment runs the regulations search and the report store live;
+  the entity store, the other searches and OCR have not run live.)
 
 Recheck this baseline before implementation. The roadmap does not claim any of the work below has shipped.
 

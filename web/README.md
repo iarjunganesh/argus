@@ -1,7 +1,8 @@
 # ARGUS web UI
 
-The browser front end for the ARGUS API: submit an entity, follow the five agents as they run,
-then read the report. Next.js (App Router), TypeScript and shadcn/ui. The browser calls the API
+The browser front end for the ARGUS API: run a demo case or submit an entity, follow the five
+agents as they run, then read the report as a case file. Next.js (App Router), TypeScript and
+shadcn/ui. The browser calls the API
 directly, so the API must list this site's origin in `ARGUS_CORS_ORIGINS`.
 
 Requires Node.js 26 (the version in [`.nvmrc`](.nvmrc)).
@@ -40,18 +41,20 @@ npm run test:e2e       # Playwright: needs `npm run build` and the API running a
 ```
 
 The end-to-end tests run the six demo scenarios through the site and compare each report with
-the recorded outcomes in [`tests/fixtures/demo_scenarios.json`](../tests/fixtures/demo_scenarios.json),
-in light, dark and phone layouts, and check every page with axe (WCAG 2.2 AA rules). The first
+the recorded outcomes in [`tests/fixtures/demo_scenarios.json`](../tests/fixtures/demo_scenarios.json)
+(the tier, the score and its working, each finding's evidence, the sanctions hold), check the
+cases queue and the cold-start notice, all in light, dark and phone layouts, and check every page
+with axe (WCAG 2.2 AA rules). The first
 run needs a browser: `npm run e2e:browsers`. CI runs them against the API container.
 
 ## Where things are
 
-| Path              | What it holds                                                                     |
-| ----------------- | --------------------------------------------------------------------------------- |
-| `src/app/`        | The pages: `/` (new assessment) and `/assessments/[id]` (progress, then report)   |
-| `src/components/` | The investigation flow, the report, the form; `ui/` holds shadcn/ui components    |
-| `src/lib/`        | The API client, the report's wording, the progress-stream reducer, the demo cases |
-| `e2e/`            | Playwright tests                                                                  |
+| Path              | What it holds                                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`        | The pages: `/` (the cases queue and, outside demo mode, the form) and `/assessments/[id]` (progress, then the case file)                                                    |
+| `src/components/` | The investigation flow, the case header, the score's working, findings and evidence, the sanctions match panel, the cases queue, the form; `ui/` holds shadcn/ui components |
+| `src/lib/`        | The API client, the report's wording, the case file's logic (`case.ts`), the cases queue store (`queue.ts`), the progress-stream reducer, the demo cases                    |
+| `e2e/`            | Playwright tests                                                                                                                                                            |
 
 The public site runs on Vercel; how it is deployed, and why from this folder only, is in
 [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) ("The web UI"). `.vercelignore` lists what the

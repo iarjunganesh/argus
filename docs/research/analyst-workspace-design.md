@@ -1,6 +1,7 @@
 # Design: the web UI as an analyst's workspace
 
-Status: **approved by the maintainer on 2026-11-18; not implemented yet.** It covers
+Status: **approved by the maintainer on 2026-11-18. A is built (2026-11-19, its pull request
+is next); B is not yet.** It covers
 two changes the maintainer chose to make together: the report as a case file an analyst can read
 quickly (A), and a simulated review with decisions kept in the visitor's browser (B).
 
@@ -228,6 +229,17 @@ cold start), then B (the review). Each passes every check on its own.
 - The roles are a switch in one browser; the second sign-off applies to HIGH and CRITICAL.
 - Decisions are kept 24 hours, like reports.
 - Two pull requests, A then B.
+
+## Calls made while building A
+
+- Each dimension's points are exact (a whole score times a whole percentage has at most two
+  decimal places), and the total is the API's overall score. The API rounds the sum to one
+  decimal place; where the sum has two, the page says so (Synthetic Pacific Banking Corporation:
+  18.25 and 18.2).
+- Without a sanctions hold, the header's button reads "Review the findings" and moves to "Why
+  this score"; "Decide the case" comes with B's decision panel.
+- In demo mode the start page's heading and the navigation read "Cases".
+- The narrow case list beside an open case has no Run buttons; cases run from the start page.
 
 ## Left to the builder
 

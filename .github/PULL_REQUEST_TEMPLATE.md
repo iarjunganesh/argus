@@ -10,6 +10,8 @@
 - [ ] `uv run pytest --cov` (100% line and branch coverage)
 - [ ] `uv run python scripts/ci/check_docs.py`, `uv run python scripts/ci/check_versions.py --check`
       and `uv run python scripts/ci/render_assets.py --check`
+- [ ] If `web/` changed: `npm --prefix web run lint`, `format:check`, `typecheck`, `test`, `build`
+      and `test:e2e`
 
 ## Also
 

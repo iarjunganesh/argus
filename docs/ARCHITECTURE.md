@@ -54,7 +54,15 @@ off by default. The start page submits an assessment; `/assessments/{id}` opens 
 stream with `EventSource`, draws the workflow's fan-out and fan-in with each agent's state, time
 and `source`, and when the stream's `status` event arrives fetches the report. If the stream
 closes at its time limit while the assessment is still running, the browser reconnects with
-`Last-Event-ID` and resumes. Its colours are the audited palette in
+`Last-Event-ID` and resumes. The report reads as a case file for an analyst: the case header
+(tier, score, what sets the tier, a sanctions hold as a blocking notice), the sanctions listing
+beside the customer, "Why this score" (each dimension's score times its weight, exact to two
+decimals, adding up to the overall score, which the API rounds to one; the typed findings and
+their evidence records behind each), then the
+explanation, the regulations cited, the actions and a collapsed audit trail. Nothing there is
+computed beyond what the report holds. The start page lists the demo cases with their last run
+in this browser (`localStorage`, by the case's position, never its name, kept 24 hours), and
+says when the API is starting from zero replicas. Its colours are the audited palette in
 `src/argus/accessibility/wcag.py`, checked for WCAG AA in both themes by
 `scripts/ci/render_assets.py --check`. See [`web/README.md`](../web/README.md).
 
@@ -359,8 +367,9 @@ chaos testing. An evaluation of the explanations is the v2 study
 mypy, a dependency audit, a secret scan, the documentation checks, and a check that the
 diagram variants match their SVG masters and pass WCAG AA contrast. It builds the container and
 runs one demo assessment through it. The Web UI job lints, type-checks, unit-tests and builds
-`web/`, then runs its Playwright tests against the API container: the six demo scenarios in light,
-dark and phone layouts, each page checked with axe. The infrastructure job compiles
+`web/`, then runs its Playwright tests against the API container: the six demo scenarios, the
+cases queue and the cold-start notice in light, dark and phone layouts, each page checked with
+axe. The infrastructure job compiles
 `infra/main.bicep` and fails on any Bicep linter warning. A separate Attribution workflow fails
 a pull request whose commits or description credit an AI assistant
 (`scripts/ci/check_attribution.py`).

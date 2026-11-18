@@ -1,7 +1,8 @@
 # ARGUS handoff
 
-Read [AGENTS.md](AGENTS.md), this file, then the [v2 plan](docs/ARGUS-V2-PLAN.md). Update Current
-state, Next step and Session log before stopping.
+Read [AGENTS.md](AGENTS.md), this file, then the [v2 plan](docs/ARGUS-V2-PLAN.md). Run the
+start-of-session check below before any other work. Update Current state, Next step and Session
+log before stopping.
 
 This file is tracked and public. It holds project state only. Drafts and research notes are in
 [`docs/research/`](docs/research/README.md). Only account, billing and machine notes stay in
@@ -10,12 +11,35 @@ the ignored `.local/` folder.
 Copy/paste initialization prompt (with this repository open):
 
 ```text
-Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
+Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md. Before anything else, run the start-of-session check in HANDOFF.md: check every fact it records against git, GitHub and the live site, review each pull request opened or merged since the last session-log entry, report every deviation you find, and fix the documents that no longer match. Then continue from Next step. Before stopping, update Current state and Next step in HANDOFF.md and add a Session log entry.
 ```
 
-## Current state — 18 November 2026
+## Start-of-session check
 
-- **Source.** `main` is at `8ac5b3d` (#37 merged). Its CI passes.
+Pull requests move faster than the documents that describe them. Before other work, check the
+grounded facts and report what deviates, with file and line:
+
+1. **Git and GitHub.** `git fetch --prune`; `main`'s commit and CI result
+   (`gh run list --branch main --limit 3`); pull requests merged and open since the last
+   session-log entry (`gh pr list --state all --limit 10`), each with its check results; merged
+   branches not yet deleted. Compare all of it with Current state and Next step.
+2. **Each of those pull requests.** It has a changelog entry that says what became true and how
+   it was checked; this file, the README, `docs/`, `web/README.md` and the diagrams describe the
+   code it merged; and no earlier entry or page now contradicts it (search for the old value:
+   a version, a status such as "not deployed", a count, a name).
+3. **The checks that read facts.** `check_docs.py`, `check_versions.py --check` and markdownlint
+   (the commands in `AGENTS.md`).
+4. **The live deployment.** <https://argus.arjunganesh.dev> answers, and so does the API's
+   `/health` (the request wakes it; it scales back to zero about 12 minutes later). Compare with
+   "Live since" below.
+
+Fix each deviation in the documents, or record it under Open items when it needs the
+maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, like any change.
+
+## Current state — 19 November 2026
+
+- **Source.** `main` is at `ef76ace` (#39 merged). Its CI passes. In progress on
+  `feat/analyst-workspace-a`: the analyst workspace's first pull request (Next step).
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -36,8 +60,9 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
     and `v*` tags). The Azure sign-in check (`azure-check.yml`) passed. Because
     `AZURE_RESOURCE_GROUP` is set, **every published release now deploys automatically**.
   - **Vercel.** The web UI runs at <https://argus.arjunganesh.dev> (project `argus`, Hobby),
-    connected to this repository: Root Directory `web`; a push to `main` deploys production,
-    other branches get previews, and commits without changes under `web/` are skipped.
+    connected to this repository: Root Directory `web`, Node.js 26; a push to `main` deploys
+    production, other branches get previews, and a push that changes nothing under `web/` since
+    the branch's last build is skipped. The repository's homepage link points to the site.
   - **Checked.** The smoke check passed on the rerun; Cayman Synth Capital came out CRITICAL 76
     with two regulations cited and a model-written explanation (the first since the rebuild);
     the API refuses other origins; it scaled to zero 12 minutes after its last request, and a
@@ -60,22 +85,27 @@ Read AGENTS.md and HANDOFF.md, then docs/ARGUS-V2-PLAN.md, and continue from Nex
   and missing-step variants with their expected behaviour, the measures and the analysis. About
   770 model calls. Its model configuration and budget ceiling are open. No case, model call or
   result exists.
-- **Checks.** Every pull request merged on 16 November (#31 to #35) passed all CI checks: 412
-  tests at 100% line and branch coverage, type check, lint, documentation, the web UI with its
-  Playwright and axe tests, container image, dependency audit, CodeQL and SonarQube Cloud. No
-  Dependabot, code scanning or secret scanning alert is open.
+- **Web UI on Node.js 26 (#39).** CI, the release workflow and Vercel read the version from
+  `web/.nvmrc`.
+- **Checks.** Every pull request merged since 16 November (#31 to #39) passed all its CI checks
+  (16 to 18 each): 412 tests at 100% line and branch coverage, type check, lint, documentation,
+  the web UI with its Playwright and axe tests, container image, dependency audit, CodeQL and
+  SonarQube Cloud. No Dependabot, code scanning or secret scanning alert is open.
 
 ## Next step
 
 **The analyst workspace, now (approved 18 November).** The design is in
-[`docs/research/analyst-workspace-design.md`](docs/research/analyst-workspace-design.md),
-which reaches `main` with the first of its two pull requests: A (the cases queue, the case
-header, the score's working, findings with their evidence, the sanctions match panel, the cold
-start notice), then B (the simulated review kept in the browser). The maintainer reviews each on
-the live site before it is merged: each pull request's preview deployment is promoted to
-<https://argus.arjunganesh.dev> (`vercel promote`), and `vercel rollback` restores the
-previous one if it is not taken. Web UI only: the API, the score and the demo profiles do not
-change.
+[`docs/research/analyst-workspace-design.md`](docs/research/analyst-workspace-design.md). Two
+pull requests:
+
+1. **A**, built on `feat/analyst-workspace-a`: the cases queue, the case header, the score's
+   working, findings with their evidence, the sanctions match panel and the cold-start notice.
+   Pull request #40 (with the design). Its preview build serves <https://argus.arjunganesh.dev>
+   (`vercel alias set`, see `docs/DEPLOYMENT.md`) for the maintainer's review on the live site;
+   merge it, or point the domain back at the latest production deployment.
+2. **B**, after A is merged: the simulated review kept in the browser, reviewed the same way.
+
+Web UI only: the API, the score and the demo profiles do not change.
 
 The study, after that. Maintainer decisions still open:
 
@@ -100,7 +130,7 @@ Then, in order:
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
 **Keeping the live demo running.** Read one idle day's cost (Cost Management lags by up to a
-day). Redeploy the web UI after a merge that changes `web/`. Fixes the live run needs ship as
+day). A merge to `main` that changes `web/` deploys the site on its own. Fixes the live run needs ship as
 `v0.1.1`; publishing that release redeploys the API automatically. `infra/teardown.py` removes
 the Azure side (see `docs/DEPLOYMENT.md`, "Remove it").
 
@@ -163,7 +193,7 @@ write-up.
 
 ## Open items
 
-- **Manual upgrades the refresh reported.** Node.js 26, the LTS, is done (18 November). ESLint 10
+- **Manual upgrades the refresh reported.** Node.js 26, the LTS, is done (#39). ESLint 10
   and TypeScript 7 are major versions, held back by peer limits
   (`eslint-config-next` matches Next.js 16.4.6). Python 3.15 waits for wheels of msgspec,
   pyyaml and uvloop.
@@ -187,7 +217,40 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 18 November 2026 (latest) — Azure readiness, the deploy identity and the live demo
+### 18 to 19 November 2026 (latest) — Node.js 26 and the analyst workspace (A)
+
+- #38 (the live deployment in the docs) and #39 (the web UI on Node.js 26) merged with every
+  check passing. The README's live badges link to the site and the API's health check. The
+  Vercel project shows each commit and builds on Node.js 26.x; the repository's homepage link
+  points to the site. Deleted the merged `docs/record-deployment` and `deps/node-26` branches.
+- Built A of the analyst workspace on `feat/analyst-workspace-a` (rebased on #39): the report
+  opens with the case header, then the sanctions match beside the customer, then "Why this
+  score" with each finding's evidence; the audit trail is collapsed; the start page lists the
+  demo cases with their last run in this browser; a slow first request says the API is
+  starting. Unit tests cover the arithmetic, the finding grouping and labels, the queue store
+  and its sorting.
+- The first end-to-end run caught a real mismatch: the working rounded each dimension's points
+  to one decimal, so Synthetic Holdings B.V. added up to 44.1 against its score of 44. Each
+  dimension's points are now exact (a whole score times a whole percentage has at most two
+  decimals), the total is the API's score, and where the exact sum has two decimals (Synthetic
+  Pacific Banking Corporation: 18.25 against 18.2) the page says the score keeps one.
+- The maintainer pointed out that the handoff and guides had fallen behind the merged work.
+  Corrected every stale statement found in a review of all tracked Markdown files; shortening
+  the long ones waits for the maintainer's answer. At the maintainer's request, added the
+  start-of-session check above and put it in the initialization prompt and `AGENTS.md`.
+- #40 opened (A). Vercel skipped its preview: the Ignored Build Step compared only the last
+  commit, which changed only documents. Within the Vercel setup approved earlier, the step now
+  compares with the branch's last successful deployment; the guide says so. `vercel promote`
+  then failed too: it rebuilds the preview for production, and the new step skipped that
+  rebuild. Pointed the domain at the preview build instead (`vercel alias set`), and checked
+  it in a browser: the queue, then Cayman Synth Capital run against the live API, CRITICAL 76
+  with the hold notice, the match panel and a working total of 76.
+- Review on #40: Codex found that reopening a report re-recorded it with the current time, so an
+  older report could replace a newer run in the queue and restart its 24 hours. Runs are now
+  dated by the report's `generated_at`, and a newer run is kept. SonarQube flagged `tabIndex` on
+  the raw evidence record; it now wraps instead of scrolling, so it needs no focus.
+
+### 18 November 2026 — Azure readiness, the deploy identity and the live demo
 
 - Read-only check of the subscription, the GitHub settings and Vercel: nothing blocks the live
   run. The free-tier slots are unused, the providers the template needs are registered, the

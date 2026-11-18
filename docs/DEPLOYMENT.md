@@ -1,7 +1,7 @@
-# Deploying ARGUS to Azure
+# Deploying ARGUS
 
-How to put the API on Azure the way decision D1 describes it ("Hosting" in
-[ARCHITECTURE.md](ARCHITECTURE.md)), fill its data plane, check it, and remove it again. Nothing here is needed to run ARGUS locally:
+How to put the API on Azure and the web UI on Vercel the way decision D1 describes it ("Hosting"
+in [ARCHITECTURE.md](ARCHITECTURE.md)), fill the data plane, check it, and remove it again. Nothing here is needed to run ARGUS locally:
 the local data plane, the default, uses no cloud service at all.
 
 Every command runs the same in PowerShell and bash. None of them prints a key.
@@ -185,9 +185,11 @@ project `argus`, which is connected to this repository:
 - **What it builds.** Root Directory `web`, framework Next.js, and the Node.js major version in
   `web/.nvmrc`.
 - **When it deploys.** A push to `main` deploys production. Every other branch gets a preview
-  deployment, whose status and link appear on its pull request. The Ignored Build Step
-  `git diff HEAD^ HEAD --quiet -- .` skips a deployment when the commit changes nothing under
-  `web/`.
+  deployment, whose status and link appear on its pull request. The Ignored Build Step skips a
+  deployment when nothing under `web/` changed since the branch's last successful deployment
+  (`VERCEL_GIT_PREVIOUS_SHA`, empty on a branch's first push, which therefore always builds).
+  Comparing only the last commit, as Vercel's example does, skipped a whole pull request whose
+  last commit changed only documents.
 - **Its settings.** `NEXT_PUBLIC_API_URL` (the API's address) and
   `NEXT_PUBLIC_ARGUS_DEMO_ONLY=true`, for Production and Preview. Both are read at build time:
   the site calls that API and offers only the demo cases it accepts. The API accepts calls only
@@ -196,12 +198,16 @@ project `argus`, which is connected to this repository:
 - **What it leaves out.** [`web/.vercelignore`](../web/.vercelignore) keeps local settings,
   build output, test results and the Playwright tests out of the deployment.
 
-To show a branch on the live domain before it is merged, promote its preview deployment;
-`vercel rollback` returns to the previous production deployment, and the next merge to `main`
-replaces either:
+To show a branch on the live domain before it is merged, point the domain at its preview
+deployment. That serves the exact build that was checked, with the same settings (both are set
+for Preview too). `vercel promote` would rebuild it as a production deployment instead, and the
+Ignored Build Step skips that rebuild because the branch has not changed since its preview. To
+go back, point the domain at the latest production deployment
+(`vercel ls argus --environment production`); the next merge to `main` takes the domain back on
+its own:
 
 ```sh
-vercel promote https://<the preview deployment's address>
+vercel alias set <the preview deployment's address> argus.arjunganesh.dev
 ```
 
 Deploy through Git, not with `vercel deploy` from a working copy: with the Root Directory set,
@@ -215,7 +221,8 @@ several teams; in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
 vercel project add argus
 vercel link --yes --project argus
 vercel api /v9/projects/argus -X PATCH -f rootDirectory=web -f framework=nextjs \
-  -f nodeVersion="$(cat .nvmrc).x" -f "commandForIgnoringBuildStep=git diff HEAD^ HEAD --quiet -- ."
+  -f nodeVersion="$(cat .nvmrc).x" \
+  -f 'commandForIgnoringBuildStep=[ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null && git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- .'
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL production
 printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY production
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL preview

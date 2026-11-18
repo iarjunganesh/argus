@@ -20,6 +20,8 @@ uv sync
 ```
 
 No cloud account is needed: by default ARGUS reads synthetic data through its local data plane.
+The web UI in `web/` also needs [Node.js](https://nodejs.org/) 26; install it with
+`npm ci --prefix web`.
 
 ## Before you open a pull request
 
@@ -32,6 +34,14 @@ uv run pytest --cov
 uv run python scripts/ci/check_docs.py
 uv run python scripts/ci/check_versions.py --check
 uv run python scripts/ci/render_assets.py --check
+```
+
+If you change `web/`, also run its checks (the end-to-end tests need the API; see
+[`web/README.md`](web/README.md)):
+
+```sh
+npm --prefix web run lint && npm --prefix web run format:check && npm --prefix web run typecheck
+npm --prefix web test && npm --prefix web run build && npm --prefix web run test:e2e
 ```
 
 - **Tests come with the code.** Coverage is 100% of lines and branches, and CI enforces it.

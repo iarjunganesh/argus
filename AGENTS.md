@@ -158,7 +158,9 @@ the table lists one that doesn't exist.
 
 - [`HANDOFF.md`](HANDOFF.md) at the repository root is the shared record for every tool and
   person: current state, next step and a session log. Conversation history does not move
-  between tools, so before you stop, update its "Current state" and "Next step" sections and
+  between tools, so start each session with its "Start-of-session check" (the recorded facts
+  against git, GitHub and the live site, and the documents against every pull request since
+  the last entry), and before you stop, update its "Current state" and "Next step" sections and
   add a session-log entry.
 - `HANDOFF.md` is tracked and public. Write only public-safe project state in it: no account,
   subscription or billing details, no personal correspondence, no unpublished drafts.
