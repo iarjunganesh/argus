@@ -1,6 +1,6 @@
 import { FindingItem } from "@/components/finding-item";
 import { TierBadge } from "@/components/tier-badge";
-import { checkLabel, groupFindings, isSanctionsHold, scoreWorking } from "@/lib/case";
+import { checkLabel, groupFindings, isSanctionsHold, pointsNote, scoreWorking } from "@/lib/case";
 import type { Report } from "@/lib/report";
 
 const percent = (weight?: number) =>
@@ -10,7 +10,10 @@ const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : 
 
 /** The score's working: each dimension's points, and behind each its findings and evidence. */
 export function ScoreWorking({ report }: { report: Report }) {
-  const { rows, total } = scoreWorking(report.dimension_scores);
+  const { rows, sum } = scoreWorking(report.dimension_scores);
+  // The total is the overall score the API computed; the points above it are its working.
+  const total = report.risk_summary?.overall_risk_score ?? sum;
+  const note = pointsNote(sum, report.risk_summary?.overall_risk_score);
   const { byDimension, checksCompleted } = groupFindings(report.findings);
   const obligations = report.decision_record?.obligations ?? [];
   const evidence = report.evidence ?? {};
@@ -80,6 +83,7 @@ export function ScoreWorking({ report }: { report: Report }) {
           <span className="text-sm text-muted-foreground">of 100</span>
         </p>
       </div>
+      {note ? <p className="mt-3 text-sm text-muted-foreground">{note}</p> : null}
       {isSanctionsHold(report) ? (
         <p className="mt-3 text-sm font-medium">
           The sanctions hold, not the score band, sets the tier.

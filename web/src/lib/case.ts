@@ -24,30 +24,44 @@ export interface WorkingRow {
   tier?: string;
 }
 
-const round1 = (value: number) => Math.round(value * 10) / 10;
+// A whole score times a whole percentage has at most two decimal places; rounding to two only
+// clears floating-point noise, so each dimension's points stay exact.
+const round2 = (value: number) => Math.round(value * 100) / 100;
 
 function parseWeight(weight?: string): number | undefined {
   const match = weight?.trim().match(/^(\d+(?:\.\d+)?)\s*%$/);
   return match ? Number(match[1]) / 100 : undefined;
 }
 
-/** Each dimension's score times its weight, and their sum: the overall score. */
+/**
+ * Each dimension's score times its weight, and the sum of those points. The API rounds that sum to
+ * one decimal place for the overall score; `pointsNote` explains when the two differ.
+ */
 export function scoreWorking(dimensions?: Record<string, Dimension>): {
   rows: WorkingRow[];
-  total?: number;
+  sum?: number;
 } {
   const rows = DIMENSIONS.map(({ key, label }): WorkingRow => {
     const dimension = dimensions?.[key] ?? {};
     const score = Number.isFinite(dimension.score) ? dimension.score : undefined;
     const weight = parseWeight(dimension.weight);
-    const points = score !== undefined && weight !== undefined ? round1(score * weight) : undefined;
+    const points = score !== undefined && weight !== undefined ? round2(score * weight) : undefined;
     return { key, label, score, weight, points, tier: dimension.tier };
   });
   const complete = rows.every((row) => row.points !== undefined);
-  const total = complete
-    ? round1(rows.reduce((sum, row) => sum + (row.points ?? 0), 0))
+  const sum = complete
+    ? round2(rows.reduce((total, row) => total + (row.points ?? 0), 0))
     : undefined;
-  return { rows, total };
+  return { rows, sum };
+}
+
+/** Why the points' sum and the overall score differ, when they do. */
+export function pointsNote(sum?: number, score?: number): string | undefined {
+  if (sum === undefined || score === undefined || sum === score) return undefined;
+  // Rounding to one decimal place moves a two-decimal sum by 0.05 at most.
+  return Math.abs(sum - score) <= 0.05 + 1e-9
+    ? `The points add up to ${sum}; the overall score keeps one decimal place.`
+    : `The points add up to ${sum}, not the overall score of ${score}.`;
 }
 
 const DIMENSION_OF: Record<Finding["category"], DimensionKey> = {

@@ -10,6 +10,7 @@ import {
   investigationSummary,
   isSanctionsHold,
   sanctionsListing,
+  pointsNote,
   scoreWorking,
   uncertaintyLabel,
 } from "./case";
@@ -43,8 +44,8 @@ function finding(overrides: Partial<Finding>): Finding {
 }
 
 describe("scoreWorking", () => {
-  it("works out each dimension's points and the total as the report does", () => {
-    const { rows, total } = scoreWorking(CAYMAN_DIMENSIONS);
+  it("works out each dimension's points and their sum as the report does", () => {
+    const { rows, sum } = scoreWorking(CAYMAN_DIMENSIONS);
     expect(rows.map((row) => row.key)).toEqual([
       "identity",
       "screening",
@@ -54,28 +55,57 @@ describe("scoreWorking", () => {
     ]);
     expect(rows.map((row) => row.weight)).toEqual([0.2, 0.3, 0.15, 0.25, 0.1]);
     expect(rows.map((row) => row.points)).toEqual([6, 30, 6, 25, 9]);
-    expect(total).toBe(76);
+    expect(sum).toBe(76);
   });
 
-  it("keeps one decimal place", () => {
-    const { total } = scoreWorking({
-      ...CAYMAN_DIMENSIONS,
-      identity: { score: 31, weight: "20%" },
+  it("keeps each dimension's points exact, so they add up to the score", () => {
+    // Synthetic Holdings B.V.: 15 x 15% and 95 x 25% have two decimal places.
+    const { rows, sum } = scoreWorking({
+      identity: { score: 10, weight: "20%" },
+      screening: { score: 40, weight: "30%" },
+      corporate_ubo: { score: 15, weight: "15%" },
+      regulatory: { score: 95, weight: "25%" },
+      transaction: { score: 40, weight: "10%" },
     });
-    expect(total).toBe(76.2);
+    expect(rows.map((row) => row.points)).toEqual([2, 12, 2.25, 23.75, 4]);
+    expect(sum).toBe(44);
   });
 
-  it("gives no total when a dimension has no weight", () => {
-    const { rows, total } = scoreWorking({ ...CAYMAN_DIMENSIONS, regulatory: { score: 100 } });
+  it("adds points with decimals without float noise", () => {
+    const { sum } = scoreWorking({ ...CAYMAN_DIMENSIONS, identity: { score: 31, weight: "20%" } });
+    expect(sum).toBe(76.2);
+  });
+
+  it("gives no sum when a dimension has no weight", () => {
+    const { rows, sum } = scoreWorking({ ...CAYMAN_DIMENSIONS, regulatory: { score: 100 } });
     expect(rows[3].points).toBeUndefined();
-    expect(total).toBeUndefined();
+    expect(sum).toBeUndefined();
   });
 
   it("still lists the five dimensions for a report without scores", () => {
-    const { rows, total } = scoreWorking(undefined);
+    const { rows, sum } = scoreWorking(undefined);
     expect(rows).toHaveLength(5);
     expect(rows.every((row) => row.points === undefined)).toBe(true);
-    expect(total).toBeUndefined();
+    expect(sum).toBeUndefined();
+  });
+});
+
+describe("pointsNote", () => {
+  it("says nothing when the points add up to the score", () => {
+    expect(pointsNote(76, 76)).toBeUndefined();
+    expect(pointsNote(undefined, 76)).toBeUndefined();
+    expect(pointsNote(76, undefined)).toBeUndefined();
+  });
+
+  it("explains a sum the score rounds to one decimal place", () => {
+    // Synthetic Pacific Banking Corporation: the points add up to 18.25; the score is 18.2.
+    expect(pointsNote(18.25, 18.2)).toBe(
+      "The points add up to 18.25; the overall score keeps one decimal place.",
+    );
+  });
+
+  it("does not call a larger difference rounding", () => {
+    expect(pointsNote(50, 44)).toBe("The points add up to 50, not the overall score of 44.");
   });
 });
 
