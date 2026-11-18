@@ -53,7 +53,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.4-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-26-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-Radix-000000?logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.65-2EAD33)](https://playwright.dev/)
@@ -234,7 +234,7 @@ cp .env.example .env    # optional: choose a model provider or the Azure backend
 
 For a populated local data set, generate the synthetic data once: `uv run python data/synthetic/generate_entities.py`, and the other `generate_*.py` scripts in that folder.
 
-Start ARGUS: the API (which runs every agent in-process) and the web UI, which needs [Node.js](https://nodejs.org/) 24. Install the web UI once with `npm ci --prefix web`. On Windows, `scripts/dev/start_demo.ps1` starts both and `scripts/dev/end_demo.ps1` stops them. Elsewhere, start each in its own terminal:
+Start ARGUS: the API (which runs every agent in-process) and the web UI, which needs [Node.js](https://nodejs.org/) 26. Install the web UI once with `npm ci --prefix web`. On Windows, `scripts/dev/start_demo.ps1` starts both and `scripts/dev/end_demo.ps1` stops them. Elsewhere, start each in its own terminal:
 
 ```bash
 ARGUS_CORS_ORIGINS=http://localhost:3000 uv run uvicorn argus.api.main:app --port 8000

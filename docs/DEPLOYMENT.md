@@ -182,7 +182,8 @@ triggers": fill the data plane, then run the smoke check again (or rerun the wor
 The web UI runs on Vercel (Hobby plan) at `https://argus.arjunganesh.dev`, from the Vercel
 project `argus`, which is connected to this repository:
 
-- **What it builds.** Root Directory `web`, framework Next.js, Node.js 24.
+- **What it builds.** Root Directory `web`, framework Next.js, and the Node.js major version in
+  `web/.nvmrc`.
 - **When it deploys.** A push to `main` deploys production. Every other branch gets a preview
   deployment, whose status and link appear on its pull request. The Ignored Build Step
   `git diff HEAD^ HEAD --quiet -- .` skips a deployment when the commit changes nothing under
@@ -214,7 +215,7 @@ several teams; in Git Bash, set `MSYS_NO_PATHCONV=1` for `vercel api`):
 vercel project add argus
 vercel link --yes --project argus
 vercel api /v9/projects/argus -X PATCH -f rootDirectory=web -f framework=nextjs \
-  -f nodeVersion=24.x -f "commandForIgnoringBuildStep=git diff HEAD^ HEAD --quiet -- ."
+  -f nodeVersion="$(cat .nvmrc).x" -f "commandForIgnoringBuildStep=git diff HEAD^ HEAD --quiet -- ."
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL production
 printf %s true | vercel env add NEXT_PUBLIC_ARGUS_DEMO_ONLY production
 printf %s "https://<the API's address>" | vercel env add NEXT_PUBLIC_API_URL preview

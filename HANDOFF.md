@@ -163,8 +163,8 @@ write-up.
 
 ## Open items
 
-- **Manual upgrades the refresh reported.** Node.js 26 is now the LTS: move `web/.nvmrc` and
-  `@types/node` by hand. ESLint 10 and TypeScript 7 are major versions, held back by peer limits
+- **Manual upgrades the refresh reported.** Node.js 26, the LTS, is done (18 November). ESLint 10
+  and TypeScript 7 are major versions, held back by peer limits
   (`eslint-config-next` matches Next.js 16.4.6). Python 3.15 waits for wheels of msgspec,
   pyyaml and uvloop.
 - **The refresh does not move Agent Framework.** It keeps the exact pin at its locked version, so
