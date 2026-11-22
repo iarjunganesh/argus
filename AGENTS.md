@@ -146,6 +146,7 @@ Inside `src/argus/`:
 | `data_plane/` | The four data interfaces (retriever, entity store, report store, OCR), each with a local and an Azure implementation |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
 | `accessibility/` | WCAG contrast utilities, also used to check the images |
+| `study/` | The explanation study's commands: the week 1 baseline (`python -m argus.study.baseline`) |
 | `models.py` | The one language-model client factory (`ARGUS_MODEL_PROVIDER`) |
 | `config.py` | The Azure client factories behind the Azure data plane |
 | `findings.py` | Typed facts, evidence records and assessment states; ignores cached scores |

@@ -100,6 +100,22 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   decided without a sign-off, a missing reason, and blocked storage, with axe on each state;
   lint, format, type check and build.
 
+- **The study's week 1 baseline has its command.** `python -m argus.study.baseline --out
+  <folder>` runs today's analyst explanation (arm A) on the six demo scenarios, five times each,
+  and writes the records of the study protocol's section 13: a manifest (commits, policy
+  version, case hashes, model configuration, counts), every exact request with its input
+  exposure and regulatory passages, and every response with its outcome, source, usage, latency
+  and attempts. The prompt comes from the production code, now split into a prompt builder
+  (`analyst_request`) and a recorded call (`request_explanation`); the Compliance agent's
+  preparation (`prepare`) and the workflow's demo responses are shared the same way. A failed
+  request is retried twice; the command refuses any data plane but the local one and writes no
+  secret. No model baseline exists yet: that waits for the frozen protocol and the budget.
+  Checked: 20 new tests, 432 in all, at 100% line and branch coverage, including that the
+  baseline's prompt equals the one the workflow sends for each of the six scenarios, the
+  retries, a failure after them, an empty reply and the records' contents; the explanation and
+  demo scenario tests pass unchanged; ruff and mypy. Run with `ARGUS_MODEL_PROVIDER=none`, it
+  wrote 30 items, all labelled `fallback`.
+
 ### Changed
 
 - **Each session starts by checking the recorded facts.** `HANDOFF.md` has a start-of-session
