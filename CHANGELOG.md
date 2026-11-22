@@ -87,7 +87,8 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   decline or escalate. A HIGH or CRITICAL decision then waits for the approver, who signs off or
   returns it; a LOW or MEDIUM one is decided. The role is a switch in the header, and the page
   says the demo cannot check that the two roles are two people. The case header, the cases
-  queue and the audit trail show the review's state and steps. Steps are named after the
+  queue and the audit trail show the review's state and steps, and each recorded step is
+  announced to screen readers. Steps are named after the
   report's empty `decision_record` slots, kept by report ID (never the entity's name) for a day
   after the newest one, forgotten with a report the API no longer has, and replayed through the
   same rules, so an edited store cannot reach a forbidden state; a browser that blocks storage
