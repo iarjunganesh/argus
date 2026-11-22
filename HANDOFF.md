@@ -27,8 +27,9 @@ grounded facts and report what deviates, with file and line:
    it was checked; this file, the README, `docs/`, `web/README.md` and the diagrams describe the
    code it merged; and no earlier entry or page now contradicts it (search for the old value:
    a version, a status such as "not deployed", a count, a name).
-3. **The checks that read facts.** `check_docs.py`, `check_versions.py --check` and markdownlint
-   (the commands in `AGENTS.md`).
+3. **The checks that read facts.** `check_docs.py` and `check_versions.py --check` (the
+   commands in `AGENTS.md`), and markdownlint as CI's Documentation job runs it
+   (`npx markdownlint-cli2 "**/*.md"`, which reads `.markdownlint-cli2.jsonc`).
 4. **The live deployment.** <https://argus.arjunganesh.dev> answers, and so does the API's
    `/health` (the request wakes it; it scales back to zero about 12 minutes later). Compare with
    "Live since" below.
@@ -36,10 +37,24 @@ grounded facts and report what deviates, with file and line:
 Fix each deviation in the documents, or record it under Open items when it needs the
 maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, like any change.
 
-## Current state — 19 November 2026
+## Current state — 22 November 2026
 
-- **Source.** `main` is at `ef76ace` (#39 merged). Its CI passes. In progress on
-  `feat/analyst-workspace-a`: the analyst workspace's first pull request (Next step).
+- **Source.** `main` is at `2ec6197` (#40 merged); its CI and the scheduled CodeQL run pass.
+  With the maintainer's go-ahead, two branches were pushed on 22 November:
+  `docs/handoff-after-40` (this file after #40, and the session-check fixes) and, on top of it,
+  `feat/analyst-workspace-b`, whose pull request #41 carries both. Until #41 is merged, `main`'s
+  copy of this file still describes the state before #40 merged.
+- **Analyst workspace B is in review (#41).** The simulated review kept in the browser (design
+  section 8), plus a layout fix in the match panel. All 18 of its checks pass, including the web
+  UI's Playwright and axe tests; locally, 96 unit tests and 45 end-to-end runs passed. The final
+  review before opening it was a self-review by the author. The maintainer pointed
+  <https://argus.arjunganesh.dev> at its preview build (`vercel alias set`) on 22 November, so
+  the live site serves B until #41 is merged or the domain is pointed back at the latest
+  production deployment.
+- **Analyst workspace A is live (#40).** The site reads a report as a case file (case header,
+  sanctions match panel, "Why this score" with each finding's evidence) and lists the demo cases
+  with their last run in this browser. Production was redeployed from `2ec6197` and the domain
+  followed it.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -87,8 +102,8 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   result exists.
 - **Web UI on Node.js 26 (#39).** CI, the release workflow and Vercel read the version from
   `web/.nvmrc`.
-- **Checks.** Every pull request merged since 16 November (#31 to #39) passed all its CI checks
-  (16 to 18 each): 412 tests at 100% line and branch coverage, type check, lint, documentation,
+- **Checks.** Every pull request merged since 16 November (#31 to #40) passed all its CI checks
+  (16 to 18 each; rechecked on 22 November): 412 tests at 100% line and branch coverage, type check, lint, documentation,
   the web UI with its Playwright and axe tests, container image, dependency audit, CodeQL and
   SonarQube Cloud. No Dependabot, code scanning or secret scanning alert is open.
 
@@ -98,12 +113,18 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 [`docs/research/analyst-workspace-design.md`](docs/research/analyst-workspace-design.md). Two
 pull requests:
 
-1. **A**, built on `feat/analyst-workspace-a`: the cases queue, the case header, the score's
-   working, findings with their evidence, the sanctions match panel and the cold-start notice.
-   Pull request #40 (with the design). Its preview build serves <https://argus.arjunganesh.dev>
-   (`vercel alias set`, see `docs/DEPLOYMENT.md`) for the maintainer's review on the live site;
-   merge it, or point the domain back at the latest production deployment.
-2. **B**, after A is merged: the simulated review kept in the browser, reviewed the same way.
+1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
+   findings with their evidence, the sanctions match panel and the cold-start notice.
+2. **B: in review (#41, opened 22 November).** The simulated review kept in the browser (design
+   section 8, and "Calls made while building B"). The live domain serves its preview build for
+   the maintainer's review (`docs/DEPLOYMENT.md`). Merge #41, which deploys production and takes
+   the domain back, then delete both merged branches (`feat/analyst-workspace-b` and
+   `docs/handoff-after-40`); or point the domain back at the latest production deployment.
+
+Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
+request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
+this file (the session log to the last few entries; the unconfirmed schedule), the generated
+`docs/DEPENDENCY-REFRESH.md` (only what moved) and `docs/roadmap/durable-execution.md`.
 
 Web UI only: the API, the score and the demo profiles do not change.
 
@@ -217,7 +238,39 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 18 to 19 November 2026 (latest) — Node.js 26 and the analyst workspace (A)
+### 22 November 2026 (latest) — session check, then B built
+
+- Session check: `main` (`2ec6197`) and its CI as recorded; no pull request since #40, which
+  passed its 18 checks; only `main` on GitHub; no Dependabot, code scanning or secret scanning
+  alert; `check_docs.py` and `check_versions.py --check` pass, and markdownlint passes on every
+  tracked file; 412 tests at 100% coverage; the site answers and the API's `/health` answered
+  after a 25-second cold start; Vercel's production deployment is the one built from the #40
+  merge, and the domain points to it. Deviations: the handoff commit made after #40 was never
+  pushed, so `main`'s copy of this file still says #40 is open (it needs the go-ahead to push);
+  the design and the research index still said A's pull request was next; this file's check
+  named markdownlint as one of the `AGENTS.md` commands, which list none; and the next step
+  pointed at "plan tasks 6 to 9" in a plan kept only in one machine's scratch folder (now it
+  points at the design). Fixed in the documents. One idle day's cost was not read: the Azure
+  command line does not start on this machine.
+- Built B on `feat/analyst-workspace-b`, test first: the review's rules (every allowed and
+  refused step, and a replay that skips stored steps the rules would refuse), its store (keyed by
+  report ID, 24 hours, blocked storage), the review panels, the role switch, the review states in
+  the queue and the audit trail, and their end-to-end tests. The calls made while building it are
+  in the design. A browser check found the match panel squeezing the listing's values beside a
+  long label (an A defect); fixed in its own commit. A self-review found that a recorded step
+  was not announced to screen readers; fixed with a test that failed first.
+- With the maintainer's go-ahead, pushed `docs/handoff-after-40` and `feat/analyst-workspace-b`
+  and opened #41 for both; all 18 checks pass, SonarQube's gate passed and Codex found nothing.
+  The maintainer then pointed the live domain at #41's preview build; the site answers with B's
+  role switch. Nothing deployed to production or paid for.
+
+### 19 November 2026 — #40 merged
+
+- The maintainer reviewed A on the live site and merged #40 (18 checks passing). Deleted the
+  `feat/analyst-workspace-a` branch; only `main` remains. The merge deployed production from
+  `2ec6197` and the domain moved to it from the preview. B starts on 20 November.
+
+### 18 to 19 November 2026 — Node.js 26 and the analyst workspace (A)
 
 - #38 (the live deployment in the docs) and #39 (the web UI on Node.js 26) merged with every
   check passing. The README's live badges link to the site and the API's health check. The

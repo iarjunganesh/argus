@@ -79,6 +79,27 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   findings, evidence and hold, the queue after a run, and the notice with a four-second delay;
   lint, format, type check and build.
 
+- **A visitor can play the review a person does after ARGUS recommends (B of that design).**
+  Kept in the browser only and labelled on every case as a demo that sends nothing. With a
+  sanctions hold, the analyst first confirms, clears or escalates the match in its panel; then
+  decides the case with a reason: approve, approve with enhanced due diligence (the only
+  approval offered when a rule requires it), decline or escalate, where a confirmed match leaves
+  decline or escalate. A HIGH or CRITICAL decision then waits for the approver, who signs off or
+  returns it; a LOW or MEDIUM one is decided. The role is a switch in the header, and the page
+  says the demo cannot check that the two roles are two people. The case header, the cases
+  queue and the audit trail show the review's state and steps, and each recorded step is
+  announced to screen readers. Steps are named after the
+  report's empty `decision_record` slots, kept by report ID (never the entity's name) for a day
+  after the newest one, forgotten with a report the API no longer has, and replayed through the
+  same rules, so an edited store cannot reach a forbidden state; a browser that blocks storage
+  keeps the review for the open page and says so. The API, its `decision_record`, the scores and
+  the demo profiles are unchanged. Checked: 30 new unit tests (every allowed and refused step,
+  the replay, the store's expiry, blocked storage and the queue's review state), 96 in all; 45
+  end-to-end runs (15 tests in light, dark and phone layouts) against the local API, including
+  Cayman Synth Capital's match, decision and sign-off kept across a reload, Jane Synthetic
+  decided without a sign-off, a missing reason, and blocked storage, with axe on each state;
+  lint, format, type check and build.
+
 ### Changed
 
 - **Each session starts by checking the recorded facts.** `HANDOFF.md` has a start-of-session
@@ -119,6 +140,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **A long label in a list of facts no longer squeezes its value.** In the sanctions match
+  panel at desktop width, the label "Match score reported by the screening source" took the
+  label column's full width, so the listing's programme, entry and match wrapped a few letters
+  per line. Labels now take at most half the width and wrap. Checked: screenshots of Cayman Synth
+  Capital at 1280 pixels and phone width before and after; the end-to-end axe checks pass.
+- **The handoff's session check and the workspace design's status match the repository.** The
+  check named markdownlint as one of the commands in `AGENTS.md`, which lists none; it now gives
+  the command CI's Documentation job runs. The design and the research index said A's pull
+  request was next; they say it merged in #40. Checked on 22 November: `check_docs.py`,
+  `check_versions.py --check` and markdownlint pass.
 - **A pull request whose last commit changes only documents still gets a preview.** The Vercel
   project's Ignored Build Step compared only the last commit (`git diff HEAD^ HEAD`), so it
   skipped #40's preview although the branch changes `web/`. It now compares with the branch's

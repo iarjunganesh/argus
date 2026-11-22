@@ -16,6 +16,7 @@ import {
 } from "@/lib/progress";
 import { investigationSummary } from "@/lib/case";
 import { demoCaseIndex, forgetReport, recordRun, runEntry } from "@/lib/queue";
+import { forgetSteps } from "@/lib/review-store";
 import { AGENTS, type Report } from "@/lib/report";
 import { recalledEntityName } from "@/lib/session";
 
@@ -43,7 +44,10 @@ export function Assessment({ reportId }: { reportId: string }) {
     const settle = (next: Outcome) => {
       settled = true;
       source.close();
-      if (next === "not_found") forgetReport(reportId);
+      if (next === "not_found") {
+        forgetReport(reportId);
+        forgetSteps(reportId);
+      }
       setOutcome(next);
     };
     const finish = async (status: string) => {

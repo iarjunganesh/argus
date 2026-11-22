@@ -62,7 +62,11 @@ their evidence records behind each), then the
 explanation, the regulations cited, the actions and a collapsed audit trail. Nothing there is
 computed beyond what the report holds. The start page lists the demo cases with their last run
 in this browser (`localStorage`, by the case's position, never its name, kept 24 hours), and
-says when the API is starting from zero replicas. Its colours are the audited palette in
+says when the API is starting from zero replicas. A simulated review runs in the browser only:
+an analyst resolves a sanctions match and decides the case with a reason, and a HIGH or CRITICAL
+decision waits for an approver's sign-off, with the role chosen in the header. Its steps are kept
+in `localStorage` by report ID for 24 hours, labelled as a demo, and never sent to the API, which
+keeps `decision_record` pending review (its `reviewer`, `decided_at` and `rationale` stay empty). Its colours are the audited palette in
 `src/argus/accessibility/wcag.py`, checked for WCAG AA in both themes by
 `scripts/ci/render_assets.py --check`. See [`web/README.md`](../web/README.md).
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Public_Sans } from "next/font/google";
+import { RoleSwitch } from "@/components/role-switch";
 import { DEMO_ONLY } from "@/lib/demo";
 
 import "./globals.css";
@@ -36,13 +37,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <span className="hidden text-sm text-muted-foreground sm:inline">
               KYC risk screening with cited evidence
             </span>
-            <nav aria-label="Main" className="ml-auto">
+            <nav aria-label="Main" className="ml-auto flex items-center gap-4">
               <Link
                 href="/"
                 className="rounded-md px-2 py-1 text-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
               >
                 {DEMO_ONLY ? "Cases" : "New assessment"}
               </Link>
+              <RoleSwitch />
             </nav>
           </div>
         </header>

@@ -1,7 +1,7 @@
 # Design: the web UI as an analyst's workspace
 
-Status: **approved by the maintainer on 2026-11-18. A is built (2026-11-19, its pull request
-is next); B is not yet.** It covers
+Status: **approved by the maintainer on 2026-11-18 and built: A in #40 (merged 2026-11-19), B
+on 2026-11-22 in the pull request after it.** It covers
 two changes the maintainer chose to make together: the report as a case file an analyst can read
 quickly (A), and a simulated review with decisions kept in the visitor's browser (B).
 
@@ -240,6 +240,20 @@ cold start), then B (the review). Each passes every check on its own.
   this score"; "Decide the case" comes with B's decision panel.
 - In demo mode the start page's heading and the navigation read "Cases".
 - The narrow case list beside an open case has no Run buttons; cases run from the start page.
+
+## Calls made while building B
+
+- Each step's fields are named after the report's empty `decision_record` slots: `reviewer` (the
+  role), `decided_at` (ISO 8601) and `rationale`, with the chosen `action`.
+- The rules replay the stored steps and skip any they would refuse, so a store edited by hand
+  cannot reach a state they forbid.
+- A decline on a HIGH or CRITICAL case also waits for the approver; escalation closes the review
+  at any tier.
+- The role switch is a list box labelled "Role" in the header, as in the sketch above; the note
+  that the demo cannot check that the two roles are two people sits in each review panel.
+- The review section lists the steps so far, so the approver sees what they sign off; the audit
+  trail lists them too.
+- Without a hold, the header's button is "Decide the case" and moves to the review section.
 
 ## Left to the builder
 
