@@ -3,12 +3,24 @@
 Both functions ask the configured language model (`argus.models`) and fall back to fixed text
 when no model is configured or the call fails. `explain_decision` reports which one wrote the
 explanation, so a report never passes the fallback text off as model output.
+
+The analyst explanation is built in two steps that the study's baseline (`argus.study`) reuses:
+`analyst_request` writes the prompt and its fallback text, and `request_explanation` sends it and
+records the call.
 """
+
+import time
+from dataclasses import dataclass
+from typing import Any, Literal
 
 from argus.models import get_chat_model
 from argus.utils.structured_logger import get_logger
 
 logger = get_logger("tool.explain_decision")
+
+# The analyst explanation's length and sampling, for a model that takes them (`ChatModel.limits`).
+MAX_TOKENS = 250
+TEMPERATURE = 0.2
 
 SANCTIONS_TEXT = {
     "potential_match": "potential match, not yet confirmed or cleared by a person",
@@ -17,14 +29,43 @@ SANCTIONS_TEXT = {
 }
 
 
-async def explain_decision(
+# Why an explanation fell back: `unavailable`, no model is configured; `call`, the request failed;
+# `empty`, the model answered with nothing.
+ErrorKind = Literal["unavailable", "call", "empty"]
+
+
+@dataclass(frozen=True)
+class AnalystRequest:
+    """The analyst explanation's prompt, and the fixed text used when no model answers."""
+
+    prompt: str
+    fallback: str
+
+
+@dataclass(frozen=True)
+class ExplanationCall:
+    """One attempt at the analyst explanation, as sent and as answered."""
+
+    text: str
+    source: Literal["model", "fallback"]
+    # The exact Chat Completions arguments sent; None when no model is configured.
+    request: dict | None = None
+    response_model: str | None = None
+    response_id: str | None = None
+    usage: dict | None = None
+    latency_seconds: float | None = None
+    error_kind: ErrorKind | None = None
+    error: str | None = None
+
+
+def analyst_request(
     entity: dict,
     risk_summary: dict,
     dimension_scores: dict,
     key_findings: list,
     regulatory_triggers: list,
-) -> dict:
-    """Return `{"text": ..., "source": "model" | "fallback"}`."""
+) -> AnalystRequest:
+    """The prompt the Compliance agent sends for a case, and its fallback text."""
     tier = risk_summary.get("overall_risk_tier", "UNKNOWN")
     score = risk_summary.get("overall_risk_score", 0)
     held = risk_summary.get("tier_basis") == "sanctions_match"
@@ -87,22 +128,69 @@ Rules:
 - Do NOT start with 'The entity'.
 - Be direct and professional."""
 
+    return AnalystRequest(prompt, _fallback_explanation(tier, key_findings, held, edd))
+
+
+def _error(exc: Exception) -> str:
+    return f"{type(exc).__name__}: {exc}"
+
+
+def _usage(response: object) -> dict | None:
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return None
+    dump = getattr(usage, "model_dump", None)
+    return dump(exclude_none=True) if dump else dict(vars(usage))
+
+
+def _fallback(analyst: AnalystRequest, kind: ErrorKind, error: str, **call: Any) -> ExplanationCall:
+    logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": error})
+    return ExplanationCall(analyst.fallback, "fallback", error_kind=kind, error=error, **call)
+
+
+async def request_explanation(request: AnalystRequest) -> ExplanationCall:
+    """Send the analyst prompt to the configured model once; fall back, labelled, if it fails."""
     try:
         chat = get_chat_model()
-        response = await chat.client.chat.completions.create(
-            model=chat.model,
-            messages=[{"role": "user", "content": prompt}],
-            **chat.limits(max_tokens=250, temperature=0.2),
-        )
-        text = (response.choices[0].message.content or "").strip()
+    except Exception as exc:  # noqa: BLE001 - no usable model configuration: nothing is sent
+        return _fallback(request, "unavailable", _error(exc))
+    body = {
+        "model": chat.model,
+        "messages": [{"role": "user", "content": request.prompt}],
+        **chat.limits(max_tokens=MAX_TOKENS, temperature=TEMPERATURE),
+    }
+    started = time.perf_counter()
+    try:
+        response = await chat.client.chat.completions.create(**body)
     except Exception as exc:  # noqa: BLE001 - any model failure falls back, labelled as such
-        logger.warning("tool.fallback", extra={"tool": "explain_decision", "reason": str(exc)})
-        text = _fallback_explanation(tier, key_findings, held, edd)
-        return {"text": text, "source": "fallback"}
+        latency = round(time.perf_counter() - started, 3)
+        return _fallback(request, "call", _error(exc), request=body, latency_seconds=latency)
+    call: dict[str, Any] = {
+        "request": body,
+        "response_model": getattr(response, "model", None),
+        "response_id": getattr(response, "id", None),
+        "usage": _usage(response),
+        "latency_seconds": round(time.perf_counter() - started, 3),
+    }
+    text = (response.choices[0].message.content or "").strip()
     if not text:
-        text = _fallback_explanation(tier, key_findings, held, edd)
-        return {"text": text, "source": "fallback"}
-    return {"text": text, "source": "model"}
+        return _fallback(request, "empty", "empty reply", **call)
+    return ExplanationCall(text, "model", **call)
+
+
+async def explain_decision(
+    entity: dict,
+    risk_summary: dict,
+    dimension_scores: dict,
+    key_findings: list,
+    regulatory_triggers: list,
+) -> dict:
+    """Return `{"text": ..., "source": "model" | "fallback"}`."""
+    request = analyst_request(
+        entity, risk_summary, dimension_scores, key_findings, regulatory_triggers
+    )
+    call = await request_explanation(request)
+    return {"text": call.text, "source": call.source}
 
 
 def _fallback_explanation(tier: str, findings: list, held: bool = False, edd: bool = False) -> str:
