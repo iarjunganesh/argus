@@ -39,8 +39,16 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 22 November 2026
 
-- **Source.** `main` is at `bb1a67e` (#41 merged on 22 November); its CI, Attribution and
-  CodeQL runs pass. All branches other than `main` are deleted.
+- **Source.** `main` is at `d2105ce` (#42, the handoff after #41, merged on 22 November); #41
+  (`bb1a67e`) passed its CI, Attribution and CodeQL runs on `main`. Two local branches wait for
+  the maintainer's go-ahead to push: `fix/review-minors` (the four minor points from B's
+  self-review) and `feat/study-baseline` (the week 1 baseline command, below).
+- **The week 1 baseline command is built, not pushed.** On `feat/study-baseline`:
+  `python -m argus.study.baseline` runs arm A on the six demo scenarios and writes the
+  protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)). The
+  analyst prompt comes from the production code, now split into a prompt builder and a recorded
+  call. 432 tests pass at 100% coverage; run without a model, it wrote 30 items, all labelled
+  fallback. No model baseline exists.
 - **The analyst workspace is live (#40 and #41).** The site reads a report as a case file (case
   header, sanctions match panel, "Why this score" with each finding's evidence) and lists the
   demo cases with their last run and review state in this browser (A, #40). A visitor can play
@@ -108,10 +116,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
    findings with their evidence, the sanctions match panel and the cold-start notice.
 2. **B: done (#41, 22 November).** The simulated review kept in the browser (design section 8,
-   and "Calls made while building B"). Four minor points from its self-review are open, none
-   blocking: the review form can keep a stale choice after an error, a full (not blocked)
-   storage is reported as blocked, the Reason field is not marked required before a refusal,
-   and outside demo mode the phone header wraps "New assessment".
+   and "Calls made while building B"). The four minor points from its self-review are fixed on
+   `fix/review-minors`, waiting for the go-ahead to push: full storage gets an accurate notice,
+   the Reason field is marked required, a form starts afresh when its open steps change, and
+   the header stays whole at phone widths (51 end-to-end runs pass).
 
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
@@ -130,11 +138,10 @@ Then, in order:
 1. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
    line says "frozen" with the date, and that version reaches `main` before any study model
    call.
-2. Week 1 code, which can start before the freeze because it makes no model call: a documented
-   baseline command that takes the analyst prompt from the production code path (split
-   `explain_decision()` into a prompt builder and the call) and writes the run records in
-   protocol section 13. Exercise it with `ARGUS_MODEL_PROVIDER=none`; those outputs are
-   labelled fallback and are not a model baseline.
+2. Week 1 code: built on `feat/study-baseline` (22 November), waiting for the go-ahead to push
+   and its own pull request. Before the baseline run, check that the local `.env` points at the
+   chosen model deployment, and record the prices in the run (the manifest's `prices` is empty
+   until the budget is set).
 3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
    repeats), then week 2 (case generator, per-case references, minimised input).
 
@@ -228,7 +235,23 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 22 November 2026 (latest) — #41 merged
+### 22 November 2026 (latest, continued) — B's minor points and the week 1 code
+
+- At the maintainer's request, fixed the four minor points from B's self-review on
+  `fix/review-minors`, each with an end-to-end test that failed first, except the stale form
+  choice, which no test can produce today (the form is replaced whenever its open steps
+  change), so its key is a guard. A browser check at 360 pixels found the header overlapping
+  the logo with the first fix; it now wraps below the logo there.
+- Built the week 1 code on `feat/study-baseline`, test first: the analyst explanation split
+  into `analyst_request` and `request_explanation` (which records the request, model, usage,
+  latency and error), the Compliance agent's `prepare` and the workflow's demo responses
+  shared, and `argus.study.baseline`, which writes the protocol's section 13 records, retries a
+  failed request twice, refuses a non-local data plane and writes no secret. A test checks that
+  its prompt equals the workflow's for all six scenarios.
+- The maintainer merged #42 and asked for its branch to be deleted; only `main` is on GitHub.
+  Nothing pushed since.
+
+### 22 November 2026 — #41 merged
 
 - The maintainer pointed the live domain at #41's preview, reviewed B there and merged #41
   (18 checks passing; SonarQube's gate passed; Codex found nothing). `main`'s CI, Attribution
