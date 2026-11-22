@@ -39,15 +39,17 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 22 November 2026
 
-- **Source.** `main` is at `2ec6197` (#40 merged); its CI and the scheduled CodeQL run pass. On
-  GitHub only `main` exists. Two local branches are not pushed: `docs/handoff-after-40` (this
-  file after #40, and the session-check fixes of 22 November) and, on top of it,
-  `feat/analyst-workspace-b` (B, below). Until they are pushed, `main`'s copy of this file still
-  describes the state before #40 merged.
-- **Analyst workspace B is built, not pushed.** On `feat/analyst-workspace-b`: the simulated
-  review kept in the browser (design section 8), plus a layout fix in the match panel. The web
-  UI's checks pass locally (96 unit tests; 45 end-to-end runs against the local API in light,
-  dark and phone layouts, with axe); the final review was a self-review by the author.
+- **Source.** `main` is at `2ec6197` (#40 merged); its CI and the scheduled CodeQL run pass.
+  With the maintainer's go-ahead, two branches were pushed on 22 November:
+  `docs/handoff-after-40` (this file after #40, and the session-check fixes) and, on top of it,
+  `feat/analyst-workspace-b`, whose pull request #41 carries both. Until #41 is merged, `main`'s
+  copy of this file still describes the state before #40 merged.
+- **Analyst workspace B is in review (#41).** The simulated review kept in the browser (design
+  section 8), plus a layout fix in the match panel. All 18 of its checks pass, including the web
+  UI's Playwright and axe tests; locally, 96 unit tests and 45 end-to-end runs passed. The final
+  review before opening it was a self-review by the author. Its preview build is
+  <https://argus-git-feat-analyst-workspace-b-arjunganesh.vercel.app>; the live domain still
+  serves A.
 - **Analyst workspace A is live (#40).** The site reads a report as a case file (case header,
   sanctions match panel, "Why this score" with each finding's evidence) and lists the demo cases
   with their last run in this browser. Production was redeployed from `2ec6197` and the domain
@@ -112,13 +114,11 @@ pull requests:
 
 1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
    findings with their evidence, the sanctions match panel and the cold-start notice.
-2. **B: built on 22 November, waiting for the maintainer's go-ahead to push.** The simulated
-   review kept in the browser (design section 8, and "Calls made while building B"). Next, with
-   the go-ahead: push `docs/handoff-after-40` and `feat/analyst-workspace-b` and open B's pull
-   request (the handoff commits ride in it, or go first as a docs pull request of their own);
-   point <https://argus.arjunganesh.dev> at its preview build (`vercel alias set`, see
-   `docs/DEPLOYMENT.md`) for the maintainer's review on the live site; merge it, or point the
-   domain back at the latest production deployment.
+2. **B: in review (#41, opened 22 November).** The simulated review kept in the browser (design
+   section 8, and "Calls made while building B"). The maintainer reviews it on its preview
+   build, or, on request, on <https://argus.arjunganesh.dev> pointed at that build (`vercel
+   alias set`, see `docs/DEPLOYMENT.md`). Then merge #41, which deploys production, and delete
+   both merged branches (`feat/analyst-workspace-b` and `docs/handoff-after-40`).
 
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
@@ -258,7 +258,10 @@ requests.
   in the design. A browser check found the match panel squeezing the listing's values beside a
   long label (an A defect); fixed in its own commit. A self-review found that a recorded step
   was not announced to screen readers; fixed with a test that failed first.
-- Nothing pushed, deployed or paid for.
+- With the maintainer's go-ahead, pushed `docs/handoff-after-40` and `feat/analyst-workspace-b`
+  and opened #41 for both; all 18 checks pass. Pointing the live domain at #41's preview was
+  left for the maintainer to ask for, because the go-ahead named the push and the pull request
+  only. Nothing deployed to production or paid for.
 
 ### 19 November 2026 — #40 merged
 
