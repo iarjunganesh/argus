@@ -39,10 +39,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 22 November 2026
 
-- **Source.** `main` is at `390a86c` (#43, the four minor points from B's self-review, merged
-  on 22 November). The week 1 baseline command is in review as #44 (`feat/study-baseline`). The
-  merged `fix/review-minors` branch still exists on GitHub.
-- **The week 1 baseline command is in review (#44).** On `feat/study-baseline`:
+- **Source.** `main` is at `78f6fde` (#44, the week 1 baseline command, merged on 22
+  November, after #43, the four minor points from B's self-review). Only `main` exists on
+  GitHub.
+- **The week 1 baseline command is merged (#44).**
   `python -m argus.study.baseline` runs arm A on the six demo scenarios and writes the
   protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)). The
   analyst prompt comes from the production code, now split into a prompt builder and a recorded
@@ -104,8 +104,8 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   result exists.
 - **Web UI on Node.js 26 (#39).** CI, the release workflow and Vercel read the version from
   `web/.nvmrc`.
-- **Checks.** Every pull request merged since 16 November (#31 to #41) passed all its CI checks
-  (16 to 18 each): 412 tests at 100% line and branch coverage, type check, lint, documentation,
+- **Checks.** Every pull request merged since 16 November (#31 to #44) passed all its CI checks
+  (16 to 18 each): 434 tests at 100% line and branch coverage, type check, lint, documentation,
   the web UI with its Playwright and axe tests, container image, dependency audit, CodeQL and
   SonarQube Cloud. No Dependabot, code scanning or secret scanning alert is open.
 
@@ -139,10 +139,9 @@ Then, in order:
 1. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
    line says "frozen" with the date, and that version reaches `main` before any study model
    call.
-2. Week 1 code: in review as #44 (22 November); merge it, then delete `feat/study-baseline`
-   and the merged `fix/review-minors`. Before the baseline run, check that the local `.env` points at the
-   chosen model deployment, and record the prices in the run (the manifest's `prices` is empty
-   until the budget is set).
+2. Week 1 code: done (#44, 22 November). Before the baseline run, check that the local `.env`
+   points at the chosen model deployment, and record the prices in the run (the manifest's
+   `prices` is empty until the budget is set).
 3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
    repeats), then week 2 (case generator, per-case references, minimised input).
 
@@ -261,6 +260,9 @@ requests.
   guide and Open items said branch protection was off; two rulesets (`main`, `release tags`)
   have been active since September and October. Corrected both. Replied to and resolved Codex's
   thread, and deleted the merged `fix/review-minors` branch.
+- The maintainer merged #44 (18 checks passing). `main`'s CI and Attribution runs on `78f6fde`
+  pass; #44 changed nothing under `web/`. Deleted the merged `feat/study-baseline` branch; only
+  `main` remains.
 
 ### 22 November 2026 — #41 merged
 
