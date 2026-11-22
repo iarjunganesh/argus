@@ -18,7 +18,8 @@ import type { Role, Step } from "@/lib/review-store";
 export const DEMO_LABEL =
   "Demo review: kept in this browser only and sent nowhere. ARGUS recommends; a person decides.";
 
-const NOT_KEPT = "Not kept: this browser blocks storage.";
+const NOT_KEPT =
+  "Not kept: this browser's storage is blocked or full, so the review lasts only while this page is open.";
 
 /** The review's steps so far: what was chosen, by which role, when and why. */
 export function ReviewSteps({ steps, empty }: { steps: Step[]; empty: string }) {
@@ -96,6 +97,7 @@ function StepForm({
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           rows={3}
+          aria-required={optional ? undefined : true}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           className="w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm dark:bg-input/30"
@@ -143,7 +145,7 @@ function MatchReview({ review }: { review: Review }) {
       </div>
       {open.length && by ? (
         role === by ? (
-          <StepForm legend="Is this the listed party?" actions={open} add={add} />
+          <StepForm key={open.join()} legend="Is this the listed party?" actions={open} add={add} />
         ) : (
           <p className="mt-2 text-sm">{waitingFor(by)}</p>
         )
@@ -181,7 +183,7 @@ function CaseReview({ review }: { review: Review }) {
       ) : null}
       {open.length && by ? (
         role === by ? (
-          <StepForm legend={legend} actions={open} add={add} />
+          <StepForm key={open.join()} legend={legend} actions={open} add={add} />
         ) : (
           <p className="mt-2 text-sm">{waitingFor(by)}</p>
         )

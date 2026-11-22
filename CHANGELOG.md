@@ -140,6 +140,19 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **Four small faults in the demo review are gone.** A browser whose storage is full, not only
+  one that blocks it, now gets an accurate notice ("Not kept: this browser's storage is blocked
+  or full, so the review lasts only while this page is open."; it said the browser blocks
+  storage). The Reason field is marked required to assistive technology as soon as a step that
+  needs one is chosen, not only after a refusal. A form starts afresh whenever its set of open
+  steps changes, so it cannot carry a stale choice. The header keeps "New assessment" on one line
+  beside the role switch at phone width, and on screens too narrow for both it wraps the links
+  below the logo instead of squeezing the logo. Checked: end-to-end tests for full storage, the
+  required field and the header at 360 and 412 pixels failed on the old build and pass now; all
+  51 end-to-end runs (17 tests in light, dark and phone layouts, with axe) and 96 unit tests
+  pass; lint, format, type check and build; screenshots of the header at both widths. No test
+  could make the stale choice happen: the form is replaced whenever its open steps change today,
+  so that change is a guard.
 - **A long label in a list of facts no longer squeezes its value.** In the sanctions match
   panel at desktop width, the label "Match score reported by the screening source" took the
   label column's full width, so the listing's programme, entry and match wrapped a few letters
