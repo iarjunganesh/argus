@@ -174,6 +174,9 @@ async function recordStep(section: ReturnType<Page["getByRole"]>, action: string
   await section.getByRole("button", { name: "Record the step" }).click();
 }
 
+const NOT_KEPT =
+  "Not kept: this browser's storage is blocked or full, so the review lasts only while this page is open.";
+
 const DEMO_LABEL =
   "Demo review: kept in this browser only and sent nowhere. ARGUS recommends; a person decides.";
 
@@ -212,6 +215,11 @@ test("Cayman Synth Capital: the match, the decision and the approver's sign-off"
   await expectNoAxeViolations(page);
 
   await page.getByLabel("Role", { exact: true }).selectOption("approver");
+  await review.getByRole("radio", { name: "Sign off" }).check();
+  await expect(review.getByLabel("Comment (optional)")).not.toHaveAttribute(
+    "aria-required",
+    "true",
+  );
   await recordStep(review, "Sign off");
   await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
 
@@ -230,7 +238,9 @@ test("Jane Synthetic: a LOW case is decided without a second sign-off", async ({
   await page.getByRole("link", { name: "Decide the case" }).click();
   const review = page.getByRole("region", { name: "Review", exact: true });
 
-  // A decision needs a reason.
+  // A decision needs a reason, and the field says so before anything is refused.
+  await review.getByRole("radio", { name: "Approve", exact: true }).check();
+  await expect(review.getByLabel("Reason")).toHaveAttribute("aria-required", "true");
   await recordStep(review, "Approve");
   await expect(review.getByRole("alert")).toHaveText(
     "Give a reason: the review records why each step was taken.",
@@ -257,8 +267,45 @@ test("a browser that blocks storage still reviews the open page and says nothing
   });
   await runCase(page, "Jane Synthetic");
   const review = page.getByRole("region", { name: "Review", exact: true });
-  await expect(review.getByText("Not kept: this browser blocks storage.")).toBeVisible();
+  await expect(review.getByText(NOT_KEPT)).toBeVisible();
   await recordStep(review, "Decline", "Testing a blocked browser.");
   await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
   await expectNoAxeViolations(page);
+});
+
+test("a browser whose storage is full says the review is not kept", async ({ page }) => {
+  await page.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key.startsWith("argus:review:")) {
+        throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+      }
+      setItem.call(this, key, value);
+    };
+  });
+  await runCase(page, "Jane Synthetic");
+  const review = page.getByRole("region", { name: "Review", exact: true });
+  await expect(review.getByText(/^Not kept/)).toHaveCount(0);
+  await recordStep(review, "Approve", "Testing a full browser storage.");
+  await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
+  await expect(review.getByText(NOT_KEPT)).toBeVisible();
+});
+
+test("the header keeps its items whole and apart at phone widths", async ({ page }) => {
+  for (const width of [360, 412]) {
+    await page.setViewportSize({ width, height: 740 });
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Main" });
+    // One line of small text with its padding is about 28 pixels tall; two lines are over 40.
+    const link = await nav.getByRole("link").boundingBox();
+    expect(link?.height).toBeLessThan(34);
+    // The logo keeps its width, and the link sits after it or wraps below it: never on top.
+    const logoLink = page.getByRole("banner").getByRole("link").first();
+    const squeezed = await logoLink.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+    expect(squeezed).toBe(false);
+    const logo = await logoLink.boundingBox();
+    if (!logo || !link) throw new Error("the header's links are not on the page");
+    expect(logo.x + logo.width <= link.x || link.y >= logo.y + logo.height).toBe(true);
+    await expect(page.getByLabel("Role", { exact: true })).toBeInViewport();
+  }
 });

@@ -11,7 +11,8 @@ export function RoleSwitch() {
   const [role, setRole] = useRole();
   return (
     <div className="flex items-center gap-2 text-sm">
-      <label htmlFor={id} className="text-muted-foreground">
+      {/* The select's name stays "Role"; phones hide the word to keep the header on one line. */}
+      <label htmlFor={id} className="sr-only text-muted-foreground sm:not-sr-only">
         Role
       </label>
       <select

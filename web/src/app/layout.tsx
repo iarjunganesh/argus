@@ -25,10 +25,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <header className="border-b bg-card">
-          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
             <Link
               href="/"
-              className="flex items-center gap-2 rounded-md font-semibold tracking-wide focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex shrink-0 items-center gap-2 rounded-md font-semibold tracking-wide focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- a static SVG needs no optimisation */}
               <img src="/icon.svg" alt="" width={28} height={28} />
@@ -40,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <nav aria-label="Main" className="ml-auto flex items-center gap-4">
               <Link
                 href="/"
-                className="rounded-md px-2 py-1 text-sm font-medium underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
+                className="rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none"
               >
                 {DEMO_ONLY ? "Cases" : "New assessment"}
               </Link>

@@ -45,8 +45,9 @@ the recorded outcomes in [`tests/fixtures/demo_scenarios.json`](../tests/fixture
 (the tier, the score and its working, each finding's evidence, the sanctions hold), check the
 cases queue and the cold-start notice, walk the demo review (Cayman Synth Capital's match,
 decision and sign-off, kept across a reload; Jane Synthetic decided without a sign-off; a missing
-reason; a browser that blocks storage), all in light, dark and phone layouts, and check every page
-and review state with axe (WCAG 2.2 AA rules). The first
+reason; a browser whose storage is blocked or full), check that the header stays whole at 360 and
+412 pixels wide, all in light, dark and phone layouts, and check every page and review state with
+axe (WCAG 2.2 AA rules). The first
 run needs a browser: `npm run e2e:browsers`. CI runs them against the API container.
 
 ## Where things are
@@ -79,8 +80,8 @@ the demo cannot check that they are two people.
 The steps (role, choice, reason, time, named after the report's empty `decision_record` slots)
 are kept in `localStorage` by report ID, never the entity's name, and dropped a day after the
 newest step, as the API drops its reports; a report the API no longer has forgets its review.
-The cases queue shows each run's review state. If the browser blocks storage, the review works
-for the open page and says it is not kept. Nothing is sent to the API.
+The cases queue shows each run's review state. If the browser's storage is blocked or full, the
+review works for the open page and says it is not kept. Nothing is sent to the API.
 
 The public site runs on Vercel; how it is deployed, and why from this folder only, is in
 [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) ("The web UI"). `.vercelignore` lists what the
