@@ -39,16 +39,17 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 22 November 2026
 
-- **Source.** `main` is at `d2105ce` (#42, the handoff after #41, merged on 22 November); #41
-  (`bb1a67e`) passed its CI, Attribution and CodeQL runs on `main`. Two local branches wait for
-  the maintainer's go-ahead to push: `fix/review-minors` (the four minor points from B's
-  self-review) and `feat/study-baseline` (the week 1 baseline command, below).
-- **The week 1 baseline command is built, not pushed.** On `feat/study-baseline`:
+- **Source.** `main` is at `390a86c` (#43, the four minor points from B's self-review, merged
+  on 22 November). The week 1 baseline command is in review as #44 (`feat/study-baseline`). The
+  merged `fix/review-minors` branch still exists on GitHub.
+- **The week 1 baseline command is in review (#44).** On `feat/study-baseline`:
   `python -m argus.study.baseline` runs arm A on the six demo scenarios and writes the
   protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)). The
   analyst prompt comes from the production code, now split into a prompt builder and a recorded
-  call. 432 tests pass at 100% coverage; run without a model, it wrote 30 items, all labelled
-  fallback. No model baseline exists.
+  call; study calls turn off the OpenAI client's own retries, so a request is sent at most three
+  times, as protocol section 8 allows (Codex's review finding on #44). 434 tests pass at 100%
+  coverage; run without a model, it wrote 30 items, all labelled fallback. No model baseline
+  exists.
 - **The analyst workspace is live (#40 and #41).** The site reads a report as a case file (case
   header, sanctions match panel, "Why this score" with each finding's evidence) and lists the
   demo cases with their last run and review state in this browser (A, #40). A visitor can play
@@ -116,10 +117,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
    findings with their evidence, the sanctions match panel and the cold-start notice.
 2. **B: done (#41, 22 November).** The simulated review kept in the browser (design section 8,
-   and "Calls made while building B"). The four minor points from its self-review are fixed on
-   `fix/review-minors`, waiting for the go-ahead to push: full storage gets an accurate notice,
-   the Reason field is marked required, a form starts afresh when its open steps change, and
-   the header stays whole at phone widths (51 end-to-end runs pass).
+   and "Calls made while building B"). The four minor points from its self-review are fixed
+   (#43, 22 November): full storage gets an accurate notice, the Reason field is marked
+   required, a form starts afresh when its open steps change, and the header stays whole at
+   phone widths.
 
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
@@ -138,8 +139,8 @@ Then, in order:
 1. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
    line says "frozen" with the date, and that version reaches `main` before any study model
    call.
-2. Week 1 code: built on `feat/study-baseline` (22 November), waiting for the go-ahead to push
-   and its own pull request. Before the baseline run, check that the local `.env` points at the
+2. Week 1 code: in review as #44 (22 November); merge it, then delete `feat/study-baseline`
+   and the merged `fix/review-minors`. Before the baseline run, check that the local `.env` points at the
    chosen model deployment, and record the prices in the run (the manifest's `prices` is empty
    until the budget is set).
 3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
@@ -248,8 +249,11 @@ requests.
   shared, and `argus.study.baseline`, which writes the protocol's section 13 records, retries a
   failed request twice, refuses a non-local data plane and writes no secret. A test checks that
   its prompt equals the workflow's for all six scenarios.
-- The maintainer merged #42 and asked for its branch to be deleted; only `main` is on GitHub.
-  Nothing pushed since.
+- The maintainer merged #42 and asked for its branch to be deleted. With the go-ahead, pushed
+  both branches and opened #43 and #44 (18 checks passing on each). The maintainer merged #43.
+  Codex found on #44 that the OpenAI client's own two retries would multiply the study's: up to
+  nine requests per item instead of three, only three of them recorded. Study calls now turn
+  them off, with tests that failed first; the run manifest records it.
 
 ### 22 November 2026 — #41 merged
 

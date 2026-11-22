@@ -109,10 +109,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   (`analyst_request`) and a recorded call (`request_explanation`); the Compliance agent's
   preparation (`prepare`) and the workflow's demo responses are shared the same way. A failed
   request is retried twice; the command refuses any data plane but the local one and writes no
-  secret. No model baseline exists yet: that waits for the frozen protocol and the budget.
-  Checked: 20 new tests, 432 in all, at 100% line and branch coverage, including that the
+  secret. The OpenAI client's own retries (two by default) are turned off for these calls, so a
+  request is sent at most three times and every attempt is recorded; the live explanation keeps
+  the client's defaults. No model baseline exists yet: that waits for the frozen protocol and
+  the budget. Checked: 22 new tests, 434 in all, at 100% line and branch coverage, including that the
   baseline's prompt equals the one the workflow sends for each of the six scenarios, the
-  retries, a failure after them, an empty reply and the records' contents; the explanation and
+  retries with the client's own turned off (and that the OpenAI client honours that), a
+  failure after them, an empty reply and the records' contents; the explanation and
   demo scenario tests pass unchanged; ruff and mypy. Run with `ARGUS_MODEL_PROVIDER=none`, it
   wrote 30 items, all labelled `fallback`.
 
