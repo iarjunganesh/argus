@@ -11,34 +11,7 @@ import {
   runEntry,
   type QueueEntry,
 } from "./queue";
-
-function memoryStorage(): Storage {
-  const items = new Map<string, string>();
-  return {
-    get length() {
-      return items.size;
-    },
-    clear: () => items.clear(),
-    getItem: (key) => items.get(key) ?? null,
-    key: (index) => [...items.keys()][index] ?? null,
-    removeItem: (key) => void items.delete(key),
-    setItem: (key, value) => void items.set(key, String(value)),
-  };
-}
-
-function blockedStorage(): Storage {
-  const fail = () => {
-    throw new Error("blocked");
-  };
-  return {
-    length: 0,
-    clear: fail,
-    getItem: fail,
-    key: fail,
-    removeItem: fail,
-    setItem: fail,
-  };
-}
+import { blockedStorage, memoryStorage } from "./test-storage";
 
 const NOW = 1_800_000_000_000;
 const entry = (reportId: string, tier?: string, at = NOW): QueueEntry => ({
