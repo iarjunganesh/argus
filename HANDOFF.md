@@ -47,9 +47,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 - **Analyst workspace B is in review (#41).** The simulated review kept in the browser (design
   section 8), plus a layout fix in the match panel. All 18 of its checks pass, including the web
   UI's Playwright and axe tests; locally, 96 unit tests and 45 end-to-end runs passed. The final
-  review before opening it was a self-review by the author. Its preview build is
-  <https://argus-git-feat-analyst-workspace-b-arjunganesh.vercel.app>; the live domain still
-  serves A.
+  review before opening it was a self-review by the author. The maintainer pointed
+  <https://argus.arjunganesh.dev> at its preview build (`vercel alias set`) on 22 November, so
+  the live site serves B until #41 is merged or the domain is pointed back at the latest
+  production deployment.
 - **Analyst workspace A is live (#40).** The site reads a report as a case file (case header,
   sanctions match panel, "Why this score" with each finding's evidence) and lists the demo cases
   with their last run in this browser. Production was redeployed from `2ec6197` and the domain
@@ -115,10 +116,10 @@ pull requests:
 1. **A: done (#40, 19 November).** The cases queue, the case header, the score's working,
    findings with their evidence, the sanctions match panel and the cold-start notice.
 2. **B: in review (#41, opened 22 November).** The simulated review kept in the browser (design
-   section 8, and "Calls made while building B"). The maintainer reviews it on its preview
-   build, or, on request, on <https://argus.arjunganesh.dev> pointed at that build (`vercel
-   alias set`, see `docs/DEPLOYMENT.md`). Then merge #41, which deploys production, and delete
-   both merged branches (`feat/analyst-workspace-b` and `docs/handoff-after-40`).
+   section 8, and "Calls made while building B"). The live domain serves its preview build for
+   the maintainer's review (`docs/DEPLOYMENT.md`). Merge #41, which deploys production and takes
+   the domain back, then delete both merged branches (`feat/analyst-workspace-b` and
+   `docs/handoff-after-40`); or point the domain back at the latest production deployment.
 
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
@@ -259,9 +260,9 @@ requests.
   long label (an A defect); fixed in its own commit. A self-review found that a recorded step
   was not announced to screen readers; fixed with a test that failed first.
 - With the maintainer's go-ahead, pushed `docs/handoff-after-40` and `feat/analyst-workspace-b`
-  and opened #41 for both; all 18 checks pass. Pointing the live domain at #41's preview was
-  left for the maintainer to ask for, because the go-ahead named the push and the pull request
-  only. Nothing deployed to production or paid for.
+  and opened #41 for both; all 18 checks pass, SonarQube's gate passed and Codex found nothing.
+  The maintainer then pointed the live domain at #41's preview build; the site answers with B's
+  role switch. Nothing deployed to production or paid for.
 
 ### 19 November 2026 — #40 merged
 
