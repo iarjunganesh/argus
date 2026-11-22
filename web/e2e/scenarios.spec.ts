@@ -193,11 +193,17 @@ test("Cayman Synth Capital: the match, the decision and the approver's sign-off"
   const match = page.getByRole("region", { name: "Potential sanctions match" });
   await recordStep(match, "Clear: false positive", "Registration and jurisdiction differ.");
   await expect(match.getByText("Registration and jurisdiction differ.")).toBeVisible();
+  // A recorded step is announced, not only drawn: the form it came from is gone.
+  const live = '[aria-live="polite"]';
+  await expect(match.locator(live, { hasText: "Clear: false positive" })).toHaveCount(1);
 
   // With enhanced due diligence required, it is the only approval offered.
   await expect(review.getByRole("radio", { name: "Approve", exact: true })).toHaveCount(0);
   await recordStep(review, "Approve with enhanced due diligence", "Onboard with EDD.");
   await expect(review.getByText(/^State:/)).toHaveText("State: Awaiting approver");
+  await expect(
+    review.locator(live, { hasText: "Approve with enhanced due diligence" }),
+  ).toHaveCount(1);
   await expect(header).toHaveText("Review: Awaiting approver");
 
   // The analyst cannot sign off their own decision.

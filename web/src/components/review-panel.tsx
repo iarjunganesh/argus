@@ -137,7 +137,10 @@ function MatchReview({ review }: { review: Review }) {
   return (
     <div className="mt-6 border-t pt-4">
       <h3 className="font-semibold">Resolve the match</h3>
-      {resolved.length ? <ReviewSteps steps={resolved} empty="" /> : null}
+      {/* Always rendered, so a step recorded here is announced when its form disappears. */}
+      <div aria-live="polite">
+        {resolved.length ? <ReviewSteps steps={resolved} empty="" /> : null}
+      </div>
       {open.length && by ? (
         role === by ? (
           <StepForm legend="Is this the listed party?" actions={open} add={add} />
@@ -184,7 +187,9 @@ function CaseReview({ review }: { review: Review }) {
         )
       ) : null}
       <h3 className="mt-6 mb-2 font-semibold">Steps so far</h3>
-      <ReviewSteps steps={steps} empty="No step recorded yet." />
+      <div aria-live="polite">
+        <ReviewSteps steps={steps} empty="No step recorded yet." />
+      </div>
       <Notes kept={review.kept} />
     </section>
   );
