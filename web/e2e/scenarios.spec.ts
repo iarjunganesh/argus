@@ -78,7 +78,7 @@ for (const scenario of scenarios) {
       await expect(match.getByText("Listing")).toBeVisible();
       await expect(match.getByText("Customer")).toBeVisible();
     } else {
-      await expect(page.getByRole("link", { name: "Review the findings" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Decide the case" })).toBeVisible();
       await expect(page.getByRole("region", { name: "Potential sanctions match" })).toHaveCount(0);
     }
 
@@ -140,6 +140,7 @@ test("the start page keeps each demo case's last run, riskiest first", async ({ 
   await page.goto("/");
   const first = page.getByRole("listitem").filter({ hasText: "Cayman Synth Capital" });
   await expect(first.getByTestId("queue-result")).toHaveText("CRITICAL76");
+  await expect(first.getByTestId("queue-review")).toHaveText("Awaiting analyst");
   await expect(page.getByTestId("queue-result").filter({ hasText: "Not run" })).toHaveCount(5);
   await first.getByRole("link", { name: "Open the assessment of Cayman Synth Capital" }).click();
   await expect(page.getByTestId("risk-score")).toHaveText("76");
@@ -156,4 +157,102 @@ test("a slow API start is explained, not left silent", async ({ page }) => {
     page.getByText(/^Starting the API: it sleeps when nobody is using it/),
   ).toBeVisible();
   await expect(page).toHaveURL(/\/assessments\/argus-rpt-[\w-]+$/);
+});
+
+// The simulated review, kept in this browser only.
+
+async function runCase(page: Page, name: string) {
+  await page.goto("/");
+  await page.getByRole("button", { name: `Run the assessment of ${name}` }).click();
+  await expect(page.getByRole("status")).toHaveText("Assessment complete. The report follows.");
+}
+
+async function recordStep(section: ReturnType<Page["getByRole"]>, action: string, reason?: string) {
+  await section.getByRole("radio", { name: action, exact: true }).check();
+  if (reason !== undefined)
+    await section.getByLabel(/^(Reason|Comment \(optional\))$/).fill(reason);
+  await section.getByRole("button", { name: "Record the step" }).click();
+}
+
+const DEMO_LABEL =
+  "Demo review: kept in this browser only and sent nowhere. ARGUS recommends; a person decides.";
+
+test("Cayman Synth Capital: the match, the decision and the approver's sign-off", async ({
+  page,
+}) => {
+  await runCase(page, "Cayman Synth Capital");
+  await expect(page.getByText(DEMO_LABEL).first()).toBeVisible();
+  const header = page.getByText(/^Review: /);
+  await expect(header).toHaveText("Review: Awaiting analyst");
+
+  // The decision waits for the match.
+  const review = page.getByRole("region", { name: "Review", exact: true });
+  await expect(review.getByText(/^Resolve the potential sanctions match first/)).toBeVisible();
+  await expect(review.getByRole("radio")).toHaveCount(0);
+
+  const match = page.getByRole("region", { name: "Potential sanctions match" });
+  await recordStep(match, "Clear: false positive", "Registration and jurisdiction differ.");
+  await expect(match.getByText("Registration and jurisdiction differ.")).toBeVisible();
+
+  // With enhanced due diligence required, it is the only approval offered.
+  await expect(review.getByRole("radio", { name: "Approve", exact: true })).toHaveCount(0);
+  await recordStep(review, "Approve with enhanced due diligence", "Onboard with EDD.");
+  await expect(review.getByText(/^State:/)).toHaveText("State: Awaiting approver");
+  await expect(header).toHaveText("Review: Awaiting approver");
+
+  // The analyst cannot sign off their own decision.
+  await expect(review.getByRole("radio", { name: "Sign off" })).toHaveCount(0);
+  await expect(review.getByText(/^Waiting for the approver/)).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await page.getByLabel("Role", { exact: true }).selectOption("approver");
+  await recordStep(review, "Sign off");
+  await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
+
+  // Kept in this browser: a reload shows the same review and its three steps.
+  await page.reload();
+  await expect(page.getByText(/^Review: /)).toHaveText("Review: Decided");
+  await openAll(page);
+  const steps = page.getByRole("region", { name: "Review steps (this browser only)" });
+  await expect(steps.getByRole("listitem")).toHaveCount(3);
+  await expect(steps.getByRole("listitem").nth(2)).toContainText("Sign off · Approver");
+  await expectNoAxeViolations(page);
+});
+
+test("Jane Synthetic: a LOW case is decided without a second sign-off", async ({ page }) => {
+  await runCase(page, "Jane Synthetic");
+  await page.getByRole("link", { name: "Decide the case" }).click();
+  const review = page.getByRole("region", { name: "Review", exact: true });
+
+  // A decision needs a reason.
+  await recordStep(review, "Approve");
+  await expect(review.getByRole("alert")).toHaveText(
+    "Give a reason: the review records why each step was taken.",
+  );
+  await expectNoAxeViolations(page);
+
+  await review.getByLabel("Reason").fill("Identity verified; no adverse findings.");
+  await review.getByRole("button", { name: "Record the step" }).click();
+  await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
+  await expect(review.getByText(/^Waiting for/)).toHaveCount(0);
+  await expect(review.getByRole("radio")).toHaveCount(0);
+  await expectNoAxeViolations(page);
+});
+
+test("a browser that blocks storage still reviews the open page and says nothing is kept", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "localStorage", {
+      get() {
+        throw new DOMException("Storage is blocked", "SecurityError");
+      },
+    });
+  });
+  await runCase(page, "Jane Synthetic");
+  const review = page.getByRole("region", { name: "Review", exact: true });
+  await expect(review.getByText("Not kept: this browser blocks storage.")).toBeVisible();
+  await recordStep(review, "Decline", "Testing a blocked browser.");
+  await expect(review.getByText(/^State:/)).toHaveText("State: Decided");
+  await expectNoAxeViolations(page);
 });
