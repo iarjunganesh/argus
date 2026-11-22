@@ -1,7 +1,7 @@
 # Design: the web UI as an analyst's workspace
 
-Status: **approved by the maintainer on 2026-11-18. A is built (2026-11-19, its pull request
-is next); B is not yet.** It covers
+Status: **approved by the maintainer on 2026-11-18. A was merged on 2026-11-19 (#40); B is
+not yet.** It covers
 two changes the maintainer chose to make together: the report as a case file an analyst can read
 quickly (A), and a simulated review with decisions kept in the visitor's browser (B).
 

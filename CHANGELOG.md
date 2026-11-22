@@ -119,6 +119,11 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **The handoff's session check and the workspace design's status match the repository.** The
+  check named markdownlint as one of the commands in `AGENTS.md`, which lists none; it now gives
+  the command CI's Documentation job runs. The design and the research index said A's pull
+  request was next; they say it merged in #40. Checked on 22 November: `check_docs.py`,
+  `check_versions.py --check` and markdownlint pass.
 - **A pull request whose last commit changes only documents still gets a preview.** The Vercel
   project's Ignored Build Step compared only the last commit (`git diff HEAD^ HEAD`), so it
   skipped #40's preview although the branch changes `web/`. It now compares with the branch's

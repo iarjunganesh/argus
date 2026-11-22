@@ -27,8 +27,9 @@ grounded facts and report what deviates, with file and line:
    it was checked; this file, the README, `docs/`, `web/README.md` and the diagrams describe the
    code it merged; and no earlier entry or page now contradicts it (search for the old value:
    a version, a status such as "not deployed", a count, a name).
-3. **The checks that read facts.** `check_docs.py`, `check_versions.py --check` and markdownlint
-   (the commands in `AGENTS.md`).
+3. **The checks that read facts.** `check_docs.py` and `check_versions.py --check` (the
+   commands in `AGENTS.md`), and markdownlint as CI's Documentation job runs it
+   (`npx markdownlint-cli2 "**/*.md"`, which reads `.markdownlint-cli2.jsonc`).
 4. **The live deployment.** <https://argus.arjunganesh.dev> answers, and so does the API's
    `/health` (the request wakes it; it scales back to zero about 12 minutes later). Compare with
    "Live since" below.
