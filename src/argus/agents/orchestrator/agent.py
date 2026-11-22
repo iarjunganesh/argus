@@ -92,6 +92,22 @@ async def call_agent(agent_name: str, payload: dict, task_id: str) -> dict:
         }
 
 
+def demo_response(agent: str, task_id: str, profile: dict) -> dict:
+    """A parallel agent's response in a demo scenario: the profile stands in for its tools."""
+    return {
+        "agent": agent,
+        "task_id": task_id,
+        "status": "completed",
+        **demo_provenance(),
+        "result": profile.get(agent, {}),
+    }
+
+
+def compliance_payload(request: dict, responses: list[dict]) -> dict:
+    """What the Compliance agent reads: the request and the parallel agents' responses."""
+    return {**request, "upstream_results": {r["agent"]: r for r in responses}}
+
+
 class _Dispatch(Executor):
     @handler
     async def start(self, assessment: Assessment, ctx: WorkflowContext[Assessment]) -> None:
@@ -102,14 +118,7 @@ class _ParallelAgent(Executor):
     @handler
     async def run(self, assessment: Assessment, ctx: WorkflowContext[AgentOutcome, dict]) -> None:
         if assessment.profile:
-            # A recorded demo scenario: its result stands in for the agent's tools.
-            response = {
-                "agent": self.id,
-                "task_id": assessment.task_id,
-                "status": "completed",
-                **demo_provenance(),
-                "result": assessment.profile.get(self.id, {}),
-            }
+            response = demo_response(self.id, assessment.task_id, assessment.profile)
         else:
             response = await call_agent(self.id, assessment.request, assessment.task_id)
         await ctx.yield_output(response)
@@ -120,10 +129,7 @@ class _Compliance(Executor):
     @handler
     async def run(self, outcomes: list[AgentOutcome], ctx: WorkflowContext[Never, dict]) -> None:
         assessment = outcomes[0].assessment
-        payload = {
-            **assessment.request,
-            "upstream_results": {o.response["agent"]: o.response for o in outcomes},
-        }
+        payload = compliance_payload(assessment.request, [o.response for o in outcomes])
         await ctx.yield_output(await call_agent("compliance", payload, assessment.task_id))
 
 
