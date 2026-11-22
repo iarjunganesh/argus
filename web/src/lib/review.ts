@@ -2,8 +2,9 @@
 // is sent anywhere; the steps are kept in this browser (review-store.ts).
 
 import { isSanctionsHold } from "./case";
+import type { QueueEntry } from "./queue";
 import type { Report } from "./report";
-import type { Role, Step } from "./review-store";
+import { loadSteps, type Role, type Step } from "./review-store";
 
 export type MatchAction = "confirm" | "clear" | "escalate_match";
 export type CaseAction = "approve" | "approve_edd" | "decline" | "escalate";
@@ -41,6 +42,8 @@ export const STATE_LABELS: Record<ReviewState, string> = {
   escalated: "Escalated",
 };
 
+export const ROLE_LABELS: Record<Role, string> = { analyst: "Analyst", approver: "Approver" };
+
 const MATCH_ACTIONS: readonly ReviewAction[] = ["confirm", "clear", "escalate_match"];
 
 export function isMatchAction(action: ReviewAction): action is MatchAction {
@@ -61,6 +64,7 @@ export function reviewContext(report: Report): ReviewContext {
 interface Progress {
   state: ReviewState;
   match?: "confirm" | "clear";
+  accepted: Step[];
 }
 
 function open(
@@ -113,8 +117,10 @@ function apply(progress: Progress, action: ReviewAction, ctx: ReviewContext): Pr
 function replay(steps: Step[], ctx: ReviewContext): Progress {
   return steps.reduce<Progress>(
     (progress, step) =>
-      refusal(step, progress, ctx) ? progress : apply(progress, step.action, ctx),
-    { state: "awaiting_analyst" },
+      refusal(step, progress, ctx)
+        ? progress
+        : { ...apply(progress, step.action, ctx), accepted: [...progress.accepted, step] },
+    { state: "awaiting_analyst", accepted: [] },
   );
 }
 
@@ -127,8 +133,23 @@ export function reviewState(
   return { state: progress.state, ...open(progress, ctx) };
 }
 
+/** The stored steps the rules accept, in order: the review's record. */
+export function acceptedSteps(steps: Step[], ctx: ReviewContext): Step[] {
+  return replay(steps, ctx).accepted;
+}
+
 /** The steps with this one added, or why the rules refuse it. */
 export function addStep(steps: Step[], step: Step, ctx: ReviewContext): Step[] | { error: string } {
   const error = refusal(step, replay(steps, ctx), ctx);
   return error ? { error } : [...steps, { ...step, rationale: step.rationale.trim() }];
+}
+
+/** A queued run's review state, from the steps kept in this browser. */
+export function entryReviewState(entry: QueueEntry, storage?: Storage, now?: number): ReviewState {
+  const ctx = {
+    hold: entry.hold === true,
+    edd: entry.edd === true,
+    tier: entry.tier?.toUpperCase(),
+  };
+  return reviewState(loadSteps(entry.reportId, storage, now).steps, ctx).state;
 }

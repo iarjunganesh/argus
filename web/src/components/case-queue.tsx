@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
 
 import { TierBadge } from "@/components/tier-badge";
+import { useQueueReviewStates } from "@/components/use-review";
 import { Button } from "@/components/ui/button";
 import type { AssessmentRequest } from "@/lib/api";
 import { loadQueue, QUEUE_EVENT, queueRows, rawQueue } from "@/lib/queue";
+import { STATE_LABELS } from "@/lib/review";
 
 function subscribe(onChange: () => void) {
   window.addEventListener("storage", onChange);
@@ -41,6 +43,7 @@ export function CaseQueue({
   disabled?: boolean;
 }) {
   const rows = useQueueRows();
+  const reviews = useQueueReviewStates(rows);
   return (
     <div className="mt-6 overflow-hidden rounded-lg border bg-card">
       <ul className="divide-y">
@@ -60,6 +63,11 @@ export function CaseQueue({
                 <span className="text-muted-foreground">Not run</span>
               )}
             </div>
+            {reviews[index] ? (
+              <p className="text-sm text-muted-foreground" data-testid="queue-review">
+                {STATE_LABELS[reviews[index]]}
+              </p>
+            ) : null}
             <div className="flex items-center gap-2">
               {entry ? (
                 <Link
@@ -89,6 +97,7 @@ export function CaseQueue({
 /** The same cases as a narrow list beside an open case. */
 export function CaseList({ currentReportId }: { currentReportId?: string }) {
   const rows = useQueueRows();
+  const reviews = useQueueReviewStates(rows);
   return (
     <nav aria-label="Cases" className="rounded-lg border bg-card">
       <p className="border-b px-3 py-2 text-sm font-semibold">Cases</p>
@@ -100,6 +109,7 @@ export function CaseList({ currentReportId }: { currentReportId?: string }) {
               <span className="block truncate font-medium">{request.entity_name}</span>
               <span className="mt-0.5 flex items-center gap-2 text-muted-foreground">
                 {entry ? <TierBadge tier={entry.tier} /> : "Not run"}
+                {reviews[index] ? <span>{STATE_LABELS[reviews[index]]}</span> : null}
               </span>
             </>
           );

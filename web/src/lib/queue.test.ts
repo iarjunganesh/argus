@@ -119,8 +119,23 @@ describe("runEntry", () => {
       reportId: "argus-rpt-a",
       tier: "LOW",
       score: 3,
+      hold: false,
+      edd: false,
       at: Date.parse("2026-11-19T10:00:00Z"),
     });
+  });
+
+  it("keeps what the demo review's rules need: the sanctions hold and enhanced due diligence", () => {
+    const report = {
+      generated_at: "2026-11-19T10:00:00Z",
+      risk_summary: {
+        overall_risk_tier: "CRITICAL",
+        overall_risk_score: 76,
+        tier_basis: "sanctions_match",
+        edd_required: true,
+      },
+    };
+    expect(runEntry("argus-rpt-a", report, NOW)).toMatchObject({ hold: true, edd: true });
   });
 
   it("falls back to now when the report has no usable time", () => {

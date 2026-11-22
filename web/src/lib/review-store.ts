@@ -22,7 +22,14 @@ const ROLE_KEY = "argus:role";
 /** Same-tab role changes; other tabs hear the browser's own "storage" event. */
 export const ROLE_EVENT = "argus:role";
 
+/** Same-tab review changes; other tabs hear the browser's own "storage" event. */
+export const REVIEW_EVENT = "argus:review";
+
 const stepsKey = (reportId: string) => `argus:review:${reportId}`;
+
+const announce = (event: string) => {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(event));
+};
 
 const isRole = (value: unknown): value is Role => value === "analyst" || value === "approver";
 
@@ -76,6 +83,7 @@ export function saveSteps(
   if (!storage) return false;
   try {
     storage.setItem(stepsKey(reportId), JSON.stringify(steps));
+    announce(REVIEW_EVENT);
     return true;
   } catch {
     return false; // storage full or blocked
@@ -86,6 +94,7 @@ export function saveSteps(
 export function forgetSteps(reportId: string, storage: Storage | undefined = browserStorage()) {
   try {
     storage?.removeItem(stepsKey(reportId));
+    announce(REVIEW_EVENT);
   } catch {
     // storage blocked: nothing was kept
   }
@@ -106,7 +115,7 @@ export function saveRole(role: Role, storage: Storage | undefined = browserStora
   if (!storage) return false;
   try {
     storage.setItem(ROLE_KEY, role);
-    if (typeof window !== "undefined") window.dispatchEvent(new Event(ROLE_EVENT));
+    announce(ROLE_EVENT);
     return true;
   } catch {
     return false;

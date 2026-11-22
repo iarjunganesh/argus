@@ -2,16 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import type { Report } from "./report";
 import {
+  acceptedSteps,
   ACTION_LABELS,
   addStep,
+  entryReviewState,
   isMatchAction,
   reviewContext,
   reviewState,
+  ROLE_LABELS,
   STATE_LABELS,
   type ReviewAction,
   type ReviewContext,
 } from "./review";
-import type { Role, Step } from "./review-store";
+import { saveSteps, type Role, type Step } from "./review-store";
+import { memoryStorage } from "./test-storage";
 
 const CAYMAN: ReviewContext = { hold: true, edd: true, tier: "CRITICAL" };
 const JANE: ReviewContext = { hold: false, edd: false, tier: "LOW" };
@@ -181,6 +185,7 @@ describe("labels", () => {
       decided: "Decided",
       escalated: "Escalated",
     });
+    expect(ROLE_LABELS).toEqual({ analyst: "Analyst", approver: "Approver" });
   });
 
   it("tells the match's actions from the case's", () => {
@@ -189,5 +194,26 @@ describe("labels", () => {
     expect(isMatchAction("escalate_match")).toBe(true);
     expect(isMatchAction("escalate")).toBe(false);
     expect(isMatchAction("sign_off")).toBe(false);
+  });
+});
+
+describe("entryReviewState", () => {
+  it("reads a queued run's review state from this browser", () => {
+    const storage = memoryStorage();
+    const now = Date.parse("2026-11-22T12:05:00Z");
+    const cayman = { reportId: "argus-rpt-a", tier: "CRITICAL", hold: true, edd: true, at: now };
+    expect(entryReviewState(cayman, storage, now)).toBe("awaiting_analyst");
+    saveSteps("argus-rpt-a", [step("clear"), step("approve_edd")], storage);
+    expect(entryReviewState(cayman, storage, now)).toBe("awaiting_approver");
+    const jane = { reportId: "argus-rpt-b", tier: "low", at: now };
+    saveSteps("argus-rpt-b", [step("approve")], storage);
+    expect(entryReviewState(jane, storage, now)).toBe("decided");
+  });
+});
+
+describe("acceptedSteps", () => {
+  it("lists only the stored steps the rules accept, in order", () => {
+    const steps = [step("approve"), step("clear"), step("sign_off"), step("approve_edd")];
+    expect(acceptedSteps(steps, CAYMAN)).toEqual([step("clear"), step("approve_edd")]);
   });
 });

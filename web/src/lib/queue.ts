@@ -2,6 +2,7 @@
 // position in DEMO_CASES, never by its name. Runs expire after a day, as the API's reports do.
 
 import type { AssessmentRequest } from "./api";
+import { isSanctionsHold } from "./case";
 import { DEMO_CASES } from "./demo";
 import type { Report } from "./report";
 
@@ -13,6 +14,10 @@ export interface QueueEntry {
   reportId: string;
   tier?: string;
   score?: number;
+  /** Whether a sanctions hold set the tier, and a rule requires enhanced due diligence: the demo
+   * review's rules depend on both. */
+  hold?: boolean;
+  edd?: boolean;
   /** When the run was recorded, in milliseconds since the epoch. */
   at: number;
 }
@@ -98,6 +103,8 @@ export function runEntry(
     reportId,
     tier: report.risk_summary?.overall_risk_tier,
     score: report.risk_summary?.overall_risk_score,
+    hold: isSanctionsHold(report),
+    edd: report.risk_summary?.edd_required === true,
     at: Number.isFinite(generated) ? generated : now,
   };
 }

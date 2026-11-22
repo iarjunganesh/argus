@@ -53,14 +53,12 @@ export function CaseHeader({ report, reviewSlot }: { report: Report; reviewSlot?
       )}
       <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
         <a
-          href={hold ? "#match" : "#working-heading"}
+          href={hold ? "#match" : "#review"}
           className={buttonVariants({ size: "lg", className: "h-10 px-4" })}
         >
-          {hold ? "Review the match" : "Review the findings"}
+          {hold ? "Review the match" : "Decide the case"}
         </a>
-        <div className="text-sm text-muted-foreground">
-          {reviewSlot ?? "A person decides; this demo does not record the decision yet."}
-        </div>
+        <div className="text-sm text-muted-foreground">{reviewSlot ?? "A person decides."}</div>
       </div>
     </section>
   );

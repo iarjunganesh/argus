@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { CaseHeader } from "@/components/case-header";
 import { Facts } from "@/components/facts";
 import { MatchPanel } from "@/components/match-panel";
+import { ReviewAudit, ReviewPanel, ReviewStatus } from "@/components/review-panel";
 import { ScoreWorking } from "@/components/score-working";
 import {
   Table,
@@ -152,11 +153,19 @@ export function ReportView({ report, auditExtra }: { report: Report; auditExtra?
     report.decision_record?.obligations,
   );
   const recommendation = report.risk_summary?.decision_recommendation;
+  // The demo review needs a report to key it by and a tier for its rules.
+  const reviewable = Boolean(report.report_id && report.risk_summary?.overall_risk_tier);
   return (
     <div>
-      <CaseHeader report={report} />
-      <MatchPanel report={report} />
+      <CaseHeader
+        report={report}
+        reviewSlot={reviewable ? <ReviewStatus report={report} /> : undefined}
+      />
+      <MatchPanel report={report}>
+        {reviewable ? <ReviewPanel report={report} scope="match" /> : null}
+      </MatchPanel>
       <ScoreWorking report={report} />
+      {reviewable ? <ReviewPanel report={report} scope="case" /> : null}
       <Section id="explanation-heading" title="Explanation">
         <p className="text-sm text-muted-foreground">
           Analyst view. {explanationSourceLabel(report.explanation_source)}.
@@ -174,7 +183,15 @@ export function ReportView({ report, auditExtra }: { report: Report; auditExtra?
           empty="No actions were recommended."
         />
       </Section>
-      <AuditTrail report={report} extra={auditExtra} />
+      <AuditTrail
+        report={report}
+        extra={
+          <>
+            {reviewable ? <ReviewAudit report={report} /> : null}
+            {auditExtra}
+          </>
+        }
+      />
       <details className="mt-4 rounded-lg border bg-card">
         <summary className="cursor-pointer px-4 py-3 font-medium">Full report as JSON</summary>
         <pre
