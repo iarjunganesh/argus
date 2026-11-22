@@ -1,7 +1,7 @@
 # Design: the web UI as an analyst's workspace
 
 Status: **approved by the maintainer on 2026-11-18 and built: A in #40 (merged 2026-11-19), B
-on 2026-11-22 in the pull request after it.** It covers
+in #41 (merged 2026-11-22).** It covers
 two changes the maintainer chose to make together: the report as a case file an analyst can read
 quickly (A), and a simulated review with decisions kept in the visitor's browser (B).
 
