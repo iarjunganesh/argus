@@ -213,9 +213,11 @@ export function ReviewStatus({ report }: { report: Report }) {
 export function ReviewAudit({ report }: { report: Report }) {
   const { steps } = useReview(report);
   return (
-    <div>
-      <h3 className="mb-2 font-semibold">Review steps (this browser only)</h3>
+    <section aria-labelledby="review-audit-heading">
+      <h3 id="review-audit-heading" className="mb-2 font-semibold">
+        Review steps (this browser only)
+      </h3>
       <ReviewSteps steps={steps} empty="No review step recorded in this browser." />
-    </div>
+    </section>
   );
 }
