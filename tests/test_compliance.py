@@ -44,7 +44,13 @@ class FakeLLM:
         self.response = response or {}
         self.prompts: list[str] = []
         self.calls: list[dict] = []
+        # The client options each call was made with (`AsyncOpenAI.with_options`).
+        self.options: list[dict] = []
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
+
+    def with_options(self, **options):
+        self.options.append(options)
+        return self
 
     async def _create(self, **kwargs):
         self.calls.append(kwargs)
@@ -408,6 +414,26 @@ async def test_without_a_model_nothing_is_sent():
         None,
     )
     assert call.error == "ModelUnavailable: ARGUS_MODEL_PROVIDER is none"
+
+
+async def test_a_study_call_turns_off_the_clients_own_retries(monkeypatch):
+    llm = FakeLLM(content="Rated LOW.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+    request = ed.analyst_request({}, {}, {}, [], [])
+
+    await ed.request_explanation(request)
+    assert llm.options == []  # the live explanation keeps the client's defaults
+    await ed.request_explanation(request, client_retries=0)
+    assert llm.options == [{"max_retries": 0}]
+
+
+def test_the_openai_client_retries_unless_told_not_to():
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key="test", base_url="http://127.0.0.1:9")
+
+    assert client.max_retries == 2
+    assert client.with_options(max_retries=0).max_retries == 0
 
 
 async def test_an_empty_reply_is_recorded_as_empty(monkeypatch):

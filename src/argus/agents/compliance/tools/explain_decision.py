@@ -148,12 +148,21 @@ def _fallback(analyst: AnalystRequest, kind: ErrorKind, error: str, **call: Any)
     return ExplanationCall(analyst.fallback, "fallback", error_kind=kind, error=error, **call)
 
 
-async def request_explanation(request: AnalystRequest) -> ExplanationCall:
-    """Send the analyst prompt to the configured model once; fall back, labelled, if it fails."""
+async def request_explanation(
+    request: AnalystRequest, client_retries: int | None = None
+) -> ExplanationCall:
+    """Send the analyst prompt to the configured model; fall back, labelled, if it fails.
+
+    The OpenAI client retries some failures on its own. `client_retries` overrides that count:
+    the study passes 0, so that every request sent is an attempt it records.
+    """
     try:
         chat = get_chat_model()
     except Exception as exc:  # noqa: BLE001 - no usable model configuration: nothing is sent
         return _fallback(request, "unavailable", _error(exc))
+    client = chat.client
+    if client_retries is not None:
+        client = client.with_options(max_retries=client_retries)
     body = {
         "model": chat.model,
         "messages": [{"role": "user", "content": request.prompt}],
@@ -161,7 +170,7 @@ async def request_explanation(request: AnalystRequest) -> ExplanationCall:
     }
     started = time.perf_counter()
     try:
-        response = await chat.client.chat.completions.create(**body)
+        response = await client.chat.completions.create(**body)
     except Exception as exc:  # noqa: BLE001 - any model failure falls back, labelled as such
         latency = round(time.perf_counter() - started, 3)
         return _fallback(request, "call", _error(exc), request=body, latency_seconds=latency)

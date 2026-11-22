@@ -49,6 +49,8 @@ ARM = "A"
 REPEATS = 5
 # Retries of the identical request after a transport or service error (protocol section 8).
 RETRIES = 2
+# The OpenAI client's own retries, turned off so that RETRIES is the whole retry budget.
+CLIENT_RETRIES = 0
 PROTOCOL = "docs/research/study-protocol.md"
 # src/argus/study/baseline.py -> the repository root is three levels up.
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -163,9 +165,10 @@ def _model_configuration() -> dict:
 
 
 async def _attempts(analyst: AnalystRequest, retries: int) -> list[ExplanationCall]:
-    attempts = [await request_explanation(analyst)]
+    # The client's own retries are off, so this loop alone decides how often a request is sent.
+    attempts = [await request_explanation(analyst, client_retries=CLIENT_RETRIES)]
     while attempts[-1].error_kind == "call" and len(attempts) <= retries:
-        attempts.append(await request_explanation(analyst))
+        attempts.append(await request_explanation(analyst, client_retries=CLIENT_RETRIES))
     return attempts
 
 
@@ -210,6 +213,7 @@ async def run_baseline(
         "case_set": {"hash": set_hash, "cases": listed},
         "repeats": repeats,
         "retries": retries,
+        "client_retries": CLIENT_RETRIES,
         "model": _model_configuration(),
         # Recorded with their source when the budget is set (protocol section 8).
         "prices": None,

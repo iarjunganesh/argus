@@ -99,7 +99,7 @@ async def test_a_run_without_a_model_records_every_item_as_a_fallback(tmp_path):
     manifest, requests, responses = _run(run_dir)
     assert run_dir.parent == tmp_path and run_dir.name == manifest["run_id"]
     assert manifest["arm"] == "A" and manifest["kind"] == "week 1 baseline"
-    assert (manifest["repeats"], manifest["retries"]) == (2, 2)
+    assert (manifest["repeats"], manifest["retries"], manifest["client_retries"]) == (2, 2, 0)
     assert manifest["model"] == {"provider": "none"}
     assert manifest["data_backend"] == "local"
     assert manifest["policy_version"] == "argus-risk-v1"
@@ -161,6 +161,8 @@ async def test_a_failed_request_is_retried_up_to_twice(monkeypatch, tmp_path):
     assert responses[0]["outcome"] == "model"
     assert [a["error_kind"] for a in responses[0]["attempts"]] == ["call", "call", None]
     assert len({json.dumps(c, sort_keys=True) for c in flaky.calls}) == 1  # identical requests
+    # The client's own retries are off, so every request sent is a recorded attempt.
+    assert flaky.options == [{"max_retries": 0}] * 3
 
 
 async def test_a_request_that_fails_after_its_retries_is_a_failure(monkeypatch, tmp_path):
