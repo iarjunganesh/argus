@@ -18,8 +18,13 @@ tag also deploys the API.
    - the `deps-broken` label;
    - the repository's Zenodo archiving, switched on in the maintainer's Zenodo account.
 
-   Changing them needs the maintainer's approval. Branch protection needs its own approval and is
-   not set yet: require every CI job and a PR, and prohibit force pushes to `main`.
+   Changing them needs the maintainer's approval. Two repository rulesets are active (read on
+   2026-11-22): `main` requires a pull request merged with a merge commit, resolved review
+   threads and six CI checks (Lint and format, Type check, Tests and coverage, Dependency audit,
+   Secret scan, Documentation), and blocks force pushes and deletion; `release tags` blocks
+   moving or deleting a `v*` tag. Classic branch protection is not set. Requiring the other CI
+   jobs too (Web UI, Container image, Infrastructure template, CodeQL, No AI attribution) needs
+   the maintainer's approval.
 2. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    (the date you tag), add a new empty `## [Unreleased]` above it, set `version` in
    `pyproject.toml` to `X.Y.Z` and run `uv lock`. Merge it before tagging, so the tagged commit

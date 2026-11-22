@@ -29,20 +29,36 @@ class FakeLLM:
 
         return lambda: ChatModel("test", "test-model", self, reasoning=reasoning)
 
-    def __init__(self, content: str | None = None, error: Exception | None = None):
+    def __init__(
+        self,
+        content: str | None = None,
+        error: Exception | None = None,
+        failures: int | None = None,
+        response: dict | None = None,
+    ):
         self.content = content
         self.error = error
+        # How many calls raise `error` before the rest answer; None: every call raises it.
+        self.failures = failures
+        # Extra attributes of the response, such as `model`, `id` and `usage`.
+        self.response = response or {}
         self.prompts: list[str] = []
         self.calls: list[dict] = []
+        # The client options each call was made with (`AsyncOpenAI.with_options`).
+        self.options: list[dict] = []
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
+
+    def with_options(self, **options):
+        self.options.append(options)
+        return self
 
     async def _create(self, **kwargs):
         self.calls.append(kwargs)
         self.prompts.append(kwargs["messages"][0]["content"])
-        if self.error:
+        if self.error and (self.failures is None or len(self.calls) <= self.failures):
             raise self.error
         message = SimpleNamespace(content=self.content)
-        return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+        return SimpleNamespace(choices=[SimpleNamespace(message=message)], **self.response)
 
 
 # ── agent ─────────────────────────────────────────────────────────────────────
@@ -317,6 +333,115 @@ async def test_an_empty_model_reply_is_not_passed_off_as_an_explanation(monkeypa
     explanation = await ed.explain_decision({}, {"overall_risk_tier": "LOW"}, {}, [], [])
 
     assert explanation["source"] == "fallback"
+
+
+ENTITY = {"name": "Acme", "type": "corporate", "jurisdiction": "NL"}
+SUMMARY = {"overall_risk_tier": "HIGH", "overall_risk_score": 60, "edd_required": True}
+
+
+async def test_the_analyst_request_is_what_the_explanation_sends(monkeypatch):
+    llm = FakeLLM(content="Rated HIGH.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+    args = (ENTITY, SUMMARY, {"identity": {"score": 10}}, ["PEP identified"], [{"rule": "R1"}])
+
+    request = ed.analyst_request(*args)
+    await ed.explain_decision(*args)
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(error=RuntimeError("down")).model())
+    fallback = await ed.explain_decision(*args)
+
+    assert llm.prompts == [request.prompt]
+    assert fallback == {"text": request.fallback, "source": "fallback"}
+
+
+async def test_a_model_call_records_its_request_response_and_usage(monkeypatch):
+    usage = SimpleNamespace(
+        model_dump=lambda exclude_none: {"prompt_tokens": 700, "completion_tokens": 90}
+    )
+    llm = FakeLLM(
+        content="  Rated HIGH.  ",
+        response={"model": "test-model-2026-01-01", "id": "resp-1", "usage": usage},
+    )
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+
+    call = await ed.request_explanation(ed.analyst_request(ENTITY, SUMMARY, {}, [], []))
+
+    assert (call.text, call.source, call.error, call.error_kind) == (
+        "Rated HIGH.",
+        "model",
+        None,
+        None,
+    )
+    assert call.request == llm.calls[0]
+    assert call.request["model"] == "test-model"
+    assert call.request["max_tokens"] == ed.MAX_TOKENS
+    assert call.request["temperature"] == ed.TEMPERATURE
+    assert (call.response_model, call.response_id) == ("test-model-2026-01-01", "resp-1")
+    assert call.usage == {"prompt_tokens": 700, "completion_tokens": 90}
+    assert call.latency_seconds is not None and call.latency_seconds >= 0
+
+
+async def test_usage_without_a_pydantic_model_is_read_from_its_fields(monkeypatch):
+    llm = FakeLLM(content="Rated LOW.", response={"usage": SimpleNamespace(total_tokens=5)})
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+
+    call = await ed.request_explanation(ed.analyst_request({}, {}, {}, [], []))
+
+    assert call.usage == {"total_tokens": 5}
+    assert (call.response_model, call.response_id) == (None, None)
+
+
+async def test_a_failed_call_records_the_error_and_falls_back(monkeypatch):
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(error=TimeoutError("timed out")).model())
+    request = ed.analyst_request({}, {"overall_risk_tier": "LOW"}, {}, [], [])
+
+    call = await ed.request_explanation(request)
+
+    assert (call.text, call.source, call.error_kind) == (request.fallback, "fallback", "call")
+    assert call.error == "TimeoutError: timed out"
+    assert call.request is not None and call.usage is None
+    assert call.latency_seconds is not None
+
+
+async def test_without_a_model_nothing_is_sent():
+    request = ed.analyst_request({}, {"overall_risk_tier": "LOW"}, {}, [], [])
+
+    call = await ed.request_explanation(request)
+
+    assert (call.source, call.error_kind, call.request, call.latency_seconds) == (
+        "fallback",
+        "unavailable",
+        None,
+        None,
+    )
+    assert call.error == "ModelUnavailable: ARGUS_MODEL_PROVIDER is none"
+
+
+async def test_a_study_call_turns_off_the_clients_own_retries(monkeypatch):
+    llm = FakeLLM(content="Rated LOW.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+    request = ed.analyst_request({}, {}, {}, [], [])
+
+    await ed.request_explanation(request)
+    assert llm.options == []  # the live explanation keeps the client's defaults
+    await ed.request_explanation(request, client_retries=0)
+    assert llm.options == [{"max_retries": 0}]
+
+
+def test_the_openai_client_retries_unless_told_not_to():
+    from openai import AsyncOpenAI
+
+    client = AsyncOpenAI(api_key="test", base_url="http://127.0.0.1:9")
+
+    assert client.max_retries == 2
+    assert client.with_options(max_retries=0).max_retries == 0
+
+
+async def test_an_empty_reply_is_recorded_as_empty(monkeypatch):
+    monkeypatch.setattr(ed, "get_chat_model", FakeLLM(content=None).model())
+
+    call = await ed.request_explanation(ed.analyst_request({}, {}, {}, [], []))
+
+    assert (call.source, call.error_kind, call.error) == ("fallback", "empty", "empty reply")
 
 
 async def test_plain_language_sections_are_parsed(monkeypatch):

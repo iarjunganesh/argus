@@ -1,12 +1,17 @@
 """Compliance: evaluate canonical findings, retrieve citations, then explain the recommendation."""
 
 import re
+from dataclasses import dataclass
 
-from argus.agents.compliance.tools.explain_decision import explain_decision
+from argus.agents.compliance.tools.explain_decision import (
+    AnalystRequest,
+    analyst_request,
+    explain_decision,
+)
 from argus.agents.compliance.tools.regulations_rag import regulations_rag
 from argus.agents.provenance import provenance
-from argus.decision import evaluate_decision, risk_indicators
-from argus.findings import collect_findings, key_findings
+from argus.decision import DecisionRecord, evaluate_decision, risk_indicators
+from argus.findings import FindingSet, collect_findings, key_findings
 from argus.utils.structured_logger import get_logger
 
 logger = get_logger("agent.compliance")
@@ -24,7 +29,33 @@ def rule_statement(text: str, limit: int = RULE_MAX_CHARS) -> str:
     return sentence[:limit].rsplit(" ", 1)[0].rstrip(",;:") + "…"
 
 
-async def assess(request: dict, task_id: str) -> dict:
+@dataclass(frozen=True)
+class Prepared:
+    """Everything the Compliance agent decides and retrieves before the explanation is written."""
+
+    records: FindingSet
+    decision: DecisionRecord
+    regulations: dict
+    triggers: list[dict]
+    display_findings: list[str]
+    entity: dict
+
+    def explanation_inputs(self) -> dict:
+        """The arguments of the analyst explanation (`explain_decision`, `analyst_request`)."""
+        return {
+            "entity": self.entity,
+            "risk_summary": self.decision.risk_summary,
+            "dimension_scores": self.decision.dimension_scores,
+            "key_findings": self.display_findings,
+            "regulatory_triggers": self.triggers,
+        }
+
+    def analyst_request(self) -> AnalystRequest:
+        return analyst_request(**self.explanation_inputs())
+
+
+async def prepare(request: dict, task_id: str) -> Prepared:
+    """Evaluate the findings and retrieve the citations; the study's baseline starts here too."""
     jurisdiction = request.get("jurisdiction", "")
     entity_type = request.get("entity_type", "corporate")
     logger.info("assess", extra={"task_id": task_id, "jurisdiction": jurisdiction})
@@ -40,18 +71,21 @@ async def assess(request: dict, task_id: str) -> dict:
         {"rule": rule_statement(r.get("text", "")), "citation": r.get("citation")}
         for r in regulations.get("regulations", [])[:4]
     ]
-    display_findings = key_findings(records.findings)
-    explanation = await explain_decision(
-        entity={
-            "name": request.get("entity_name", "Unknown"),
-            "type": entity_type,
-            "jurisdiction": jurisdiction,
-        },
-        risk_summary=decision.risk_summary,
-        dimension_scores=decision.dimension_scores,
-        key_findings=display_findings,
-        regulatory_triggers=triggers,
+    entity = {
+        "name": request.get("entity_name", "Unknown"),
+        "type": entity_type,
+        "jurisdiction": jurisdiction,
+    }
+    return Prepared(
+        records, decision, regulations, triggers, key_findings(records.findings), entity
     )
+
+
+async def assess(request: dict, task_id: str) -> dict:
+    prepared = await prepare(request, task_id)
+    records, decision, regulations = prepared.records, prepared.decision, prepared.regulations
+    triggers, display_findings = prepared.triggers, prepared.display_findings
+    explanation = await explain_decision(**prepared.explanation_inputs())
     canonical = records.model_dump(mode="json")
     return {
         "agent": "compliance",

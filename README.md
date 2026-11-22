@@ -189,6 +189,7 @@ Working drafts behind the study are in [`docs/research/`](docs/research/README.m
 
 - [`accessibility/`](src/argus/accessibility/) has the contrast utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
+- [`study/baseline.py`](src/argus/study/baseline.py) writes the study's week 1 baseline from that same explanation code; see [`docs/research/baseline.md`](docs/research/baseline.md).
 
 ---
 
