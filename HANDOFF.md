@@ -224,7 +224,10 @@ write-up.
   rewritten and no longer contains them, and GitHub's contributor data for `main` lists only the
   maintainer and Dependabot. Only GitHub Support can remove the leftover commits from #1 and
   refresh the list; the maintainer has the request text.
-- **Branch protection** on `main` is off and needs its own approval (`docs/RELEASING.md`).
+- **Required checks on `main`.** The `main` ruleset requires a pull request, resolved review
+  threads and six CI checks, and blocks force pushes (`docs/RELEASING.md`). Requiring the other
+  jobs too (Web UI, Container image, Infrastructure template, CodeQL, No AI attribution) needs
+  its own approval.
 - **Editor setup.** Use Ruff as the Python formatter, to match the project's formatting checks
   (the recommended VS Code extensions include it); machine-specific diagnostics and suggested
   settings are recorded locally.
@@ -254,6 +257,10 @@ requests.
   Codex found on #44 that the OpenAI client's own two retries would multiply the study's: up to
   nine requests per item instead of three, only three of them recorded. Study calls now turn
   them off, with tests that failed first; the run manifest records it.
+- #44 then showed as blocked: the `main` ruleset requires resolved review threads. The release
+  guide and Open items said branch protection was off; two rulesets (`main`, `release tags`)
+  have been active since September and October. Corrected both. Replied to and resolved Codex's
+  thread, and deleted the merged `fix/review-minors` branch.
 
 ### 22 November 2026 — #41 merged
 

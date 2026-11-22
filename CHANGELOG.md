@@ -199,6 +199,13 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   cited regulations. Checked against `release.yml`, `check_versions.py` and `smoke_api.py`;
   `check_docs.py` and markdownlint pass.
 
+- **The release guide says what protects `main`.** It and the handoff said branch protection
+  was off and not set yet. Two repository rulesets have been active since September and October
+  2026: `main` requires a pull request merged with a merge commit, resolved review threads and
+  six CI checks, and blocks force pushes and deletion; `release tags` blocks moving or deleting
+  a `v*` tag. Checked on 22 November against the rulesets read from GitHub's API; #44 was held
+  by its unresolved review thread, as the `main` ruleset requires.
+
 ### Known issues
 
 - **The API does not accept identity documents yet.** `POST /api/v1/kyc/assess` has no
