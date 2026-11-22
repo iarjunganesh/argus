@@ -209,15 +209,16 @@ Every entity is invented. These use recorded demo profiles for the parallel agen
 
 The web UI shows a report as an analyst's case file:
 
-- **Cases** — the start page lists the demo cases with their last run in this browser, riskiest first
+- **Cases** — the start page lists the demo cases with their last run and its review state in this browser, riskiest first
 - **Investigation** — each agent's progress as it runs (four in parallel, then compliance), its time and where its result came from; collapsed to one line once the report is in
-- **Case header** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, whether enhanced due diligence is required, the recommendation (a hold as a blocking notice) and the next step
-- **Potential sanctions match** — for a hold, the listing beside the customer it may concern
+- **Case header** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, whether enhanced due diligence is required, the recommendation (a hold as a blocking notice), the next step and the review's state
+- **Potential sanctions match** — for a hold, the listing beside the customer it may concern, where the match is confirmed, cleared or escalated
+- **Review** — a simulated review kept in this browser only and sent nowhere: the analyst decides with a reason, and a HIGH or CRITICAL decision waits for an approver's sign-off (the role is a switch in the header)
 - **Why this score** — each dimension's score times its weight, adding up to the overall score; behind each, its findings with their uncertainty, source and evidence records, or the obligations for Regulatory
 - **Explanation** — the analyst explanation, and whether a model or the template wrote it
 - **Regulations cited** — the knowledge base, source document and article behind each regulatory trigger
 - **Recommended actions** — driven by risk indicators and compliance gaps
-- **Audit trail** (collapsed) — report and task IDs, each agent's status, where its result came from and which tools fell back, the timeline, and the full report as JSON
+- **Audit trail** (collapsed) — report and task IDs, each agent's status, where its result came from and which tools fell back, the timeline, the review's steps in this browser, and the full report as JSON
 
 The JSON report also includes canonical typed `findings`, an `evidence` index and a `decision_record` with the policy version and evaluated finding IDs. Every record remains pending human review. Scores and obligations use those facts; cached agent scores cannot change them. Missing assessments retain the existing numeric defaults and are explicitly unknown. The string `key_findings` list remains available to current clients. See [the scoring record](docs/ARCHITECTURE.md#typed-findings-and-decision-record).
 
@@ -275,7 +276,7 @@ To run on Azure instead, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) deploys the 
 
 ## Contributing
 
-The next work is the analyst workspace in the web UI, then the study above; [`HANDOFF.md`](HANDOFF.md) has the order. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
+The next work is the study above; [`HANDOFF.md`](HANDOFF.md) has the order. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
 
 1. Accessibility review of the web UI with real assistive technology: axe finds no WCAG 2.2 AA violations, but that is not a full audit (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
 2. Translations of explanation output — the people who need plain language most often aren't reading in English
