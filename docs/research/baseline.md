@@ -54,6 +54,10 @@ or a link, is refused, because an agent may choose the command's arguments.
 - **The ledger** is one file of JSON lines for the whole study, so its totals carry across runs
   and restarts. Use the same file for every run; a new file starts the study's total at zero.
   It is created on the first attempt.
+- **One run at a time.** A run holds the ledger while it runs, through a lock file beside it
+  (`<ledger>.lock`, naming the run), and reads the ledger afresh once it holds it. A second run
+  refuses to start (exit 2) while the lock exists. If a run is killed, its lock stays: remove
+  it by hand once no run is active.
 - **Before each attempt**, retries included, the run reserves an upper bound on the attempt's
   cost: every prompt byte priced as an uncached input token (a token is at least one byte), 16
   tokens of message framing, and the whole completion allowance (`max_completion_tokens`, 4000

@@ -128,13 +128,17 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   reservation at the cost the reply's usage reports, or keeps it whole when the usage is
   unknown. A reservation that would take the study past US$20, or week 1 past US$2, is not
   made: the run stops, writes what ran, records where it stopped and exits with 1. A run
-  without a model spends nothing. The command reads the prices and the ledger only from inside
-  the working directory, since an agent may choose its arguments (SonarQube Cloud's path
-  traversal rule on #46). Checked: 47 new tests, 490 in all, at 100% line and branch coverage,
-  among them hand-worked bounds and costs, a reservation that reaches a ceiling but not past
-  it, totals carried across restarts and earlier runs, a stop before an item and one between
-  retries, and a prices file or ledger outside the working directory refused; ruff and mypy. Run offline with a prices file and a new ledger, it wrote 30
-  `fallback` items and wrote nothing to the ledger. At the 2026-11-22 rates (rechecked on
+  without a model spends nothing. One run at a time holds the ledger (a lock file beside it)
+  and reads it afresh when it does, so two runs cannot both reserve the last of the budget
+  (Codex's review finding on #46). The command reads the prices and the ledger only from
+  inside the working directory, since an agent may choose its arguments (SonarQube Cloud's
+  path traversal rule on #46). Checked: 52 new tests, 495 in all, at 100% line and branch
+  coverage, among them hand-worked bounds and costs, a reservation that reaches a ceiling but
+  not past it, totals carried across restarts and earlier runs, a stop before an item and one
+  between retries, two runs whose ledgers were opened together, a held ledger refused, and a
+  prices file or ledger outside the working directory refused; ruff and mypy. Run offline with
+  a prices file and a new ledger, it wrote 30 `fallback` items and wrote nothing to the
+  ledger. At the 2026-11-22 rates (rechecked on
   2026-11-25), week 1's 30 items reserve about US$0.64, and 90 failed attempts would count
   US$1.91.
 
