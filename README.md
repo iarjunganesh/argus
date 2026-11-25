@@ -239,7 +239,7 @@ model output is read ([the protocol](docs/research/study-protocol.md)). It asks 
 | Step | Status |
 | --- | --- |
 | Typed findings and the decision record every arm is checked against | ✅ Done (16 November 2026) |
-| The protocol, the model and the budget | ✅ Written, and the model and budget approved; the protocol is frozen before the first study model call |
+| The protocol, the model and the budget | ✅ Model and budget approved on 22 November 2026; protocol frozen on 25 November 2026 |
 | Week 1: a baseline of today's explanation (six demo scenarios, arm A, five repeats) | 🔧 Command and spending stop built; the first model run is next |
 | Week 2: the case set, the per-case references and the minimised input | Planned |
 | Week 3: arms A, B and C on every case | Planned |
