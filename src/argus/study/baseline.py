@@ -384,6 +384,19 @@ async def run_baseline(
     return run_dir
 
 
+def inside_working_directory(given: str) -> Path:
+    """The file a command-line path names, refused unless it lies inside the working directory.
+
+    The command may be run by an agent with arguments it chose, so it reads only files from the
+    folder it runs in (usually the repository), never from elsewhere on the machine.
+    """
+    base = Path.cwd().resolve()
+    path = (base / given).resolve()  # follows links and "..", so neither can lead outside
+    if not path.is_relative_to(base):
+        raise ValueError(f"{given} must be inside the working directory, {base}")
+    return path
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m argus.study.baseline",
@@ -392,15 +405,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True, help="folder to write the run into")
     parser.add_argument("--repeats", type=int, default=REPEATS, help="repeats per scenario")
     parser.add_argument(
-        "--prices", type=Path, help="token prices per million, with source and check date (JSON)"
+        "--prices",
+        help="token prices per million, with source and check date (JSON), in this folder",
     )
     parser.add_argument(
-        "--ledger", type=Path, help="the study's spend ledger, one file for all runs (JSON lines)"
+        "--ledger",
+        help="the study's spend ledger, one file for all runs (JSON lines), in this folder",
     )
     args = parser.parse_args(argv)
     try:
-        prices = Prices.load(args.prices) if args.prices else None
-        ledger = Ledger(args.ledger) if args.ledger else None
+        prices = Prices.load(inside_working_directory(args.prices)) if args.prices else None
+        ledger = Ledger(inside_working_directory(args.ledger)) if args.ledger else None
         run_dir = asyncio.run(
             run_baseline(args.out, repeats=args.repeats, prices=prices, ledger=ledger)
         )

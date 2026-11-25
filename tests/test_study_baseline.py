@@ -424,19 +424,42 @@ def _prices_file(tmp_path: Path) -> Path:
 def test_the_command_reads_the_prices_and_the_ledger(monkeypatch, tmp_path, capsys):
     llm = FakeLLM(content="Explained.", response={"usage": USAGE})
     monkeypatch.setattr(ed, "get_chat_model", llm.model())
-    out, ledger, prices = tmp_path / "runs", tmp_path / "spend.jsonl", _prices_file(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    _prices_file(tmp_path)
 
-    args = ["--out", str(out), "--repeats", "1", "--prices", str(prices), "--ledger", str(ledger)]
+    args = ["--out", "runs", "--repeats", "1", "--prices", "prices.json", "--ledger", "spend.jsonl"]
     assert baseline.main(args) == 0
 
     run_dir = Path(capsys.readouterr().out.strip().splitlines()[-1])
     manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["prices"]["checked"] == "2026-11-22"
-    assert len(_lines(ledger)) == 12  # six scenarios, each reserved and settled
+    assert len(_lines(tmp_path / "spend.jsonl")) == 12  # six scenarios, each reserved and settled
+
+
+@pytest.mark.parametrize("outside", ["prices", "ledger"])
+def test_the_command_reads_no_file_outside_the_working_directory(
+    monkeypatch, tmp_path, capsys, outside
+):
+    llm = FakeLLM(content="Explained.", response={"usage": USAGE})
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    files = {"prices": _prices_file(work), "ledger": work / "spend.jsonl"}
+    files[outside] = tmp_path / files[outside].name  # beside the working directory, not in it
+    if outside == "prices":
+        _prices_file(tmp_path)
+
+    args = ["--out", "runs", "--prices", str(files["prices"]), "--ledger", str(files["ledger"])]
+    assert baseline.main(args) == 2
+
+    assert "inside the working directory" in capsys.readouterr().err
+    assert not (work / "runs").exists() and llm.calls == []
 
 
 def test_the_command_reports_a_stop(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(ed, "get_chat_model", FakeLLM(content="Explained.").model())
+    monkeypatch.chdir(tmp_path)
     ledger = tmp_path / "spend.jsonl"
     spend.Ledger(ledger).reserve("earlier", "week 1", Decimal(2))
     args = ["--out", str(tmp_path / "runs"), "--prices", str(_prices_file(tmp_path))]
