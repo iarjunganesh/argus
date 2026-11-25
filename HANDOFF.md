@@ -54,7 +54,7 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   spend file for the study): each attempt reserves an upper bound on its cost first, settles at
   the reported usage, and the run stops before an attempt that would take the study past US$20
   or week 1 past US$2. At the approved rates week 1 reserves about US$0.64; 90 failed attempts
-  would count US$1.91. 488 tests pass at 100% coverage; the 25 November offline run wrote 30
+  would count US$1.91. 490 tests pass at 100% coverage; the 25 November offline run wrote 30
   fallback items and spent nothing. No model baseline exists.
 - **The analyst workspace is live (#40, #41 and #43).** The site reads a report as a case file (case
   header, sanctions match panel, "Why this score" with each finding's evidence) and lists the
@@ -304,10 +304,13 @@ requests.
   the `main` ruleset now requires the other four CI jobs and CodeQL results (read back from the
   API). Rechecked ESLint 10 and TypeScript 7: still held back by `eslint-config-next`'s
   plugins. Left open: the stale contributor entry (only GitHub Support can clear it) and the
-  documents field (undecided). 488 tests at 100% coverage, ruff, mypy, the docs, version and
+  documents field (undecided). 490 tests at 100% coverage, ruff, mypy, the docs, version and
   asset checks, markdownlint, and the web UI's lint, format, type check, 96 unit tests and
   build pass; the end-to-end tests run in the pull request's CI (Node 26 is not installed
-  here). Committed on `feat/study-spending-stop` and opened #46.
+  here). Committed on `feat/study-spending-stop` and opened #46. All its required checks
+  passed; SonarQube Cloud's gate failed on two path traversal findings (the prices file and the
+  ledger are read from any path an agent passes), so the command now reads them only from
+  inside the working directory, with two tests that failed first.
 
 ### 22 November 2026 — model and budget approved
 

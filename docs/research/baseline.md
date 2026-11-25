@@ -36,7 +36,9 @@ that checks the command, is not a model baseline, and spends nothing.
 ## Prices and the spending stop
 
 A run with a model refuses to start without `--prices` and `--ledger` (protocol section 8;
-`src/argus/study/spend.py`).
+`src/argus/study/spend.py`). Both must be inside the folder the command runs in (usually the
+repository, for example under the ignored `.local/`); a path that leads elsewhere, through `..`
+or a link, is refused, because an agent may choose the command's arguments.
 
 - **Prices** are a JSON file in US dollars per million tokens, with where and when they were
   checked. Check them on the day of the run; the manifest records the file's values.
