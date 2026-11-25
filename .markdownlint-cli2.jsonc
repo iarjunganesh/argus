@@ -17,6 +17,7 @@
     "web/test-results/**",
     ".tmp/**",
     ".local/**",
+    ".superpowers/sdd/**",
     // Frozen hackathon material is kept exactly as submitted.
     "archive/**"
   ]

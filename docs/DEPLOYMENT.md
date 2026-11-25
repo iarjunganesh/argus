@@ -113,7 +113,7 @@ zero.
 [`deploy.yml`](../.github/workflows/deploy.yml) does the same from GitHub Actions: it builds the
 image, pushes it to GitHub Container Registry as `sha-<commit>`, deploys the template with the
 image's digest, and runs the smoke test against the result. It runs when started by hand (Actions
-→ Deploy → Run workflow) and after every published release (`release.yml`). It signs in to Azure
+→ Deploy → Run workflow) and after `release.yml` publishes a release from a tag push. It signs in to Azure
 with OpenID Connect, so no client secret exists anywhere. Setting it up, once:
 
 1. **An identity for the workflow.** A user-assigned managed identity with a federated
@@ -239,8 +239,9 @@ Then connect the repository (the project's Settings → Git). `vercel link` writ
 - **Requests end after 240 seconds.** Container Apps' ingress closes any HTTP request after 240
   seconds. An assessment finishes well within that; a progress stream that is cut reconnects and
   resumes from its last event.
-- **Cold starts.** At zero replicas, the first request waits for the API to start. The smoke test
-  measures it.
+- **Cold starts.** At zero replicas, the first request waits for the API to start: 14 to 45
+  seconds between 18 and 25 November 2026. The smoke test measures it; the web UI's notice and
+  the README's live API badge say that waking can take up to a minute.
 - **Reports live in Cosmos DB,** so they survive the API scaling to zero.
 - **AI Search Free** may be deleted after a long time without use when the region runs short of
   capacity. Moving to Basic means a new service and a rerun of `infra/populate.py`.

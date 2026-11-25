@@ -20,6 +20,7 @@ from urllib.error import HTTPError
 from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
+from packaging.markers import Marker
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.tags import compatible_tags, cpython_tags
@@ -452,17 +453,90 @@ def latest_image_release(image: str, current: Version) -> Version:
     return Version(tag.removeprefix("v"))
 
 
-def wheel_ready(files: list[dict], minor: str) -> bool:
+# The Windows development and Linux CI/deployment platforms: the wheel tags each accepts, and the
+# marker environment a lock's dependency markers are evaluated in.
+PLATFORMS = {
+    "windows": {
+        "tags": ["win_amd64"],
+        "markers": {
+            "sys_platform": "win32",
+            "platform_system": "Windows",
+            "os_name": "nt",
+            "platform_machine": "AMD64",
+        },
+    },
+    "linux": {
+        "tags": [
+            "manylinux_2_28_x86_64",
+            "manylinux_2_17_x86_64",
+            "manylinux2014_x86_64",
+            "linux_x86_64",
+        ],
+        "markers": {
+            "sys_platform": "linux",
+            "platform_system": "Linux",
+            "os_name": "posix",
+            "platform_machine": "x86_64",
+        },
+    },
+}
+BOTH = ("windows", "linux")
+
+
+def _reached(lock: list[dict], environment: dict[str, str]) -> set[str]:
+    """The locked packages installed in `environment`: reachable from the project through
+    dependencies, extras and dependency groups whose markers hold there."""
+    entries: dict[str, list[dict]] = {}
+    for package in lock:
+        entries.setdefault(canonicalize_name(package["name"]), []).append(package)
+    queue: list[dict] = []
+    for package in lock:
+        if not {"editable", "virtual"} & set(package.get("source", {})):
+            continue
+        queue += package.get("dependencies", [])
+        for group in package.get("dev-dependencies", {}).values():
+            queue += group
+    extras: dict[str, set[str]] = {}
+    while queue:
+        edge = queue.pop()
+        if "marker" in edge and not Marker(edge["marker"]).evaluate(environment):
+            continue
+        name = canonicalize_name(edge["name"])
+        first = name not in extras
+        new = set(edge.get("extra", [])) - extras.setdefault(name, set())
+        extras[name] |= new
+        for package in entries.get(name, []):
+            if first:
+                queue += package.get("dependencies", [])
+            for extra in sorted(new):
+                queue += package.get("optional-dependencies", {}).get(extra, [])
+    return set(extras)
+
+
+def installed_on(root: Path, minor: str) -> dict[str, tuple[str, ...]]:
+    """The platforms each locked registry package is installed on, read from the lock's markers.
+
+    A package the lock reaches on neither platform needs wheels for both, so a gap in the
+    lock's reading can only ask for more wheels, never fewer."""
+    lock = read_toml(root / "uv.lock")["package"]
+    python = {"python_version": minor, "python_full_version": f"{minor}.0"}
+    cpython = {"platform_python_implementation": "CPython", "implementation_name": "cpython"}
+    reached = {
+        platform: _reached(lock, {**spec["markers"], **cpython, **python})
+        for platform, spec in PLATFORMS.items()
+    }
+    where = {}
+    for name in packages(root):
+        platforms = tuple(platform for platform in BOTH if name in reached[platform])
+        where[name] = platforms or BOTH
+    return where
+
+
+def wheel_ready(files: list[dict], minor: str, platforms: tuple[str, ...] = BOTH) -> bool:
+    """Whether a release has a wheel for `minor` on each of `platforms`."""
     version = tuple(int(part) for part in minor.split("."))
-    platforms = [
-        "win_amd64",
-        "manylinux_2_28_x86_64",
-        "manylinux_2_17_x86_64",
-        "manylinux2014_x86_64",
-        "linux_x86_64",
-    ]
-    # Require both the Windows development and Linux CI/deployment platforms.
-    for platform_group in [platforms[:1], platforms[1:]]:
+    for platform in platforms:
+        platform_group = PLATFORMS[platform]["tags"]
         supported = set(
             cpython_tags(version, abis=["cp" + minor.replace(".", "")], platforms=platform_group)
         )
@@ -642,11 +716,12 @@ def _python_row(
     candidate = f"{latest_python.major}.{latest_python.minor}"
     current_python = (root / ".python-version").read_text("utf-8").strip()
     if Version(candidate) > Version(current_python):
+        where = installed_on(root, candidate)
         blocked = [
             f"{name}=={version}"
             for name, versions in inventory.items()
             for version in versions
-            if not wheel_ready(metadata[name]["releases"][version], candidate)
+            if not wheel_ready(metadata[name]["releases"][version], candidate, where[name])
         ]
         state = "blocked: " + ", ".join(blocked) if blocked else "ready for separate PR"
     else:
@@ -683,6 +758,35 @@ def write_minimums(root: Path) -> None:
         return f"{match['quote']}{req.name}{extras}{operator}{inventory[name][0]}{match['quote']}"
 
     path.write_text(DEPENDENCY.sub(replace, text), encoding="utf-8", newline="\n")
+
+
+def write_agent_framework(root: Path) -> dict[str, tuple[str, str]]:
+    """Move each exact Agent Framework pin in pyproject.toml to its latest release.
+
+    The pin stays exact; a prerelease pin may move to a newer prerelease, a stable one only to a
+    stable release. The refresh runs this before it upgrades the lock, so the lock, the minimums
+    and the README badge follow, and the tests run the workflow on the new version. Returns what
+    moved, as name -> (old, new).
+    """
+    path = root / "pyproject.toml"
+    text = path.read_text("utf-8")
+    moved: dict[str, tuple[str, str]] = {}
+    for req in requirements(read_toml(path)):
+        name = canonicalize_name(req.name)
+        if not name.startswith("agent-framework"):
+            continue
+        old = str(req.specifier).removeprefix("==")
+        upstream = fetch(api_url("pypi", "pypi", name, "json"))
+        new = latest_package(upstream, allow_pre=Version(old).is_prerelease)
+        if Version(new) <= Version(old):
+            continue
+        # The quoted requirement, extras kept: "agent-framework-core==1.26.0".
+        pinned = re.escape(req.name) + r"(?:\[[^\]]*\])?=="
+        pattern = re.compile(rf"(?P<head>[\"']{pinned}){re.escape(old)}(?P<tail>[\"'])")
+        text = pattern.sub(rf"\g<head>{new}\g<tail>", text)
+        moved[name] = (old, new)
+    path.write_text(text, encoding="utf-8", newline="\n")
+    return moved
 
 
 def write_actions(root: Path, actions: dict[str, tuple[str, str]]) -> None:
@@ -765,10 +869,11 @@ def check_python_wheels(root: Path, minor: str) -> list[str]:
     if not re.fullmatch(r"3\.\d+", minor):
         raise ValueError("Expected a CPython minor")
     blocked = []
+    where = installed_on(root, minor)
     for name, resolutions in packages(root).items():
         for version in resolutions:
             files = fetch(api_url("pypi", "pypi", name, version, "json"))["urls"]
-            if not wheel_ready(files, minor):
+            if not wheel_ready(files, minor, where[name]):
                 blocked.append(f"{name}=={version} has no compatible wheels for Python {minor}")
     return blocked
 
@@ -788,6 +893,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--check-upstream", action="store_true")
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--write-minimums", action="store_true")
+    mode.add_argument("--write-agent-framework", action="store_true")
     mode.add_argument("--write-python")
     mode.add_argument("--check-python-wheels")
     parser.add_argument("--report", choices=sorted(REPORTS), help="also write the report to .tmp/")
@@ -810,27 +916,39 @@ def main(argv: list[str] | None = None) -> int:
         if args.write_minimums:
             write_minimums(ROOT)
             return 0
-        rows, actions, images, npm, candidate = upstream(ROOT)
-        report = "\n".join(rows) + "\n"
-        print(report)
-        if args.report:
-            path = REPORTS[args.report]
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(report, encoding="utf-8")
-        if args.write_candidate:
-            CANDIDATE.parent.mkdir(parents=True, exist_ok=True)
-            CANDIDATE.write_text(candidate or "", encoding="utf-8")
-        if args.write:
-            write_backend(ROOT)
-            write_actions(ROOT, actions)
-            write_images(ROOT, images)
-            write_npm(ROOT, npm)
-            write_minimums(ROOT)
-            write_badges(ROOT)
+        if args.write_agent_framework:
+            moved = write_agent_framework(ROOT)
+            for name, (old, new) in moved.items():
+                print(f"{name}: {old} -> {new}")
+            if not moved:
+                print("Agent Framework is at its latest release.")
+            return 0
+        _inventory(args)
         return 0
     except (OSError, ValueError, KeyError) as exc:
         print(f"Version inventory failed: {exc}", file=sys.stderr)
         return 1
+
+
+def _inventory(args: argparse.Namespace) -> None:
+    """The upstream inventory: print it, keep the report and candidate, and write with --write."""
+    rows, actions, images, npm, candidate = upstream(ROOT)
+    report = "\n".join(rows) + "\n"
+    print(report)
+    if args.report:
+        path = REPORTS[args.report]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(report, encoding="utf-8")
+    if args.write_candidate:
+        CANDIDATE.parent.mkdir(parents=True, exist_ok=True)
+        CANDIDATE.write_text(candidate or "", encoding="utf-8")
+    if args.write:
+        write_backend(ROOT)
+        write_actions(ROOT, actions)
+        write_images(ROOT, images)
+        write_npm(ROOT, npm)
+        write_minimums(ROOT)
+        write_badges(ROOT)
 
 
 if __name__ == "__main__":

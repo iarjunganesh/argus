@@ -111,15 +111,65 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   request is retried twice; the command refuses any data plane but the local one and writes no
   secret. The OpenAI client's own retries (two by default) are turned off for these calls, so a
   request is sent at most three times and every attempt is recorded; the live explanation keeps
-  the client's defaults. No model baseline exists yet: that waits for the frozen protocol and
-  the budget. Checked: 22 new tests, 434 in all, at 100% line and branch coverage, including that the
+  the client's defaults. No model baseline exists yet: that waits for the frozen protocol.
+  Checked: 22 new tests, 434 in all, at 100% line and branch coverage, including that the
   baseline's prompt equals the one the workflow sends for each of the six scenarios, the
   retries with the client's own turned off (and that the OpenAI client honours that), a
   failure after them, an empty reply and the records' contents; the explanation and
   demo scenario tests pass unchanged; ruff and mypy. Run with `ARGUS_MODEL_PROVIDER=none`, it
   wrote 30 items, all labelled `fallback`.
 
+- **A model run of the week 1 baseline stops at the study's spending ceilings.** The command
+  takes `--prices` (US dollars per million tokens, with their source and check date, recorded in
+  the manifest) and `--ledger` (one spend file for the whole study), and refuses a model run
+  without them. Before each attempt, retries included, it reserves an upper bound on the
+  attempt's cost (every prompt byte as an uncached input token, plus framing, and the whole
+  completion allowance as output) and flushes it to disk. Afterwards it settles the
+  reservation at the cost the reply's usage reports, or keeps it whole when the usage is
+  unknown. A reservation that would take the study past US$20, or week 1 past US$2, is not
+  made: the run stops, writes what ran, records where it stopped and exits with 1. A run
+  without a model spends nothing. One run at a time holds the ledger (a lock file beside it)
+  and reads it afresh when it does, so two runs cannot both reserve the last of the budget
+  (Codex's review finding on #46). The command reads the prices and the ledger only from
+  inside the working directory, since an agent may choose its arguments (SonarQube Cloud's
+  path traversal rule on #46). Checked: 52 new tests, 495 in all, at 100% line and branch
+  coverage, among them hand-worked bounds and costs, a reservation that reaches a ceiling but
+  not past it, totals carried across restarts and earlier runs, a stop before an item and one
+  between retries, two runs whose ledgers were opened together, a held ledger refused, and a
+  prices file or ledger outside the working directory refused; ruff and mypy. Run offline with
+  a prices file and a new ledger, it wrote 30 `fallback` items and wrote nothing to the
+  ledger. At the 2026-11-22 rates (rechecked on
+  2026-11-25), week 1's 30 items reserve about US$0.64, and 90 failed attempts would count
+  US$1.91.
+
 ### Changed
+
+- **Merging to `main` needs every CI job to pass.** With the maintainer's approval, the `main`
+  ruleset now also requires Web UI (with the Playwright and axe tests), Container image,
+  Infrastructure template and No AI attribution, ten checks in all, and CodeQL results with no
+  error and no high or critical security alert. Every pull request since #31 passed all of
+  them. Checked: the ruleset read back from GitHub's API on 25 November with the ten checks and
+  the code scanning rule; the release guide lists them.
+- **The dependency refresh moves Agent Framework too.** Its first writing step,
+  `check_versions.py --write-agent-framework`, moves the exact pin in `pyproject.toml` to the
+  latest release (a newer prerelease only from a prerelease pin) before the lock upgrade, so the
+  lock, the minimums and the README badge follow and the tests run the workflow on the new
+  version; it was a manual step after `v0.1.0`. `AGENTS.md`, the release guide and the refresh
+  report say so. Checked: five new tests (a move past a yanked release and a prerelease, a
+  prerelease pin, a current pin, the command's output, the step's place before the lock
+  upgrade); on 25 November the real inventory showed Agent Framework 1.26.0 as current.
+- **The site and the README say the API can take up to a minute to wake.** The cold-start notice
+  said "about 20 seconds", and the live API badge said nothing of the wait, but the first
+  request after idle took 44.5 seconds on 25 November (14 to 30 seconds earlier). The badge now
+  reads "demo cases only, wakes in up to a minute" and still links to the health check, whose
+  address matches the running app. Checked: the web UI's lint, type check, 96 unit tests and
+  build; the end-to-end test matches the notice's unchanged opening words; opened from a
+  browser after the API scaled to zero, the link showed `{"status":"ok"}`.
+- **The draft study protocol records the approved model and spending limits.** GPT-5.4 mini
+  is pinned to the verified Azure deployment version. The protocol records the US$20
+  study ceiling, the US$2 baseline ceiling, and the checked Azure retail rates. Checked on
+  2026-11-25: the deployment reads back as `gpt-5.4-mini` version `2026-03-17`, Data Zone
+  Standard, with automatic upgrades off, and the retail price list gives the recorded rates.
 
 - **Each session starts by checking the recorded facts.** `HANDOFF.md` has a start-of-session
   check, named in its initialization prompt, in `AGENTS.md` and in the Claude Code and Copilot
@@ -159,6 +209,23 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Fixed
 
+- **The Python upgrade check no longer asks for wheels a platform never installs.** It required
+  a Windows and a Linux wheel of every locked package, so `uvloop`, which the lock installs
+  only off Windows and which publishes no Windows wheels, blocked every new Python minor. The
+  check now reads each package's platforms from the lock's markers, through dependencies,
+  extras and groups, and still asks for both when the lock reaches a package on neither.
+  Checked: four new tests (the platforms read from a lock with markers, extras, a group and a
+  stray package; the wheel gate per platform; the interpreter PR's and the inventory's
+  verdicts); on 25 November the real inventory's Python 3.15 row lists only `msgspec` 0.21.1
+  and `pyyaml` 6.0.3, whose newer releases (0.22.0, 6.0.4) publish 3.15 wheels for both
+  platforms.
+- **The session check records the current source and deployment.** Verified #45's merge and
+  checks on GitHub, #43's production build and public domain in Vercel, and HTTP 200 from the
+  site and API. A local run produced 30 fallback items without sending requests.
+- **Repository-local verification works with scratch files present.** Markdown lint excludes
+  the ignored Superpowers task notes, and the baseline test for a directory outside Git also
+  works with a repo-local pytest temporary folder. Checked with the full Markdown glob and
+  434 Python tests at 100% line and branch coverage.
 - **Four small faults in the demo review are gone.** A browser whose storage is full, not only
   one that blocks it, now gets an accurate notice ("Not kept: this browser's storage is blocked
   or full, so the review lasts only while this page is open."; it said the browser blocks

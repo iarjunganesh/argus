@@ -110,9 +110,9 @@ A change is done when:
 After each release tag, every dependency moves to its latest version in a pull request titled
 `deps: refresh after vX.Y.Z`: the Python packages in `uv.lock` and the `pyproject.toml`
 minimums, the GitHub Actions pins, and the Python version once all dependencies support it.
-Microsoft Agent Framework is pinned exactly, and its compatibility is part of that check; the
-automation leaves that pin at its locked version, so move it by hand in the same pull request
-(see [`docs/RELEASING.md`](docs/RELEASING.md)). **A
+Microsoft Agent Framework stays pinned exactly; the refresh moves that pin to its latest release
+before it upgrades the lock, so its compatibility is part of that check (see
+[`docs/RELEASING.md`](docs/RELEASING.md)). **A
 release isn't finished until that pull request exists**; report which packages moved and whether
 anything broke. `release.yml` opens that pull request automatically after each tag (see
 [`docs/RELEASING.md`](docs/RELEASING.md)); to do the same by hand:
@@ -146,7 +146,7 @@ Inside `src/argus/`:
 | `data_plane/` | The four data interfaces (retriever, entity store, report store, OCR), each with a local and an Azure implementation |
 | `utils/` | Shared helpers: `.env` loader, JSON logger, the six recorded demo profiles |
 | `accessibility/` | WCAG contrast utilities, also used to check the images |
-| `study/` | The explanation study's commands: the week 1 baseline (`python -m argus.study.baseline`) |
+| `study/` | The explanation study's commands: the week 1 baseline (`python -m argus.study.baseline`) and its spending stop |
 | `models.py` | The one language-model client factory (`ARGUS_MODEL_PROVIDER`) |
 | `config.py` | The Azure client factories behind the Azure data plane |
 | `findings.py` | Typed facts, evidence records and assessment states; ignores cached scores |

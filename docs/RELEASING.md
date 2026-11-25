@@ -19,12 +19,13 @@ tag also deploys the API.
    - the repository's Zenodo archiving, switched on in the maintainer's Zenodo account.
 
    Changing them needs the maintainer's approval. Two repository rulesets are active (read on
-   2026-11-22): `main` requires a pull request merged with a merge commit, resolved review
-   threads and six CI checks (Lint and format, Type check, Tests and coverage, Dependency audit,
-   Secret scan, Documentation), and blocks force pushes and deletion; `release tags` blocks
-   moving or deleting a `v*` tag. Classic branch protection is not set. Requiring the other CI
-   jobs too (Web UI, Container image, Infrastructure template, CodeQL, No AI attribution) needs
-   the maintainer's approval.
+   2026-11-25): `main` requires a pull request merged with a merge commit, resolved review
+   threads, ten checks (Lint and format, Type check, Tests and coverage, Dependency audit, Secret
+   scan, Documentation, Web UI, Container image, Infrastructure template and No AI attribution)
+   and CodeQL results with no error and no security alert of high severity or worse, and blocks
+   force pushes and deletion; `release tags` blocks moving or deleting a `v*` tag. Classic branch
+   protection is not set. The last four checks and the CodeQL rule were added on 2026-11-25,
+   with the maintainer's approval.
 2. Open a release-prep pull request: rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    (the date you tag), add a new empty `## [Unreleased]` above it, set `version` in
    `pyproject.toml` to `X.Y.Z` and run `uv lock`. Merge it before tagging, so the tagged commit
@@ -66,10 +67,12 @@ existing published tag. Manual dispatch retries the refresh without republishing
 - `--write` refreshes action pins and raises direct minimums to the resolved lock versions.
   Run `uv lock --upgrade` first, then `uv lock` after raising minimums. Review all changes.
 - A newer stable CPython minor is eligible only when **every locked package version** has
-  non-yanked compatible wheels for Linux x86_64 and Windows amd64 and accepts that Python
-  version. The release workflow prepares a separate interpreter PR and verifies Linux
-  binary-only installation. Its normal PR CI must pass before merge. This conservative test
-  can defer an upgrade because of a platform-specific optional package; review that explicitly.
+  non-yanked compatible wheels, accepting that Python version, for each platform the lock
+  installs it on: Linux x86_64, Windows amd64 or both. The platforms come from the lock's
+  dependency markers (`uvloop`, for one, is never installed on Windows, so it needs no Windows
+  wheel); a package the lock reaches on neither platform needs wheels for both. The release
+  workflow prepares a separate interpreter PR and verifies Linux binary-only installation. Its
+  normal PR CI must pass before merge.
 
 - **Container base images.** `--check` requires every `FROM` in the root `Dockerfile` to be pinned
   by version tag and `sha256` digest, one pin per image, to an image the inventory knows (Python
@@ -79,11 +82,12 @@ existing published tag. Manual dispatch retries the refresh without republishing
   `rebuilt` under the same tag, usually for base-OS security fixes. `--write` moves the pins, and
   the interpreter PR moves the Python image to the new minor. A tag the registry has not published
   yet stays as it is and is reported.
-- **Agent Framework** is pinned exactly, and `--write` keeps it exact at its locked version, so the
-  refresh does not move it. Move it by hand in the refresh pull request: the new version in
-  `pyproject.toml` and the README badge, then `uv lock --upgrade-package agent-framework-core`;
-  the orchestrator and API contract tests then run the workflow on it. After `v0.1.0` it moved
-  from 1.19.0 to 1.26.0 this way.
+- **Agent Framework** stays pinned exactly. The refresh's first writing step,
+  `--write-agent-framework`, moves the pin in `pyproject.toml` to the latest release (a newer
+  prerelease only when the pin is one); the lock upgrade then resolves it, `--write` keeps it
+  exact and moves the README badge, and the orchestrator and API contract tests run the workflow
+  on it. If the new version breaks something, the refresh pull request carries the failure. After
+  `v0.1.0` it was moved by hand, from 1.19.0 to 1.26.0, before this step existed.
 
 The build backend is reported separately because it is outside the lock; the refresh raises
 its minimum to the latest release and retains an upper bound at the next minor.

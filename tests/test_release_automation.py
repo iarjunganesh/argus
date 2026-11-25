@@ -782,3 +782,192 @@ def test_the_inventory_writes_its_report_and_candidate_to_fixed_files(tmp_path, 
 
     assert (tmp_path / "after.md").read_text() == "| row |\n"
     assert (tmp_path / "candidate.txt").read_text() == "3.15"
+
+
+# ── Agent Framework moves with the refresh ───────────────────────────────────
+
+
+def _pin_agent_framework(repo, version):
+    change(
+        repo / "pyproject.toml",
+        '"sample[extra]>=1.0"',
+        f'"sample[extra]>=1.0", "agent-framework-core=={version}"',
+    )
+
+
+def _agent_framework_releases(monkeypatch, releases):
+    def fake_fetch(url):
+        assert url == "https://pypi.org/pypi/agent-framework-core/json"
+        return {"releases": {version: [wheel(**extra)] for version, extra in releases.items()}}
+
+    monkeypatch.setattr(versions, "fetch", fake_fetch)
+
+
+def test_agent_framework_moves_to_its_latest_stable_release(repo, monkeypatch):
+    _pin_agent_framework(repo, "1.0.0")
+    _agent_framework_releases(
+        monkeypatch, {"1.0.0": {}, "1.2.0": {}, "1.3.0": {"yanked": True}, "2.0.0b1": {}}
+    )
+
+    assert versions.write_agent_framework(repo) == {"agent-framework-core": ("1.0.0", "1.2.0")}
+
+    text = (repo / "pyproject.toml").read_text()
+    assert '"agent-framework-core==1.2.0"' in text and '"sample[extra]>=1.0"' in text
+
+
+def test_a_prerelease_agent_framework_may_move_to_a_newer_prerelease(repo, monkeypatch):
+    _pin_agent_framework(repo, "1.0.0b1")
+    _agent_framework_releases(monkeypatch, {"1.0.0b1": {}, "1.0.0b2": {}})
+
+    assert versions.write_agent_framework(repo) == {"agent-framework-core": ("1.0.0b1", "1.0.0b2")}
+
+
+def test_a_current_agent_framework_and_a_project_without_one_are_left_alone(repo, monkeypatch):
+    original = (repo / "pyproject.toml").read_text()
+    assert versions.write_agent_framework(repo) == {}  # no pin: nothing is fetched
+    _pin_agent_framework(repo, "1.2.0")
+    pinned = (repo / "pyproject.toml").read_text()
+    _agent_framework_releases(monkeypatch, {"1.0.0": {}, "1.2.0": {}})
+
+    assert versions.write_agent_framework(repo) == {}
+    assert (repo / "pyproject.toml").read_text() == pinned != original
+
+
+def test_the_command_moves_agent_framework_and_says_so(repo, monkeypatch, capsys):
+    monkeypatch.setattr(versions, "ROOT", repo)
+    _pin_agent_framework(repo, "1.0.0")
+    _agent_framework_releases(monkeypatch, {"1.0.0": {}, "1.1.0": {}})
+
+    assert versions.main(["--write-agent-framework"]) == 0
+
+    assert "agent-framework-core: 1.0.0 -> 1.1.0" in capsys.readouterr().out
+
+
+def test_the_refresh_moves_agent_framework_before_it_upgrades_the_lock():
+    steps = refresh.commands("python")
+    labels = [label for label, _ in steps]
+
+    assert labels.index("Move Agent Framework") < labels.index("Upgrade lock")
+    command = dict(steps)["Move Agent Framework"]
+    assert command == ["python", "scripts/ci/check_versions.py", "--write-agent-framework"]
+
+
+# ── The interpreter gate asks each platform only for what it installs ────────
+
+
+LOCK_WITH_MARKERS = """requires-python = ">=3.14"
+[[package]]
+name = "argus"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "server", extra = ["standard"] },
+    { name = "console", marker = "sys_platform == 'win32'" },
+]
+[package.dev-dependencies]
+dev = [
+    { name = "checker" },
+]
+[[package]]
+name = "server"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "core" },
+]
+[package.optional-dependencies]
+standard = [
+    { name = "fastloop", marker = "implementation_name == 'cpython' and sys_platform != 'win32'" },
+]
+[[package]]
+name = "core"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+[[package]]
+name = "fastloop"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "loophelper" },
+]
+[[package]]
+name = "loophelper"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+[[package]]
+name = "console"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+[[package]]
+name = "checker"
+version = "2.0"
+source = { registry = "https://pypi.org/simple" }
+[[package]]
+name = "stray"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+"""
+
+
+def test_the_lock_says_where_each_package_is_installed(repo):
+    (repo / "uv.lock").write_text(LOCK_WITH_MARKERS)
+
+    assert versions.installed_on(repo, "3.15") == {
+        "server": ("windows", "linux"),
+        "core": ("windows", "linux"),
+        "checker": ("windows", "linux"),  # a dependency group
+        "fastloop": ("linux",),  # an extra, behind a marker that excludes Windows
+        "loophelper": ("linux",),  # only reached through fastloop
+        "console": ("windows",),
+        "stray": ("windows", "linux"),  # reached on neither: both are required
+    }
+
+
+def test_the_wheel_gate_checks_only_the_platforms_asked_for():
+    linux = [wheel("fastloop-1.0-cp315-cp315-manylinux_2_17_x86_64.whl")]
+    windows = [wheel("console-1.0-cp315-cp315-win_amd64.whl")]
+
+    assert versions.wheel_ready(linux, "3.15", ("linux",))
+    assert not versions.wheel_ready(linux, "3.15")
+    assert versions.wheel_ready(windows, "3.15", ("windows",))
+    assert not versions.wheel_ready(windows, "3.15", ("linux",))
+
+
+def test_a_linux_only_package_needs_no_windows_wheel_for_a_new_python(repo, monkeypatch):
+    (repo / "uv.lock").write_text(LOCK_WITH_MARKERS)
+    platform_wheel = {
+        "fastloop": "cp315-cp315-manylinux_2_17_x86_64",
+        "loophelper": "cp315-cp315-manylinux_2_17_x86_64",
+        "console": "cp315-cp315-win_amd64",
+    }
+
+    def fake_fetch(url):
+        name = url.split("/")[4]
+        tag = platform_wheel.get(name, "py3-none-any")
+        return {"urls": [wheel(f"{name}-1.0-{tag}.whl")]}
+
+    monkeypatch.setattr(versions, "fetch", fake_fetch)
+    assert versions.check_python_wheels(repo, "3.15") == []
+
+    platform_wheel["server"] = "cp315-cp315-manylinux_2_17_x86_64"  # installed on Windows too
+    assert versions.check_python_wheels(repo, "3.15") == [
+        "server==1.0 has no compatible wheels for Python 3.15"
+    ]
+
+
+def test_the_upstream_gate_reads_the_same_platforms(repo, monkeypatch):
+    (repo / "uv.lock").write_text(LOCK_WITH_MARKERS)
+    linux_only = {"fastloop", "loophelper"}
+
+    def fake_fetch(url):
+        if "pypi" not in url:
+            return [{"ref": "refs/tags/v3.15.0"}]
+        name = url.split("/")[4]
+        tag = "cp315-cp315-manylinux_2_17_x86_64" if name in linux_only else "py3-none-any"
+        return {"releases": {"1.0": [wheel(f"{name}-1.0-{tag}.whl")], "2.0": [wheel()]}}
+
+    monkeypatch.setattr(versions, "fetch", fake_fetch)
+    monkeypatch.setattr(versions, "action_release", lambda _: ("v1.0.0", "a" * 40))
+
+    *_, candidate = versions.upstream(repo)
+    assert candidate == "3.15"

@@ -307,7 +307,8 @@ services; both are in the EU).
 
 Search moves to Basic ($0.101 an hour, about $74 a month at list price) only when the data outgrows
 50 MB or keyless access is needed; Free can't be converted in place, so that means a new service
-and a re-index. The idle cost is an estimate until the exit gate observes a full idle day.
+and a re-index. The table shows estimated costs per resource. Azure Monitor recorded a full
+idle day on 20 November 2026 (UTC), and the daily cost was checked on 22 November.
 
 ## Infrastructure
 

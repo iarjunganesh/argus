@@ -37,35 +37,43 @@ grounded facts and report what deviates, with file and line:
 Fix each deviation in the documents, or record it under Open items when it needs the
 maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, like any change.
 
-## Current state — 22 November 2026
+## Current state — 25 November 2026
 
-- **Source.** `main` is at `78f6fde` (#44, the week 1 baseline command, merged on 22
-  November, after #43, the four minor points from B's self-review). Only `main` exists on
-  GitHub.
-- **The week 1 baseline command is merged (#44).**
-  `python -m argus.study.baseline` runs arm A on the six demo scenarios and writes the
-  protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)). The
-  analyst prompt comes from the production code, now split into a prompt builder and a recorded
+- **Source.** `main` is at `041d7ca` (#45, the handoff after #44, merged on 22 November);
+  nothing has merged since. The work of 22 and 25 November (this file, the protocol's model and
+  budget, the guide corrections, the spending stop and the open items fixed on 25 November) is
+  on `feat/study-spending-stop`, in pull request #46, opened on 25 November with the
+  maintainer's go-ahead.
+- **The week 1 baseline command is merged (#44); its spending stop is built (25 November,
+  not yet merged).** `python -m argus.study.baseline` runs arm A on the six demo scenarios and
+  writes the protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)).
+  The analyst prompt comes from the production code, split into a prompt builder and a recorded
   call; study calls turn off the OpenAI client's own retries, so a request is sent at most three
-  times, as protocol section 8 allows (Codex's review finding on #44). 434 tests pass at 100%
-  coverage; run without a model, it wrote 30 items, all labelled fallback. No model baseline
-  exists.
-- **The analyst workspace is live (#40 and #41).** The site reads a report as a case file (case
+  times, as protocol section 8 allows (Codex's review finding on #44). A model run now needs
+  `--prices` (recorded in the manifest with their source and check date) and `--ledger` (one
+  spend file for the study): each attempt reserves an upper bound on its cost first, settles at
+  the reported usage, and the run stops before an attempt that would take the study past US$20
+  or week 1 past US$2. At the approved rates week 1 reserves about US$0.64; 90 failed attempts
+  would count US$1.91. 495 tests pass at 100% coverage; the 25 November offline run wrote 30
+  fallback items and spent nothing. No model baseline exists.
+- **The analyst workspace is live (#40, #41 and #43).** The site reads a report as a case file (case
   header, sanctions match panel, "Why this score" with each finding's evidence) and lists the
   demo cases with their last run and review state in this browser (A, #40). A visitor can play
   the review: resolve a sanctions match, decide the case with a reason, and have the approver
   sign off a HIGH or CRITICAL decision, all kept in the browser and labelled as a demo (B, #41,
-  with a layout fix in the match panel). The merge deployed production from `bb1a67e`, and the
-  domain moved to it from #41's preview.
+  with a layout fix in the match panel). The public domain now serves production from
+  `390a86c` (#43), with the four review fixes. Vercel skipped the builds for #44 and #45,
+  which changed no files under `web/`.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
   10.5281/zenodo.24292413 always resolves to the latest version. The post-release dependency
   refresh (#35) is merged, which finishes the release; Agent Framework moved to 1.26.0 by hand.
-- **What runs.** One process: a FastAPI API that runs five agents as a Microsoft Agent Framework
-  workflow, and a Next.js web UI. Fixed rules compute the score and tier from typed findings; a
-  language model only writes the explanation. The default is the local data plane with
-  synthetic data and no cloud account. Known issues: the Azure data plane has run live only in
+- **What runs.** ARGUS is a technical demonstration with no active customers. The v2 study
+  uses synthetic cases for a technical report. The FastAPI API runs the five-agent Microsoft
+  Agent Framework workflow in one process. The Next.js UI calls the API. Fixed rules compute
+  the score and tier from typed findings. A language model writes the explanation. The default
+  is the local data plane with synthetic data and no cloud account. Known issues: the Azure data plane has run live only in
   part (the entity store, sanctions and adverse-media searches and Document Intelligence have
   not), and the API takes no documents.
 - **Live since 18 November, for the six demo cases.** With the maintainer's go-ahead:
@@ -75,16 +83,26 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
     in as the user-assigned managed identity `id-argus-deploy`, kept in its own group
     `rg-argus-ci` and trusted for the GitHub `azure` environment only (deployments from `main`
     and `v*` tags). The Azure sign-in check (`azure-check.yml`) passed. Because
-    `AZURE_RESOURCE_GROUP` is set, **every published release now deploys automatically**.
+    `AZURE_RESOURCE_GROUP` is set, the release workflow deploys the API after publishing
+    a release from a tag push.
   - **Vercel.** The web UI runs at <https://argus.arjunganesh.dev> (project `argus`, Hobby),
     connected to this repository: Root Directory `web`, Node.js 26; a push to `main` deploys
     production, other branches get previews, and a push that changes nothing under `web/` since
     the branch's last build is skipped. The repository's homepage link points to the site.
   - **Checked.** The smoke check passed on the rerun; Cayman Synth Capital came out CRITICAL 76
     with two regulations cited and a model-written explanation (the first since the rebuild);
-    the API refuses other origins; it scaled to zero 12 minutes after its last request, and a
-    report made before that was served afterwards from Cosmos DB. The first request after idle
-    takes 14 to 30 seconds. One idle day's cost is still to be read.
+    CORS allows the site's browser origin. The API scaled to zero 12 minutes after its last
+    request and served an earlier report afterwards from Cosmos DB. The first request after
+    idle took 14 to 30 seconds in the deployment smoke check. On 22 November the site and API
+    health check both returned HTTP 200, with the API taking 22.4 seconds. On 25 November both
+    returned HTTP 200 again; from zero replicas the health check took 44.5 seconds the first
+    time, and the second time a browser showed `{"status":"ok"}` within 8 seconds but reported
+    the page loaded only after 27 seconds. The README's live API badge links to the running
+    app's health check (the address matches the app's ingress); the pull request makes the
+    badge and the site's cold-start notice say that waking can take up to a minute (the notice
+    said about 20 seconds). Azure Monitor recorded zero
+    requests and zero replicas on 20 November (UTC). The corresponding daily cost entry was
+    read on 22 November and kept in `.local/`.
 - **Every demo case is invented (#29).** The data rule is in `AGENTS.md`, with an empty
   `docs/DATA-SOURCES.md` register. The six scenarios keep their tiers: Jane Synthetic 3.0 (LOW),
   Synthetic Holdings B.V. 44.0 (MEDIUM), Cayman Synth Capital 76.0 (CRITICAL), Synthetic
@@ -100,14 +118,18 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   in eight strata (8 tuning, 16 held out), three arms (today's raw prompt, minimised typed
   findings, the fixed template), a per-case reference written before outputs are read, injection
   and missing-step variants with their expected behaviour, the measures and the analysis. About
-  770 model calls. Its model configuration and budget ceiling are open. No case, model call or
-  result exists.
-- **Web UI on Node.js 26 (#39).** CI, the release workflow and Vercel read the version from
-  `web/.nvmrc`.
-- **Checks.** Every pull request merged since 16 November (#31 to #44) passed all its CI checks
-  (16 to 18 each): 434 tests at 100% line and branch coverage, type check, lint, documentation,
-  the web UI with its Playwright and axe tests, container image, dependency audit, CodeQL and
-  SonarQube Cloud. No Dependabot, code scanning or secret scanning alert is open.
+  770 model calls before retries. The maintainer approved the existing Azure OpenAI
+  `gpt-5.4-mini` deployment, version `2026-03-17`, and a US$20 study token-spend ceiling
+  including up to US$2 for week 1. On 25 November the deployment read back as that version,
+  Data Zone Standard, with automatic upgrades off, and the retail price list still gave the
+  recorded rates. The 24 study cases have yet to be built, and no study model calls have been
+  made.
+- **Web UI on Node.js 26 (#39).** CI and the release workflow read `web/.nvmrc`. The
+  Vercel project is set to 26.x.
+- **Checks.** CI and Attribution passed on `041d7ca`. Each of #31 through #45 passed all its
+  checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
+  scanning alerts. Since 25 November the `main` ruleset requires ten checks and CodeQL results
+  (Decisions, `docs/RELEASING.md`).
 
 ## Next step
 
@@ -127,30 +149,37 @@ request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary 
 this file (the session log to the last few entries; the unconfirmed schedule), the generated
 `docs/DEPENDENCY-REFRESH.md` (only what moved) and `docs/roadmap/durable-execution.md`.
 
-The study is next. Maintainer decisions still open:
+Waiting for the maintainer: review and merge #46 (the session checks' corrections, the
+protocol's model and budget, the spending stop, the automatic Agent Framework move, the Python
+upgrade check and the wake-up wording). Its merge deploys the site, since it changes `web/`.
 
-1. The study's model configuration and budget ceiling (protocol section 8). Required to freeze
-   the protocol and before any study model call.
-2. Whether a second annotator is sought, and whether the optional uncapped raw arm is included
-   (protocol section 16).
+The study proceeds in order:
 
-Then, in order:
-
-1. Freeze the protocol once decisions 1 and 2 are made and the text is approved: its status
-   line says "frozen" with the date, and that version reaches `main` before any study model
-   call.
-2. Week 1 code: done (#44, 22 November). Before the baseline run, check that the local `.env`
-   points at the chosen model deployment, and record the prices in the run (the manifest's
-   `prices` is empty until the budget is set).
-3. After the freeze and the budget: the week 1 baseline (six demo scenarios, arm A, five
-   repeats), then week 2 (case generator, per-case references, minimised input).
+1. Decide whether to seek a second annotator and include the optional raw arm with no
+   finding-count cap (protocol section 16). Then approve the protocol text and date the
+   freeze. The frozen version must reach `main` before any study model call.
+2. Before the first model run. Done on 25 November: the deployment runs the approved version;
+   the command records the sourced prices and enforces the spending stop (tests and an offline
+   run). Still open:
+   - The local `.env` does not select the study model: it leaves the provider at `none` and
+     names an older deployment on an endpoint that is no longer in use. The maintainer points it
+     at the `gpt-5.4-mini` deployment (the settings are noted in `.local/`).
+   - Whether the study's charges draw on the hackathon credit, and its balance. Microsoft's
+     credit documentation says Azure Sponsorship credits might cover models sold directly by
+     Azure, `gpt-5.4-mini` among them, and do not cover partner models; the balance shows only
+     in the credit's own portal, which needs the maintainer's sign-in. The US$20 ceiling holds
+     either way.
+   - On the day of the run, recheck the rates and write them to the prices file
+     ([`docs/research/baseline.md`](docs/research/baseline.md)), and keep one ledger file for
+     every study run.
+3. After the freeze: the week 1 baseline (six demo scenarios, arm A, five repeats), then week 2
+   (case generator, per-case references, minimised input).
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
 
-**Keeping the live demo running.** Read one idle day's cost (Cost Management lags by up to a
-day). A merge to `main` that changes `web/` deploys the site on its own. Fixes the live run needs ship as
-`v0.1.1`; publishing that release redeploys the API automatically. `infra/teardown.py` removes
-the Azure side (see `docs/DEPLOYMENT.md`, "Remove it").
+**Keeping the live demo running.** A merge to `main` that changes `web/` deploys the site on
+its own. Fixes the live run needs ship as `v0.1.1` through the release workflow, which then
+redeploys the API. `infra/teardown.py` removes the Azure side (see `docs/DEPLOYMENT.md`, "Remove it").
 
 ### Proposed schedule (11 November 2026; not yet confirmed by the maintainer)
 
@@ -208,25 +237,29 @@ write-up.
   works cases all day: the report as a case file and a simulated review kept in the browser,
   built together (options A and B in the design). Accounts and stored decisions (option C) are
   out of scope.
+- 25 November 2026: merging to `main` requires every CI job: the `main` ruleset now also
+  requires Web UI, Container image, Infrastructure template and No AI attribution (ten checks)
+  and CodeQL results with no error and no high or critical alert. The API keeps scaling to
+  zero; the site and the README's badge say that waking can take up to a minute.
 
 ## Open items
 
-- **Manual upgrades the refresh reported.** Node.js 26, the LTS, is done (#39). ESLint 10
-  and TypeScript 7 are major versions, held back by peer limits
-  (`eslint-config-next` matches Next.js 16.4.6). Python 3.15 waits for wheels of msgspec,
-  pyyaml and uvloop.
-- **The refresh does not move Agent Framework.** It keeps the exact pin at its locked version, so
-  each refresh moves it by hand (documented in `docs/RELEASING.md`); automating that step is
-  open.
+- **Manual upgrades the refresh reported.** Node.js 26, the LTS, is done (#39).
+  - ESLint 10 and TypeScript 7 are still held back, by the plugins `eslint-config-next` 16.4.6
+    depends on (rechecked on 25 November): `eslint-plugin-react` 7.37.5,
+    `eslint-plugin-jsx-a11y` 6.10.2 and `eslint-plugin-import` 2.32.0 accept ESLint up to 9,
+    and `typescript-eslint` 8.74.0 accepts TypeScript below 6.1.
+  - Python 3.15 (3.15.2 is out) is no longer waiting on wheels. `msgspec` 0.22.0 and `pyyaml`
+    6.0.4 publish 3.15 wheels for Windows and Linux; the lock still holds 0.21.1 and 6.0.3,
+    which the next dependency refresh moves. `uvloop`, never installed on Windows, blocked
+    only because the upgrade check asked it for a Windows wheel; #46 fixes that check.
+    After the next release's refresh, the release workflow prepares the interpreter pull
+    request.
 - **A stale contributor entry.** The repository sidebar lists an AI assistant as a contributor.
   The cause is two commits brought in by #1 (June 2026) with co-author trailers; `main` was later
   rewritten and no longer contains them, and GitHub's contributor data for `main` lists only the
   maintainer and Dependabot. Only GitHub Support can remove the leftover commits from #1 and
   refresh the list; the maintainer has the request text.
-- **Required checks on `main`.** The `main` ruleset requires a pull request, resolved review
-  threads and six CI checks, and blocks force pushes (`docs/RELEASING.md`). Requiring the other
-  jobs too (Web UI, Container image, Infrastructure template, CodeQL, No AI attribution) needs
-  its own approval.
 - **Editor setup.** Use Ruff as the Python formatter, to match the project's formatting checks
   (the recommended VS Code extensions include it); machine-specific diagnostics and suggested
   settings are recorded locally.
@@ -238,7 +271,91 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 22 November 2026 (latest, continued) — B's minor points and the week 1 code
+### 25 November 2026 (latest) — session check and the spending stop
+
+- Session check. GitHub matches the record: `main` at `041d7ca` with CI, Attribution and
+  CodeQL passing, no pull request opened or merged since #45, only `main`, the `v0.1.0` tag and
+  release, and no Dependabot, code scanning or secret scanning alert. Vercel's production is
+  still #43's `390a86c` (#44 and #45 skipped) and the domain points to it. `check_docs.py`,
+  `check_versions.py --check` and markdownlint pass. The site answered at once; the API's
+  `/health` answered after 44.5 seconds from zero replicas, beyond the 14 to 30 seconds
+  recorded. The maintainer asked whether the README's live API badge opens as expected: its
+  address is the app's own, and opened in a browser after the API had scaled to zero again, it
+  showed `{"status":"ok"}`; the wait from zero replicas is the open question (Open items).
+  Deviations: the 22 November session's changes (its corrections, the protocol's
+  model and budget, a test fix) were never committed, so GitHub's copy of this file and the
+  protocol still say the model and budget are open; and the local `.env` does not select the
+  approved model (Next step).
+- Verified the approved deployment (version `2026-03-17`, Data Zone Standard, automatic
+  upgrades off) and today's retail rates (unchanged). Microsoft's credit documentation says
+  Sponsorship credits might cover models sold directly by Azure; the balance needs the
+  maintainer.
+- Built the spending stop, test first (`argus.study.spend` and the baseline's `--prices` and
+  `--ledger`): 45 new tests, each watched failing first, 479 in all at 100% coverage; ruff,
+  mypy, the docs, version and asset checks and markdownlint pass. An offline run with a prices
+  file wrote 30 fallback items and nothing to the ledger. Updated the baseline guide, the v2
+  plan, the research index, the repository map, the README and the changelog.
+- The maintainer asked to fix the open items and open the pull request. Fixed, test first
+  where code changed: the refresh now moves the Agent Framework pin itself (five tests); the
+  Python upgrade check reads each package's platforms from the lock's markers, so `uvloop` no
+  longer blocks Python 3.15 (four tests; the real inventory now lists only `msgspec` and
+  `pyyaml`, whose newer releases have the wheels); the site's cold-start notice and the README's
+  live API badge say waking can take up to a minute. With the maintainer's explicit approval,
+  the `main` ruleset now requires the other four CI jobs and CodeQL results (read back from the
+  API). Rechecked ESLint 10 and TypeScript 7: still held back by `eslint-config-next`'s
+  plugins. Left open: the stale contributor entry (only GitHub Support can clear it) and the
+  documents field (undecided). 495 tests at 100% coverage (after the fixes below), ruff, mypy,
+  the docs, version and asset checks, markdownlint, and the web UI's lint, format, type check,
+  96 unit tests and build pass; the end-to-end tests run in the pull request's CI (Node 26 is
+  not installed here). Committed on `feat/study-spending-stop` and opened #46. All its required checks
+  passed; SonarQube Cloud's gate failed on two path traversal findings (the prices file and the
+  ledger are read from any path an agent passes), so the command now reads them only from
+  inside the working directory, with two tests that failed first. Codex then found (P2) that
+  two runs opening the ledger before either writes could both reserve the last of the budget;
+  reproduced in a test, fixed with a lock that holds the ledger for a whole run and a fresh read
+  once it is held (five tests that failed first), and replied to and resolved its thread.
+
+### 22 November 2026 — model and budget approved
+
+- Confirmed the existing Azure model's version and automatic-upgrade setting and checked
+  Microsoft's retail token rates. Proposed a study model and spending ceiling under
+  Next step. The maintainer's decision is pending. No study model calls were sent.
+- The maintainer confirmed ARGUS is a technical demonstration with no active customers.
+  Revised the proposed ceiling to US$20 and recorded how the runner should enforce it.
+- Confirmed the published US$500 Azure credit for Hack for Good winners. The study budget
+  proposal remains at US$20. Remaining credit and model-charge eligibility are unverified.
+- The maintainer approved GPT-5.4 mini and the US$20 ceiling, including US$2 for week 1.
+  Recorded the configuration, rates and spending stop in protocol section 8. The next
+  decisions concern the second annotator and optional raw arm.
+
+### 22 November 2026 — session check and baseline readiness
+
+- Fetched and checked GitHub. #45 is the only pull request opened or merged after the previous
+  entry. It changes only the handoff and passed all 18 checks. Main CI and Attribution pass on
+  `041d7ca`. Rechecked #41 through #44, their changelog and guide updates, and the historical
+  check totals for #31 through #40. There are no open pull requests, other remote branches or
+  open security alerts. The #42 and #45 documentation-only merges recorded state in the
+  handoff and carried no changelog entry.
+- Corrected the recorded tip of `main`, the active Vercel deployment (#43's `390a86c`), and
+  how Vercel's Node.js version is set. The site and the API's `/health` both returned HTTP 200.
+  A CORS preflight succeeded for the site and was refused for an unrelated origin. The
+  release tag, Zenodo DOI, GitHub rulesets and Azure deployment history matched the records.
+  Read the cost entry for a day with zero API requests and replicas and saved it privately.
+- Updated the v2 plan for #44 and the current model and local data-plane implementations.
+  Dated the workspace design's description of the old UI and clarified the release workflow's
+  deploy trigger. The model baseline guide records that price capture and the spending stop
+  are still pending, and the protocol links to the current decision list.
+  The local check ran six scenarios five times each and produced 30 matched request and
+  response records, all labelled fallback with zero requests sent.
+- Fixed the Git discovery test for a repo-local pytest temporary directory and excluded
+  ignored Superpowers scratch notes from the Markdown glob. The Python suite passed with
+  434 tests and 100% line and branch coverage. Documentation, version and asset checks
+  passed, as did 96 web unit tests. The installed Node 27 prerelease failed at server
+  startup. All 51 Playwright runs passed on Node 26.13.1.
+- The protocol stays in draft pending the maintainer's model, budget, annotation and arm
+  decisions.
+
+### 22 November 2026 (continued) — B's minor points and the week 1 code
 
 - At the maintainer's request, fixed the four minor points from B's self-review on
   `fix/review-minors`, each with an end-to-end test that failed first, except the stale form

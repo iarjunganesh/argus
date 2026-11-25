@@ -182,17 +182,18 @@ and for the screening variant it must not say that no sanctions match was found.
 
 ## 8. Model configuration, repeats and budget
 
-To be fixed by the maintainer before the freeze (open decision 2 in [`../../HANDOFF.md`](../../HANDOFF.md)):
+Model and budget approved by the maintainer on 2026-11-22. The protocol freeze is tracked
+in [Next step in the handoff](../../HANDOFF.md#next-step).
 
 | Setting | Value |
 | --- | --- |
-| Provider and model | *open* |
-| Model version or deployment date | *open; recorded from the API response on every call* |
-| Sampling | As the production code sets them: `temperature` 0.2 and `max_tokens` 250, or, for a reasoning model, `max_completion_tokens` 4000 and the provider's default temperature |
+| Provider and model | Azure OpenAI `gpt-5.4-mini`, using the existing EU Data Zone Standard deployment |
+| Model version | `2026-03-17`. Verify the deployment version before each run and record the model identifier returned by the API for every response. |
+| Sampling | Production reasoning-model settings. `max_completion_tokens` is 4000, including reasoning tokens. Temperature uses the provider's default. |
 | Messages | One user message, as in production; no system message |
 | Repeats | 5 per item in the model arms; 1 for arm C, which is deterministic |
 | Retries | Up to 2 retries of the identical request after a transport or service error |
-| Budget ceiling | *open* |
+| Study token-spend ceiling | US$20 across all study runs, including a US$2 ceiling for week 1. Both limits include retries. |
 
 Expected volume, for the budget estimate:
 
@@ -205,13 +206,19 @@ Expected volume, for the budget estimate:
 | Week 5 improvement rerun: 16 held-out cases plus the 24 failure variants, one changed arm | 200 |
 | Total, before retries | 770 |
 
-At about 600 to 900 input tokens and at most 250 output tokens a call, that is under 0.7 million
-input and 0.2 million output tokens for a non-reasoning model. A reasoning model may use up to
-4,000 completion tokens a call, about 3 million in all. Prices are checked on the day the budget
-is set and recorded with their source.
+Checked on 2026-11-22, Microsoft's
+[Sweden Central retail rates](https://prices.azure.com/api/retail/prices?currencyCode=USD&api-version=2023-01-01-preview&%24filter=armRegionName%20eq%20%27swedencentral%27%20and%20productName%20eq%20%27Azure%20OpenAI%20GPT5%27%20and%20contains%28meterName%2C%20%275.4%20mini%27%29)
+per million tokens are US$0.825 for uncached input, US$0.0825 for cached input and US$4.95 for
+output. At 900 input and 4,000 completion tokens per call, pricing all input as uncached gives
+an estimate of US$15.82 for 770 calls before retries. The same estimate is US$0.62 for the 30
+baseline calls, or US$1.85 for three billed attempts per item. Verify rates before each run
+and record them with their source.
 
-A run stops when its spend reaches the agreed ceiling; the stop and the partial results are
-reported.
+Before each attempt, including retries, the runner reserves a conservative upper bound
+on its token cost against the applicable ceilings. It keeps the full reservation if
+billable usage is unknown. The study total carries across runs and restarts. The runner
+stops before the next attempt would exceed either applicable ceiling and reports the stop
+and partial results.
 
 ## 9. Measures
 
@@ -322,7 +329,7 @@ reported as such.
 
 ## 16. Before the freeze
 
-1. The maintainer fixes the model configuration and the budget ceiling (section 8).
+1. The maintainer fixed the model configuration and budget ceiling on 2026-11-22 (section 8).
 2. The maintainer decides whether a second annotator is sought, and whether the optional uncapped
    raw arm is included.
 3. The maintainer approves this text; the status line becomes "frozen" with the date, and the
