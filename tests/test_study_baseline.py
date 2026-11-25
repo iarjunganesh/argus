@@ -411,6 +411,41 @@ async def test_a_stop_between_retries_records_the_attempts_made(monkeypatch, tmp
     }
 
 
+async def test_a_run_counts_what_another_run_spent_after_its_ledger_was_opened(
+    monkeypatch, tmp_path, budget
+):
+    llm = FakeLLM(content="Explained.", response={"usage": USAGE})
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+    case = baseline.demo_cases()[0]
+    budget["ledger"].reserve("earlier", "week 1", Decimal(2) - await _bound(case))
+    later = spend.Ledger(tmp_path / "spend.jsonl")  # opened before the first run spends
+
+    await baseline.run_baseline(tmp_path / "a", repeats=1, cases=[case], **budget)
+    run_dir = await baseline.run_baseline(
+        tmp_path / "b", repeats=1, cases=[case], prices=PRICES, ledger=later
+    )
+
+    manifest, requests, _ = _run(run_dir)
+    assert len(llm.calls) == 1 and requests == []
+    assert manifest["spend"]["stopped"]["ceiling"] == "week 1"
+    assert Decimal(manifest["spend"]["before_usd"]["week 1"]) == Decimal(2) + USAGE_COST - (
+        await _bound(case)
+    )
+
+
+async def test_a_run_refuses_a_ledger_another_run_holds(monkeypatch, tmp_path, budget):
+    llm = FakeLLM(content="Explained.")
+    monkeypatch.setattr(ed, "get_chat_model", llm.model())
+
+    with (
+        spend.Ledger(tmp_path / "spend.jsonl").held("another run"),
+        pytest.raises(RuntimeError, match="Another run holds the study ledger"),
+    ):
+        await baseline.run_baseline(tmp_path / "runs", repeats=1, **budget)
+
+    assert not (tmp_path / "runs").exists() and llm.calls == []
+
+
 def _prices_file(tmp_path: Path) -> Path:
     path = tmp_path / "prices.json"
     path.write_text(

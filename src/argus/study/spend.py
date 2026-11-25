@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -114,10 +116,18 @@ def cost(prices: Prices, usage: dict | None) -> Decimal | None:
 
 
 class Ledger:
-    """The study's spend: one append-only file of reservations and settlements."""
+    """The study's spend: one append-only file of reservations and settlements.
+
+    One run at a time holds it (`held`), and reads it afresh when it does, so two runs can never
+    both reserve the same remaining budget.
+    """
 
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
+        self.lock = self.path.with_name(self.path.name + ".lock")
+        self._read()
+
+    def _read(self) -> None:
         self._phase: dict[str, str] = {}
         self._amount: dict[str, Decimal] = {}
         if self.path.exists():
@@ -147,6 +157,27 @@ class Ledger:
             ledger.flush()
             os.fsync(ledger.fileno())  # a reservation must survive a crash during its attempt
         self._apply(entry)
+
+    @contextmanager
+    def held(self, holder: str) -> Iterator[None]:
+        """Hold the ledger for one run, then read it afresh: what another run spent after this
+        ledger was opened counts. A second holder is refused while it is held. The lock file
+        names the holder; if a run is killed it stays, and is removed by hand once no run is
+        active, so a crash can only stop runs, never let one overspend."""
+        try:
+            handle = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            raise RuntimeError(
+                f"Another run holds the study ledger ({self.lock}); remove that file only if "
+                "no run is active."
+            ) from None
+        with os.fdopen(handle, "w", encoding="utf-8") as lock:
+            lock.write(holder + "\n")
+        try:
+            self._read()
+            yield
+        finally:
+            self.lock.unlink()
 
     @staticmethod
     def ceilings(phase: str) -> dict[str, Decimal]:

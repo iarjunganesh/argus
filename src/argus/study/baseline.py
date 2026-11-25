@@ -30,6 +30,7 @@ import json
 import shutil
 import subprocess
 import sys
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -319,8 +320,27 @@ async def run_baseline(
     model = _model_configuration()
     meter = _meter(model, prices, ledger)
     cases = demo_cases() if cases is None else cases
-    started_at = _now()
     run_id = run_id or f"baseline-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{uuid4().hex[:6]}"
+    # The run holds the ledger throughout, and reads it afresh first: another run may have spent
+    # since it was opened, and none may spend alongside it.
+    with ledger.held(run_id) if ledger else nullcontext():
+        return await _write_run(
+            out_dir, run_id, repeats, retries, cases, model, prices, ledger, meter
+        )
+
+
+async def _write_run(
+    out_dir: Path,
+    run_id: str,
+    repeats: int,
+    retries: int,
+    cases: list[Case],
+    model: dict,
+    prices: Prices | None,
+    ledger: Ledger | None,
+    meter: Meter | None,
+) -> Path:
+    started_at = _now()
     run_dir = out_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
 

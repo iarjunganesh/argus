@@ -194,3 +194,45 @@ def test_every_entry_is_on_disk_when_the_call_returns(tmp_path):
         ("run/a/1", "settled", None, "0.00000123"),  # never in exponent form
     ]
     assert all(e["at"] for e in entries)
+
+
+# ── one run at a time (Codex's review finding on #46) ────────────────────────
+
+
+def test_two_ledgers_opened_together_cannot_both_spend_the_last_of_the_budget(tmp_path):
+    path = tmp_path / "spend.jsonl"
+    spend.Ledger(path).reserve("earlier", "week 1", Decimal("1.98"))
+    first, second = spend.Ledger(path), spend.Ledger(path)  # both opened before either writes
+
+    with first.held("run-1"):
+        assert first.reserve("run-1/a/1", "week 1", Decimal("0.02")) is None
+    with second.held("run-2"):
+        assert second.reserve("run-2/a/1", "week 1", Decimal("0.02")) == "week 1"
+
+    assert spend.Ledger(path).totals("week 1")["week 1"] == Decimal("2.00")
+
+
+def test_a_held_ledger_refuses_a_second_holder_until_it_is_released(tmp_path):
+    path = tmp_path / "spend.jsonl"
+    first, second = spend.Ledger(path), spend.Ledger(path)
+
+    with first.held("run-1"):
+        assert (tmp_path / "spend.jsonl.lock").read_text("utf-8") == "run-1\n"
+        with (
+            pytest.raises(RuntimeError, match="Another run holds the study ledger"),
+            second.held("run-2"),
+        ):
+            pass
+    assert not (tmp_path / "spend.jsonl.lock").exists()
+
+    with second.held("run-2"):
+        pass
+
+
+def test_a_ledger_is_released_when_its_run_fails(tmp_path):
+    ledger = spend.Ledger(tmp_path / "spend.jsonl")
+
+    with pytest.raises(ZeroDivisionError), ledger.held("run-1"):
+        _ = 1 / 0
+
+    assert not (tmp_path / "spend.jsonl.lock").exists()
