@@ -39,11 +39,17 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 25 November 2026
 
-- **Source.** `main` is at `d419115` (#48, the handoff after #47), after `9d4e535` (#47: the
-  handoff after #46 and how a local run signs in to the study model) and `16f124d` (#46: the
-  session checks of 22 and 25 November, the protocol's model and budget, the spending stop and
-  the open items fixed on 25 November). The merged branches are deleted; this file's update is
-  in the protocol freeze's docs pull request (`docs/freeze-study-protocol`).
+- **Source.** `main` is at `639c835` (#50, the README rewrite), after `1ac83f4` (#49, the
+  protocol freeze), `d419115` (#48, the handoff after #47), `9d4e535` (#47: the handoff after
+  #46 and how a local run signs in to the study model) and `16f124d` (#46: the session checks
+  of 22 and 25 November, the protocol's model and budget, the spending stop and the open items
+  fixed on 25 November). The merged branches are deleted; this file's update is in its own docs
+  pull request (`docs/handoff-after-50`).
+- **The README leads with what ARGUS tests and where it is heading (#50).** The tagline is
+  "Rules decide. A language model explains. A person reviews."; the opening cites Global
+  Findex 2025 and the FATF's unintended-consequences project in place of two invented stories;
+  two screenshots of the report, light and dark, are in `assets/screenshots/`; every demo
+  scenario shows its score and tier; and the study's questions, design and progress are set out.
 - **The week 1 baseline command (#44) and its spending stop (#46) are merged.** `python -m argus.study.baseline` runs arm A on the six demo scenarios and
   writes the protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)).
   The analyst prompt comes from the production code, split into a prompt builder and a recorded
@@ -64,7 +70,7 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   sign off a HIGH or CRITICAL decision, all kept in the browser and labelled as a demo (B, #41,
   with a layout fix in the match panel). The public domain serves production from `16f124d`
   (#46, which changed the cold-start notice); the four review fixes came in #43. Vercel skipped
-  the builds for #44, #45, #47 and #48, which changed no files under `web/`.
+  the builds for #44, #45 and #47 to #50, which changed no files under `web/`.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -114,9 +120,9 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   versioned `decision_record`, pending human review; cached agent scores cannot affect
   decisions. The analyst prompt is unchanged and typed records still contain raw strings, so
   the minimised input is study work. The customer-facing variant is not wired in.
-- **Study protocol: frozen on 25 November (drafted in #32).** The maintainer chose no second
-  annotator and no uncapped raw arm, and approved the text; the freeze is the docs pull request
-  from `docs/freeze-study-protocol`, and the next handoff records the commit that froze it.
+- **Study protocol: frozen on 25 November (drafted in #32, frozen in #49).** The maintainer
+  chose no second annotator and no uncapped raw arm, and approved the text. The commit that
+  froze it is `ca4ed18`, the protocol commit a study run records (merged as `1ac83f4`).
   [`docs/research/study-protocol.md`](docs/research/study-protocol.md) fixes 24 synthetic cases
   in eight strata (8 tuning, 16 held out), three arms (today's raw prompt, minimised typed
   findings, the fixed template), a per-case reference written before outputs are read, injection
@@ -131,10 +137,11 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   study cases have yet to be built, and no study model calls have been made.
 - **Web UI on Node.js 26 (#39).** CI and the release workflow read `web/.nvmrc`. The
   Vercel project is set to 26.x.
-- **Checks.** CI, Attribution and CodeQL pass on `9d4e535` and `d419115`, and CodeQL's
-  Python, JavaScript/TypeScript and Actions analyses all uploaded with no error. On `16f124d`
-  the Python and JavaScript uploads had failed as GitHub's 25 November incident began, and
-  GitHub refused a rerun. Each of #31 through #48 passed all its checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
+- **Checks.** CI, Attribution and CodeQL pass on every merge since `9d4e535`, `639c835`
+  included, and CodeQL's Python, JavaScript/TypeScript and Actions analyses upload with no
+  error. On `16f124d` the Python and JavaScript uploads had failed as GitHub's 25 November
+  incident began, and GitHub refused a rerun. Each of #31 through #50 passed all its checks (16
+  to 18 each). GitHub reports zero open Dependabot, code scanning and secret
   scanning alerts. Since 25 November the `main` ruleset requires ten checks and CodeQL results
   (Decisions, `docs/RELEASING.md`).
 
@@ -159,7 +166,7 @@ this file (the session log to the last few entries; the unconfirmed schedule), t
 The study proceeds in order:
 
 1. **The protocol freeze: done on 25 November** (protocol section 16): no second annotator, no
-   uncapped raw arm, text approved. It must be merged to `main` before any study model call.
+   uncapped raw arm, text approved, merged to `main` in #49 (frozen by `ca4ed18`).
 2. Before the first model run. Done on 25 November: the deployment runs the approved version;
    the command records the sourced prices and enforces the spending stop (tests and an offline
    run); the local `.env` names the `gpt-5.4-mini` deployment with the provider left at `none`
@@ -173,8 +180,8 @@ The study proceeds in order:
    - On the day of the run, recheck the rates and write them to the prices file
      ([`docs/research/baseline.md`](docs/research/baseline.md)), and keep one ledger file for
      every study run.
-3. Once the freeze is on `main`: the week 1 baseline (six demo scenarios, arm A, five repeats;
-   a paid run, so it needs the maintainer's go-ahead on the day), then week 2
+3. **Next:** the week 1 baseline (six demo scenarios, arm A, five repeats; a paid run that
+   reserves at most about US$0.64, so it needs the maintainer's go-ahead on the day), then week 2
    (case generator, per-case references, minimised input).
 
 Nothing is pushed, tagged, deployed or paid for without the maintainer's go-ahead in the session.
@@ -273,7 +280,18 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 25 November 2026 (latest) — #48 merged; the protocol freeze
+### 25 November 2026 (latest) — #49 and #50 merged
+
+- The maintainer merged #49 (the protocol freeze, `1ac83f4`) and #50 (the README rewrite,
+  `639c835`); both passed all 17 checks, and Codex found nothing in either. CI, Attribution and
+  CodeQL pass on `639c835`; Vercel skipped the build. With the maintainer's go-ahead, deleted
+  both merged branches (local and on GitHub). `git log` gives `ca4ed18` as the protocol's last
+  commit, so the baseline's manifest will record it as the protocol commit.
+- #50's screenshots come from the web UI built from `main` against a local API with no model;
+  the explanation shown is the template's, labelled as such.
+- This pull request records the merges and gives the README's study table the freeze date.
+
+### 25 November 2026 — #48 merged; the protocol freeze
 
 - The maintainer merged #48 (17 checks passing, Codex found nothing); CI, Attribution and
   CodeQL pass on `d419115`. With the maintainer's go-ahead, deleted the merged
