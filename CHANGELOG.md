@@ -159,6 +159,16 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
   Checked: on 25 November one call outside the study, through `get_chat_model()`, signed in that
   way and the API answered as `gpt-5.4-mini-2026-03-17`.
 
+- **The README leads with what ARGUS tests and where it is heading.** It opens with what ARGUS
+  is and why an explanation must keep the facts, in place of two invented stories, and cites the
+  World Bank's Global Findex 2025 (about 1.3 billion adults without an account, not 2021's 1.4
+  billion) and the FATF's project on its standards' unintended consequences. It shows the web UI
+  in two screenshots, light and dark (`assets/screenshots/`), gives every demo scenario its score
+  and tier, and sets out the study's questions, design and progress. Checked: the scores and
+  tiers match `tests/fixtures/demo_scenarios.json`; the study's figures match the protocol; the
+  screenshots come from a local run on 25 November with no model, labelled as such;
+  `check_docs.py`, `check_versions.py --check` and markdownlint pass.
+
 - **Merging to `main` needs every CI job to pass.** With the maintainer's approval, the `main`
   ruleset now also requires Web UI (with the Playwright and axe tests), Container image,
   Infrastructure template and No AI attribution, ten checks in all, and CodeQL results with no

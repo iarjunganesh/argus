@@ -1,7 +1,7 @@
 # Assets
 
-Every image here is drawn from a hand-authored SVG **master**. The `-light` and `-dark` files
-next to each master are generated from it; don't edit them by hand.
+Every image here except the screenshots is drawn from a hand-authored SVG **master**. The
+`-light` and `-dark` files next to each master are generated from it; don't edit them by hand.
 
 ## Brand
 
@@ -34,6 +34,20 @@ The GitHub social preview can't be set from the repository: upload
 
 The architecture diagrams describe the code, not the aspiration. When the code changes a port,
 a fallback, a weight or a threshold, update the diagram in the same pull request.
+
+## Screenshots
+
+| File | Shows |
+| --- | --- |
+| `screenshots/case-light.png`, `screenshots/case-dark.png` | The report for Cayman Synth Capital from the top: the case queue, the tier, the score and the sanctions hold |
+| `screenshots/score-light.png`, `screenshots/score-dark.png` | The same report's "Why this score", review and explanation, main column only |
+
+Captured on 25 November 2026 from the web UI as built from `main`, against a local API with no
+model configured (`ARGUS_MODEL_PROVIDER=none`), so the template wrote the explanation and the
+report says so. A Chromium browser through Playwright, 1280 CSS pixels wide at a device scale of
+1.5, once with the light and once with the dark colour scheme; the README's `<picture>` elements
+pick the one that matches the reader's theme. Capture them again when the report's layout
+changes.
 
 ## How the files are made
 
