@@ -1,7 +1,7 @@
 # The week 1 baseline command
 
 Status: **command built on 2026-11-22, spending stop added on 2026-11-25; no model baseline has
-been captured.** A model run waits for the frozen protocol
+been captured.** The protocol it follows was frozen on 2026-11-25
 ([`study-protocol.md`](study-protocol.md), section 16).
 
 The command captures today's analyst explanation (arm A) for the six demo scenarios, five times

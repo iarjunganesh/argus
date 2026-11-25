@@ -1,14 +1,14 @@
 # Study protocol: the matched explanation study
 
-Status: **draft, written 2026-11-16; not yet approved or frozen.** It becomes binding when the
-maintainer approves it, its status line says "frozen" with a date, and that version is in Git
-before the first study model call. Every later change is a dated entry under "Amendments". No
-case, model output or annotation exists yet.
+Status: **frozen on 2026-11-25.** Written on 2026-11-16 and approved by the maintainer, who
+fixed the model and budget on 2026-11-22 and the annotation and arms on 2026-11-25 (section
+16). It binds every study run, and it reached Git before the first study model call. Every later
+change is a dated entry under "Amendments". No case, model output or annotation exists yet.
 
 This protocol turns the study in [`../ARGUS-V2-PLAN.md`](../ARGUS-V2-PLAN.md) into fixed
 procedures. Where the two differ, this protocol governs the study and the plan is corrected. It
-describes ARGUS as it is on `main` after the typed-findings change (#31, merged on
-2026-11-16); verify the code before relying on any detail here.
+describes ARGUS as it is on `main` at the freeze; the code details in sections 5, 7, 8 and 13
+were checked against it on 2026-11-25. Verify the code again before relying on any detail here.
 
 ## 1. Questions
 
@@ -32,7 +32,8 @@ real-world screening. The study measures faithfulness to ARGUS's own rules on sy
   and the shared policy (`argus-risk-v1`). No model output can change them. A structural check
   confirms they are identical across the arms of each case.
 - **The code.** Every run records the ARGUS commit, the protocol commit and the policy version.
-  A run whose ARGUS commit differs from the frozen one is reported separately.
+  The ARGUS commit for the held-out runs is recorded with the frozen arm B template (section 5);
+  a held-out run on another commit is reported separately.
 - **The data plane.** Local only: synthetic data, the local retriever and its corpus. The
   regulatory passages a case retrieves are recorded with each request.
 - **The model configuration.** One provider, model, version and set of sampling settings for
@@ -104,8 +105,9 @@ The two model arms differ in three ways at once: the entity name, the representa
 and the five-finding cap. The comparison is between two input packages. To separate the cap from
 the representation, every required fact is marked as present or absent in each arm's input, and
 preservation is reported both over the facts provided and over all required facts (section 9).
-An optional uncapped raw arm (A without the five-finding limit) may be added before the held-out
-runs if the budget allows; it is then a secondary arm, not part of the primary comparison.
+There is no uncapped raw arm (arm A without the five-finding limit; decided on 2026-11-25,
+section 16): the cap stays part of arm A's package, and the measure over the facts provided
+separates its effect.
 
 The arm B template is written and checked on tuning cases only, then frozen (an amendment
 records its hash) before any held-out run.
@@ -182,8 +184,8 @@ and for the screening variant it must not say that no sanctions match was found.
 
 ## 8. Model configuration, repeats and budget
 
-Model and budget approved by the maintainer on 2026-11-22. The protocol freeze is tracked
-in [Next step in the handoff](../../HANDOFF.md#next-step).
+Model and budget approved by the maintainer on 2026-11-22; the protocol was frozen on
+2026-11-25.
 
 | Setting | Value |
 | --- | --- |
@@ -252,11 +254,9 @@ starts.
 
 ### 9.3 Annotation procedure
 
-- Annotator 1 is the author and labels every model output. A second annotator, if one can be
-  found, independently labels a random 25% of outputs, stratified by arm and stratum. Agreement is
-  reported per label as percent agreement and Cohen's kappa. If there is no second annotator, the
+- Annotator 1 is the author and labels every model output. There is no second annotator
+  (decided on 2026-11-25, section 16), so agreement between annotators is not measured, and the
   report says so.
-- Disagreements are resolved by discussion; both original labels and the resolution are kept.
 - Outputs are shuffled and shown without arm labels. In the annotation view only, the exact
   entity name is replaced by a placeholder, so arm A outputs do not reveal their arm by naming the
   entity. The stored outputs are not changed.
@@ -318,9 +318,10 @@ reported as such.
 ## 15. Known limitations
 
 - Small: 24 cases and one pinned model. Results describe these cases and this model.
-- The author wrote the rules, the generator, the cases, the reference and most of the
-  annotations. Separating tuning from held-out cases and writing the reference first reduce, but do
-  not remove, that bias.
+- The author wrote the rules, the generator, the cases and the reference, and labels every
+  output, with no second annotator to measure agreement. Separating tuning from held-out cases,
+  writing the reference first and annotating without arm labels reduce, but do not remove, that
+  bias.
 - ARGUS's weights are illustrative. The study measures faithfulness to its rules, not their
   correctness.
 - The two model arms differ in a package of changes (section 5).
@@ -329,11 +330,13 @@ reported as such.
 
 ## 16. Before the freeze
 
+Done:
+
 1. The maintainer fixed the model configuration and budget ceiling on 2026-11-22 (section 8).
-2. The maintainer decides whether a second annotator is sought, and whether the optional uncapped
-   raw arm is included.
-3. The maintainer approves this text; the status line becomes "frozen" with the date, and the
-   commit is recorded in [`../../HANDOFF.md`](../../HANDOFF.md).
+2. On 2026-11-25 the maintainer decided that no second annotator is sought (section 9.3) and
+   that the optional uncapped raw arm is not included (section 5).
+3. The maintainer approved this text on 2026-11-25, and the status line says "frozen". The
+   commit that froze it is recorded in [`../../HANDOFF.md`](../../HANDOFF.md).
 
 ## Amendments
 
