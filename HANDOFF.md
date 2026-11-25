@@ -128,8 +128,9 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   Vercel project is set to 26.x.
 - **Checks.** CI and Attribution passed on `16f124d`. CodeQL's Python and JavaScript jobs there
   failed while uploading their results, with no error in the log; the same analysis passed on
-  #46's last commit, the Actions analysis uploaded, and GitHub refused to rerun the run (HTTP
-  500 twice). The next push to `main` runs CodeQL again. Each of #31 through #46 passed all its
+  #46's last commit, and the Actions analysis uploaded. GitHub declared an incident at 15:55 UTC
+  (Actions, pull requests and Git operations degraded), three minutes after the failure, and
+  refused to rerun the run (HTTP 500 twice). The next push to `main` runs CodeQL again. Each of #31 through #46 passed all its
   checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
   scanning alerts. Since 25 November the `main` ruleset requires ten checks and CodeQL results
   (Decisions, `docs/RELEASING.md`).
@@ -278,8 +279,10 @@ requests.
 - The maintainer merged #46 (18 checks passing, SonarQube Cloud's gate passed, Codex's thread
   resolved). `main` is at `16f124d`; its CI and Attribution runs pass. CodeQL's Python and
   JavaScript jobs failed while uploading results, with no error logged, although the same
-  analysis passed on #46's last commit; no GitHub incident was open, and a rerun was refused
-  with HTTP 500 twice, so the handoff pull request's merge runs it again. The merge deployed
+  analysis passed on #46's last commit. GitHub declared an incident at 15:55 UTC (Actions, pull
+  requests and Git operations degraded), three minutes later; a rerun was refused with HTTP 500
+  twice, and opening this handoff's pull request failed several times during the incident. The
+  handoff pull request's merge runs CodeQL again. The merge deployed
   production from `16f124d`, the domain points to it, and the site serves the new cold-start
   notice. With the maintainer's go-ahead, deleted the merged `feat/study-spending-stop` branch
   (local and on GitHub) and opened this handoff's pull request.
