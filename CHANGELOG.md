@@ -144,6 +144,12 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The baseline guide says how a local run signs in to the study's model.** The study account
+  accepts no keys, so the command signs in as the `az login` user, who needs the Cognitive
+  Services OpenAI User role; `ARGUS_MODEL_PROVIDER` goes on the command, not in `.env`.
+  Checked: on 25 November one call outside the study, through `get_chat_model()`, signed in that
+  way and the API answered as `gpt-5.4-mini-2026-03-17`.
+
 - **Merging to `main` needs every CI job to pass.** With the maintainer's approval, the `main`
   ruleset now also requires Web UI (with the Playwright and axe tests), Container image,
   Infrastructure template and No AI attribution, ten checks in all, and CodeQL results with no

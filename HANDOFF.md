@@ -39,13 +39,11 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 25 November 2026
 
-- **Source.** `main` is at `041d7ca` (#45, the handoff after #44, merged on 22 November);
-  nothing has merged since. The work of 22 and 25 November (this file, the protocol's model and
-  budget, the guide corrections, the spending stop and the open items fixed on 25 November) is
-  on `feat/study-spending-stop`, in pull request #46, opened on 25 November with the
-  maintainer's go-ahead.
-- **The week 1 baseline command is merged (#44); its spending stop is built (25 November,
-  not yet merged).** `python -m argus.study.baseline` runs arm A on the six demo scenarios and
+- **Source.** `main` is at `16f124d` (#46, merged on 25 November): the session checks of 22
+  and 25 November, the protocol's model and budget, the spending stop and the open items fixed
+  on 25 November. The merged branch is deleted; this file's update is in its own docs pull
+  request (`docs/handoff-after-46`).
+- **The week 1 baseline command (#44) and its spending stop (#46) are merged.** `python -m argus.study.baseline` runs arm A on the six demo scenarios and
   writes the protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)).
   The analyst prompt comes from the production code, split into a prompt builder and a recorded
   call; study calls turn off the OpenAI client's own retries, so a request is sent at most three
@@ -53,17 +51,19 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   `--prices` (recorded in the manifest with their source and check date) and `--ledger` (one
   spend file for the study): each attempt reserves an upper bound on its cost first, settles at
   the reported usage, and the run stops before an attempt that would take the study past US$20
-  or week 1 past US$2. At the approved rates week 1 reserves about US$0.64; 90 failed attempts
-  would count US$1.91. 495 tests pass at 100% coverage; the 25 November offline run wrote 30
+  or week 1 past US$2. One run at a time holds the ledger (a lock file beside it) and rereads it
+  once it does, so two runs cannot both spend the last of the budget (Codex's finding on #46);
+  the prices file and the ledger are read only from inside the working directory. At the
+  approved rates week 1 reserves about US$0.64; 90 failed attempts would count US$1.91. 495 tests pass at 100% coverage; the 25 November offline run wrote 30
   fallback items and spent nothing. No model baseline exists.
 - **The analyst workspace is live (#40, #41 and #43).** The site reads a report as a case file (case
   header, sanctions match panel, "Why this score" with each finding's evidence) and lists the
   demo cases with their last run and review state in this browser (A, #40). A visitor can play
   the review: resolve a sanctions match, decide the case with a reason, and have the approver
   sign off a HIGH or CRITICAL decision, all kept in the browser and labelled as a demo (B, #41,
-  with a layout fix in the match panel). The public domain now serves production from
-  `390a86c` (#43), with the four review fixes. Vercel skipped the builds for #44 and #45,
-  which changed no files under `web/`.
+  with a layout fix in the match panel). The public domain serves production from `16f124d`
+  (#46, which changed the cold-start notice); the four review fixes came in #43. Vercel skipped
+  the builds for #44 and #45, which changed no files under `web/`.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -98,9 +98,9 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
     returned HTTP 200 again; from zero replicas the health check took 44.5 seconds the first
     time, and the second time a browser showed `{"status":"ok"}` within 8 seconds but reported
     the page loaded only after 27 seconds. The README's live API badge links to the running
-    app's health check (the address matches the app's ingress); the pull request makes the
-    badge and the site's cold-start notice say that waking can take up to a minute (the notice
-    said about 20 seconds). Azure Monitor recorded zero
+    app's health check (the address matches the app's ingress); since #46 the badge and the
+    site's cold-start notice say that waking can take up to a minute (the notice said about 20
+    seconds), and the live site serves the new notice. Azure Monitor recorded zero
     requests and zero replicas on 20 November (UTC). The corresponding daily cost entry was
     read on 22 November and kept in `.local/`.
 - **Every demo case is invented (#29).** The data rule is in `AGENTS.md`, with an empty
@@ -122,11 +122,17 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   `gpt-5.4-mini` deployment, version `2026-03-17`, and a US$20 study token-spend ceiling
   including up to US$2 for week 1. On 25 November the deployment read back as that version,
   Data Zone Standard, with automatic upgrades off, and the retail price list still gave the
-  recorded rates. The 24 study cases have yet to be built, and no study model calls have been
-  made.
+  recorded rates. Local runs sign in to it with Microsoft Entra ID (the account accepts no
+  keys); one test call outside the study on 25 November answered as
+  `gpt-5.4-mini-2026-03-17` (see [the baseline guide](docs/research/baseline.md)). The 24
+  study cases have yet to be built, and no study model calls have been made.
 - **Web UI on Node.js 26 (#39).** CI and the release workflow read `web/.nvmrc`. The
   Vercel project is set to 26.x.
-- **Checks.** CI and Attribution passed on `041d7ca`. Each of #31 through #45 passed all its
+- **Checks.** CI and Attribution passed on `16f124d`. CodeQL's Python and JavaScript jobs there
+  failed while uploading their results, with no error in the log; the same analysis passed on
+  #46's last commit, and the Actions analysis uploaded. GitHub declared an incident at 15:55 UTC
+  (Actions, pull requests and Git operations degraded), three minutes after the failure, and
+  refused to rerun the run (HTTP 500 twice). The next push to `main` runs CodeQL again. Each of #31 through #46 passed all its
   checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
   scanning alerts. Since 25 November the `main` ruleset requires ten checks and CodeQL results
   (Decisions, `docs/RELEASING.md`).
@@ -144,14 +150,13 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
    required, a form starts afresh when its open steps change, and the header stays whole at
    phone widths.
 
+After this handoff's pull request merges: check that CodeQL passes on `main` again (its Python
+and JavaScript uploads failed on `16f124d`; see Checks).
+
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
 this file (the session log to the last few entries; the unconfirmed schedule), the generated
 `docs/DEPENDENCY-REFRESH.md` (only what moved) and `docs/roadmap/durable-execution.md`.
-
-Waiting for the maintainer: review and merge #46 (the session checks' corrections, the
-protocol's model and budget, the spending stop, the automatic Agent Framework move, the Python
-upgrade check and the wake-up wording). Its merge deploys the site, since it changes `web/`.
 
 The study proceeds in order:
 
@@ -252,7 +257,7 @@ write-up.
   - Python 3.15 (3.15.2 is out) is no longer waiting on wheels. `msgspec` 0.22.0 and `pyyaml`
     6.0.4 publish 3.15 wheels for Windows and Linux; the lock still holds 0.21.1 and 6.0.3,
     which the next dependency refresh moves. `uvloop`, never installed on Windows, blocked
-    only because the upgrade check asked it for a Windows wheel; #46 fixes that check.
+    only because the upgrade check asked it for a Windows wheel; #46 fixed that check.
     After the next release's refresh, the release workflow prepares the interpreter pull
     request.
 - **A stale contributor entry.** The repository sidebar lists an AI assistant as a contributor.
@@ -271,7 +276,29 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 25 November 2026 (latest) — session check and the spending stop
+### 25 November 2026 (latest) — #46 merged
+
+- The maintainer merged #46 (18 checks passing, SonarQube Cloud's gate passed, Codex's thread
+  resolved). `main` is at `16f124d`; its CI and Attribution runs pass. CodeQL's Python and
+  JavaScript jobs failed while uploading results, with no error logged, although the same
+  analysis passed on #46's last commit. GitHub declared an incident at 15:55 UTC (Actions, pull
+  requests and Git operations degraded), three minutes later; a rerun was refused with HTTP 500
+  twice. The handoff pull request's merge runs CodeQL again. The merge deployed production from
+  `16f124d`, the domain points to it, and the site serves the new cold-start notice.
+- With the maintainer's go-ahead, deleted the merged `feat/study-spending-stop` branch (local
+  and on GitHub). Opening the handoff's pull request failed through both of GitHub's APIs during
+  the incident; the maintainer opened it from the web as #47, and its title and description
+  were set through the REST API. #47's first CodeQL run failed to start (`startup_failure`),
+  GitHub refuses to rerun such a run (HTTP 403), and the `main` ruleset waits for CodeQL
+  results, so the branch's next commit, pushed once Actions recovered, starts CodeQL again.
+- The maintainer gave their own user the Cognitive Services OpenAI User role on the study
+  account (key access is off, and Owner grants no model access), and it read back. With their
+  go-ahead, one test call outside the study, through `get_chat_model()` with one attempt and a
+  500-token cap, signed in with Entra ID and returned `ready` from
+  `gpt-5.4-mini-2026-03-17`, at about US$0.00003 at the protocol's rates. It is not in the
+  study ledger, which counts study runs. The baseline guide now says how a local run signs in.
+
+### 25 November 2026 — session check and the spending stop
 
 - Session check. GitHub matches the record: `main` at `041d7ca` with CI, Attribution and
   CodeQL passing, no pull request opened or merged since #45, only `main`, the `v0.1.0` tag and

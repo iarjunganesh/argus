@@ -33,6 +33,14 @@ The model is the one `ARGUS_MODEL_PROVIDER` configures (`src/argus/models.py`). 
 (`ARGUS_MODEL_PROVIDER=none`, the default), every output is the template, labelled `fallback`:
 that checks the command, is not a model baseline, and spends nothing.
 
+For the study's Azure OpenAI deployment, set `ARGUS_MODEL_PROVIDER=azure-openai` on the command
+itself rather than in `.env`, where it would make local API runs paid as well, with
+`AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_DEPLOYMENT=gpt-5.4-mini` in `.env` and no
+`AZURE_OPENAI_API_KEY`. The account accepts no keys (the template turns key access off), so the
+command signs in as the `az login` user, who needs the Cognitive Services OpenAI User role on
+the account: Owner grants no access to the model itself. On 25 November 2026 one test call
+outside the study signed in this way and the API answered as `gpt-5.4-mini-2026-03-17`.
+
 ## Prices and the spending stop
 
 A run with a model refuses to start without `--prices` and `--ledger` (protocol section 8;
