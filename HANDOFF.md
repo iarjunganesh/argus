@@ -122,8 +122,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   `gpt-5.4-mini` deployment, version `2026-03-17`, and a US$20 study token-spend ceiling
   including up to US$2 for week 1. On 25 November the deployment read back as that version,
   Data Zone Standard, with automatic upgrades off, and the retail price list still gave the
-  recorded rates. The 24 study cases have yet to be built, and no study model calls have been
-  made.
+  recorded rates. Local runs sign in to it with Microsoft Entra ID (the account accepts no
+  keys); one test call outside the study on 25 November answered as
+  `gpt-5.4-mini-2026-03-17` (see [the baseline guide](docs/research/baseline.md)). The 24
+  study cases have yet to be built, and no study model calls have been made.
 - **Web UI on Node.js 26 (#39).** CI and the release workflow read `web/.nvmrc`. The
   Vercel project is set to 26.x.
 - **Checks.** CI and Attribution passed on `16f124d`. CodeQL's Python and JavaScript jobs there
@@ -289,6 +291,12 @@ requests.
   were set through the REST API. #47's first CodeQL run failed to start (`startup_failure`),
   GitHub refuses to rerun such a run (HTTP 403), and the `main` ruleset waits for CodeQL
   results, so the branch's next commit, pushed once Actions recovered, starts CodeQL again.
+- The maintainer gave their own user the Cognitive Services OpenAI User role on the study
+  account (key access is off, and Owner grants no model access), and it read back. With their
+  go-ahead, one test call outside the study, through `get_chat_model()` with one attempt and a
+  500-token cap, signed in with Entra ID and returned `ready` from
+  `gpt-5.4-mini-2026-03-17`, at about US$0.00003 at the protocol's rates. It is not in the
+  study ledger, which counts study runs. The baseline guide now says how a local run signs in.
 
 ### 25 November 2026 — session check and the spending stop
 
