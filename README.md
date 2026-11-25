@@ -9,7 +9,8 @@
 </p>
 
 <p align="center">
-  <strong>Compliance infrastructure that believes financial access is a human right.</strong>
+  <strong>Rules decide. A language model explains. A person reviews.</strong><br/>
+  Open, explainable KYC screening, and a study of whether its explanations keep the facts.
 </p>
 
 <p align="center">
@@ -93,21 +94,42 @@
 
 ---
 
-## The quiet cost of bad KYC
+ARGUS runs the checks of a bank's know-your-customer (KYC) screening: identity, sanctions and
+politically exposed persons, company ownership and transactions. Four agents gather the evidence
+and a fifth combines it. Fixed, versioned rules turn it into a risk score, a tier and the
+obligations that follow. A language model writes the explanation and nothing else, and every case
+waits for a person to decide. Every customer, document and transaction ARGUS screens is
+synthetic.
 
-A refugee family in Germany spends 18 months trying to open a bank account. Their documents are legitimate. But an automated KYC system — never designed with them in mind — scores their jurisdiction as high risk and closes the case. No human review. No plain-language explanation. No appeal path.
-
-An NGO doing legitimate microfinance work in Southeast Asia gets de-risked by their correspondent bank. The letter cites "risk appetite." The lending operation, which supports 4,000 families, can no longer move money.
-
-These two stories are illustrations, not documented cases. The wider problem is documented: about **1.4 billion adults have no account** (World Bank Global Findex 2021), and compliance checks built to protect institutions are one of the barriers that keep people out.
-
-ARGUS is a research prototype that explores one part of that problem: KYC screening whose outcome comes from fixed, inspectable rules, with an explanation a human reviewer can check. It is **open, runs on synthetic data, and makes no claim to improve real screening outcomes.**
+**[Try the live demo](https://argus.arjunganesh.dev)** · **[Watch the 5-minute video](https://youtu.be/yaTNCgCwX4s)** · **[Read the study plan](docs/ARGUS-V2-PLAN.md)**
 
 ---
 
-## What ARGUS does
+## Why it matters
 
-A single KYC request fans out across **five specialist agents**. The Identity, Screening, Corporate and Transaction agents run in parallel; the Compliance & Risk agent combines their results into one risk report. Risk scores, tiers and compliance gaps are computed by deterministic code. A language model writes the plain-English explanation of the decision. The report keeps an audit trail of which agents ran, which tools they called, and the citations each finding rests on.
+Screening decides who gets a bank account. When software makes that decision, the analyst who
+reviews it, and the customer who later asks why, depend on its explanation. Language models make
+such explanations cheap to write, and they write fluently whether or not the text matches the
+decision. A model can drop a finding, call a *potential* sanctions match confirmed or cleared,
+or leave out that a person still has to decide. A wrong explanation is worse than none: it
+misleads the reviewer exactly where care is needed.
+
+The stakes are real. About 1.3 billion adults still have no account
+([World Bank, Global Findex 2025](https://www.worldbank.org/en/publication/globalfindex)), and
+the Financial Action Task Force, which sets the global anti-money-laundering standards, runs a
+[project on its standards' unintended consequences](https://www.fatf-gafi.org/content/fatf-gafi/en/publications/Financialinclusionandnpoissues/Unintended-consequences-project.html),
+de-risking and financial exclusion among them. ARGUS began as a Hack for Good project with the
+people at that edge in mind: those whose documents or countries fall outside what a screening
+system expects.
+
+ARGUS does not claim to fix that. It isolates one thing that has to hold before an automated
+decision can be reviewed fairly: **the explanation must say what the decision actually rests
+on.** So ARGUS keeps the decision and the explanation apart, and measures what happens between
+them.
+
+---
+
+## How ARGUS works
 
 <p align="center">
   <picture>
@@ -117,34 +139,163 @@ A single KYC request fans out across **five specialist agents**. The Identity, S
   </picture>
 </p>
 
-📹 [Watch the demo](https://youtu.be/yaTNCgCwX4s)
+1. **Agents gather the evidence.** The Identity, Screening, Corporate and Transaction agents run
+   in parallel in one Microsoft Agent Framework workflow, and the Compliance & Risk agent combines
+   their results.
+2. **Fixed rules decide.** Every result becomes typed findings, and one versioned policy
+   (`argus-risk-v1`) computes the dimension scores, the weighted score, the tier and the
+   obligations. A potential sanctions match holds the case at CRITICAL whatever the score.
+3. **A language model explains, and only explains.** It receives the decision and writes three to
+   five sentences for the analyst. It cannot change a score, a tier or a finding. Without a
+   model, a fixed template writes the explanation, and the report says so.
+4. **A person decides.** Every report is pending human review. Every result says how it was
+   produced (`computed`, `fallback` when a service was unavailable, or `demo_profile`), every
+   finding carries its uncertainty and evidence, and every regulation cited names its source
+   document and article.
 
-### What works today, and what doesn't
+---
 
-ARGUS was rebuilt after the hackathon. This table describes the current code; the branch, dated checks and next step are in [`HANDOFF.md`](HANDOFF.md).
+## See it
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/case-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/case-light.png">
+    <img width="100%" src="assets/screenshots/case-light.png" alt="The ARGUS report for Cayman Synth Capital, a synthetic company, beside the queue of six demo cases: risk tier CRITICAL, risk score 76 of 100, the tier set by a sanctions hold, enhanced due diligence required, and a notice not to onboard or process transactions until a compliance officer confirms or clears the potential sanctions match."/>
+  </picture>
+</p>
+
+<p align="center"><sub>Cayman Synth Capital, a synthetic company with a potential sanctions match: the tier is held at CRITICAL, and nothing moves until a person confirms or clears the match.</sub></p>
+
+The web UI reads a report as an analyst's case file:
+
+- **Case header**: the tier, the score, what set the tier (the score band or a sanctions hold),
+  the sanctions status, whether enhanced due diligence is required, the recommendation and the
+  review's state.
+- **Potential sanctions match**: the listing beside the customer it may concern, to confirm,
+  clear or escalate.
+- **Why this score**: each dimension's score times its weight, and behind it the findings with
+  their uncertainty, source and evidence records.
+- **Explanation**: the analyst explanation, and whether a model or the template wrote it.
+- **Review**: a simulated review kept in the browser and sent nowhere. The analyst decides with a
+  reason, and a HIGH or CRITICAL decision waits for an approver's sign-off.
+- **Audit trail**: which agents ran, how each result was produced, which tools fell back, and the
+  full report as JSON.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/score-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/score-light.png">
+    <img width="80%" src="assets/screenshots/score-light.png" alt="The same report further down. Why this score: identity 30 times 20 percent is 6, screening 100 times 30 percent is 30, corporate and ownership 40 times 15 percent is 6, regulatory 100 times 25 percent is 25, transaction 90 times 10 percent is 9, total 76 of 100; the sanctions hold, not the score band, sets the tier. Review: awaiting the analyst. Explanation, written from a template because no language model answered: the case is held at CRITICAL because screening found a potential sanctions match, and a compliance officer must confirm or clear it before any onboarding decision."/>
+  </picture>
+</p>
+
+<p align="center"><sub>Rules decide, the explanation follows. The dimension scores add up to 76, the sanctions hold sets the tier, and the explanation says who wrote it: in this local run no model was configured, so the fixed template did.</sub></p>
+
+### Demo scenarios
+
+The six demo cases, riskiest first. The live site offers only these.
+
+| Entity | Type | Jurisdiction | Score and tier | Recommendation |
+| --- | --- | --- | --- | --- |
+| 🔴 `Cayman Synth Capital` | corporate | KY | 76.0 CRITICAL | Hold until the sanctions match is confirmed or cleared |
+| 🔴 `Synthetic Payments AG` | corporate | DE | 56.5 HIGH | Enhanced due diligence (PEP match, offshore owners, structuring) |
+| 🟠 `Synthetic Holdings B.V.` | corporate | NL | 44.0 MEDIUM | Enhanced due diligence (PEP match) |
+| 🟠 `Synthetic Nordic Bank A/S` | corporate | DK | 36.0 MEDIUM | Enhanced due diligence (PEP match) |
+| 🟢 `Synthetic Pacific Banking Corporation` | corporate | AU | 18.2 LOW | Standard onboarding, despite adverse media and a structuring flag |
+| 🟢 `Jane Synthetic` | individual | DE | 3.0 LOW | Standard onboarding |
+
+Every entity is invented. The four parallel agents' results come from recorded profiles; the
+scoring, the decision and the explanation run live. A test
+([`tests/test_demo_scenarios.py`](tests/test_demo_scenarios.py)) fails if any scenario's score,
+tier or recommended actions change.
+
+---
+
+## Where ARGUS is heading
+
+### Now: does the explanation keep the facts?
+
+The next piece of work is a small, planned study, with every procedure written down before any
+model output is read ([the protocol](docs/research/study-protocol.md)). It asks three questions:
+
+1. When a model explains a decision that rules made, does it keep the findings, the evidence,
+   the uncertainty and the need for human review?
+2. Does that change when it receives minimised typed findings, without the entity's name,
+   instead of the raw case? Which case strings reach the model either way?
+3. What happens when a case field carries an injected instruction, or one workflow step's result
+   is missing?
+
+| | Design |
+| --- | --- |
+| **Cases** | 24 synthetic cases in eight strata, from clear cases to many findings, with PEP matches, potential sanctions matches, partial evidence, missing assessments and conflicting findings. 8 tune the prompts; the outputs of the other 16 are not read until the prompts are frozen. |
+| **Arms** | A: today's analyst prompt with the raw case. B: the same instructions with minimised typed findings. C: the fixed template, no model. |
+| **Reference** | Written for each case before any output is read: the required facts, the evidence, the uncertainty, the review status and the permitted next steps. |
+| **Stress tests** | The same injected instruction in two fields of six cases, and two missing-step variants of six cases, with the expected behaviour written down first. |
+| **Model** | Azure OpenAI `gpt-5.4-mini`, version `2026-03-17`, pinned, with five repeats per item to measure variability. |
+| **Spend** | US$20 for the whole study, enforced in code: each attempt reserves its worst-case cost before it is sent, and the run stops before an attempt that would pass the ceiling. |
+| **Reporting** | Every request and response saved. Each result given with its numerator and denominator, by stratum, with failures quoted in full and null results reported as null. |
+
+| Step | Status |
+| --- | --- |
+| Typed findings and the decision record every arm is checked against | ✅ Done (16 November 2026) |
+| The protocol, the model and the budget | ✅ Written, and the model and budget approved; the protocol is frozen before the first study model call |
+| Week 1: a baseline of today's explanation (six demo scenarios, arm A, five repeats) | 🔧 Command and spending stop built; the first model run is next |
+| Week 2: the case set, the per-case references and the minimised input | Planned |
+| Week 3: arms A, B and C on every case | Planned |
+| Week 4: the injection and missing-step pairs | Planned |
+| Week 5: one targeted improvement, rerun, with its regressions reported | Planned |
+| Week 6: the technical report and a summary article, with the run files to reproduce them | Planned |
+
+The study measures faithfulness to ARGUS's own rules on synthetic cases. It will not show that
+ARGUS improves real screening, and it does not try to.
+
+### After the study
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
+    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built, with the built part deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with the planned explanation study and human review, one model-provider setting, Foundry IQ, the later Fabric IQ and Work IQ integrations, and a data plane with Azure and local implementations."/>
+  </picture>
+</p>
+
+The target runtime: solid outlines are built, dashed ones are planned.
+
+- **Plain language for the person screened.** Once faithfulness is measured, the follow-up
+  question is whether the wording can be made simpler without losing it. A plain-language
+  variant of the explanation is in the code, not yet wired in.
+- **All three Microsoft IQs.** Foundry IQ already serves the regulations. Fabric IQ, for
+  evaluation data and ownership relationships, and Work IQ, for case-handover context, come after
+  the first write-up.
+- **Neutral where it's cheap.** The model provider already changes with one setting; the goal is
+  the same for the container host, the tools (MCP) and telemetry. The data plane stays Azure, with
+  a local implementation for tests and self-hosting.
+- **Longer term**, in [`docs/roadmap/`](docs/roadmap/): an accessibility review with assistive
+  technology, a community edition for NGOs, durable execution, an open knowledge graph,
+  multimodal identity evidence and adverse-event reports.
+
+---
+
+## What works today, and what doesn't
+
+ARGUS was rebuilt after the hackathon. This table describes the current code; the dated checks
+and the next step are in [`HANDOFF.md`](HANDOFF.md).
 
 | Capability | Status |
 | --- | --- |
 | Orchestrator fan-out and fan-in across five agents | ✅ Works, as one in-process Microsoft Agent Framework workflow inside the API. `GET /api/v1/kyc/stream/{id}` follows each agent's progress as server-sent events. |
 | Deterministic risk scoring, tiering and gap analysis | ✅ Works |
-| Plain-English decision explanation | ✅ Works. On the deployment Azure OpenAI `gpt-5.4-mini` writes it (first checked on 18 November 2026); elsewhere the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models). Without one, a fixed template writes it, labelled as such. |
+| Plain-English decision explanation | ✅ Works. On the deployment, Azure OpenAI `gpt-5.4-mini` writes it; elsewhere, the model chosen by `ARGUS_MODEL_PROVIDER` (Azure OpenAI, OpenAI or GitHub Models). Without one, a fixed template writes it, labelled as such. |
 | **Local data plane** (default): knowledge-base search, entities, ownership, transactions, reports | ✅ Works with no cloud account, on the synthetic data in `data/`. A clone without generated data finds nothing, and says so. |
 | **Azure data plane** (`ARGUS_DATA_BACKEND=azure`): Foundry IQ knowledge bases on AI Search, Cosmos DB, Document Intelligence | ⚠️ The deployment runs the knowledge-base search (regulations) and the report store live. The entity store, the sanctions and adverse-media searches and Document Intelligence have **not yet run live**: the public demo takes the four parallel agents' results from recorded profiles, and the API takes no documents. |
 | OCR without Azure | ✅ Tesseract reads the synthetic identity documents (PNG and PDF) when it is installed (the `ocr` dependency group and the Tesseract program); without it, documents are reported as unread, labelled `fallback`. ⚠️ The API does not accept documents yet: OCR runs when the Identity agent is called directly. |
-| The six demo scenarios below | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
+| The six demo scenarios | ⚠️ Their parallel-agent results come from recorded demo profiles ([`utils/demo_profiles.py`](src/argus/utils/demo_profiles.py)), not live calls. The compliance fan-in still runs live. |
 | Web UI ([`web/`](web/): Next.js, TypeScript, shadcn/ui) | ✅ Works locally (submit an entity or a demo case, follow each agent live, read the report as a case file) and at [argus.arjunganesh.dev](https://argus.arjunganesh.dev), which offers the six demo cases only. Tested end to end with Playwright and axe. |
 
-Every agent result says where it came from: `computed`, `fallback` (a service was unavailable and a result that asserts nothing was used instead), or `demo_profile`. The report's audit trace lists them, names any tool that fell back, and says whether a model or the template wrote the explanation.
-
 ---
 
-## Recognition
-
-ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents League — AI Skills Fest 2026. The submission material (runbooks, narration script, slides, original architecture spec) is preserved unchanged in [`archive/hackathon-2026/`](archive/hackathon-2026/).
-
----
-
-## How ARGUS works
+## Architecture
 
 <p align="center">
   <picture>
@@ -160,77 +311,22 @@ ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents L
 | 🪪 Identity | customer_lookup, ocr_processor, identity_validator | Entity store, OCR |
 | 🔍 Screening | sanctions_checker, adverse_media_scanner, pep_checker | Sanctions and adverse media knowledge bases, entity store |
 | 🏢 Corporate Intelligence | ubo_resolver, registry_lookup, jurisdiction_mapper | Entity store (ownership graph) |
-| ⚖️ Compliance & Risk | regulations_rag, risk_scorer, gap_analyzer, explain_decision | Regulations knowledge base, language model (explanation only) |
 | 💳 Transaction Intelligence | transaction_monitor, pattern_detector, typology_matcher | Entity store (transactions), regulations knowledge base |
+| ⚖️ Compliance & Risk | regulations_rag, risk_scorer, gap_analyzer, explain_decision | Regulations knowledge base, language model (explanation only) |
 
-Each source is one of four data-plane interfaces with a local and an Azure implementation; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#data-plane).
-
----
-
-## Where ARGUS is going
-
-The next piece of work is a study, planned in [`docs/ARGUS-V2-PLAN.md`](docs/ARGUS-V2-PLAN.md). The diagram shows the target runtime: solid outlines are built, dashed ones are planned.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/v2-target-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/v2-target-light.svg">
-    <img width="100%" src="assets/architecture/v2-target-light.svg" alt="The v2 runtime, partly built, with the built part deployed: Next.js on Vercel, one FastAPI container on Azure Container Apps, a Microsoft Agent Framework workflow with the planned explanation study and human review, one model-provider setting, Foundry IQ, the later Fabric IQ and Work IQ integrations, and a data plane with Azure and local implementations."/>
-  </picture>
-</p>
-
-In short:
-
-- **A focused study first.** Fixed rules decide the outcome and a model only explains it. Does the explanation keep the findings, evidence, uncertainty and the need for human review, and does that change when the model is given minimised findings instead of the raw case? It will be measured on a fixed synthetic case set and written up, including failures. Making the wording simpler is the follow-up question.
-- **A simpler runtime.** Done: one process on Microsoft Agent Framework instead of six services, one container, and a Next.js UI. Both are deployed, on Azure Container Apps and Vercel (18 November 2026), though the study does not need them.
-- **All three Microsoft IQs, later.** Foundry IQ for cited regulatory knowledge, then, after the first write-up, Fabric IQ for evaluation data and corporate-ownership relationships and Work IQ for case-handover context.
-- **Neutral where it's cheap.** The model provider, the container host, the tools (MCP) and telemetry can be swapped by configuration. The data plane stays Azure, with a local implementation for tests and self-hosting.
-
-Working drafts behind the study are in [`docs/research/`](docs/research/README.md). Longer-term ideas, not yet scheduled, live in [`docs/roadmap/`](docs/roadmap/): an accessibility review with assistive technology, a plain-language explanation for the person screened, a community edition for NGOs, durable execution, an open knowledge graph, multimodal identity evidence, and adverse-event reports. Current starting points in the code:
-
-- [`accessibility/`](src/argus/accessibility/) has the contrast utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
-- [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
-- [`study/baseline.py`](src/argus/study/baseline.py) writes the study's week 1 baseline from that same explanation code, and [`study/spend.py`](src/argus/study/spend.py) stops a model run at the study's spending ceilings; see [`docs/research/baseline.md`](docs/research/baseline.md).
-
----
-
-## Demo scenarios
-
-| Scenario | Entity | Type | Jurisdiction | Expected |
-| --- | --- | --- | --- | --- |
-| 🔴 Sanctions Hold | `Cayman Synth Capital` | corporate | KY | CRITICAL — Hold until the sanctions match is confirmed or cleared |
-| 🟠 Medium Risk | `Synthetic Holdings B.V.` | corporate | NL | MEDIUM — Enhanced Due Diligence (PEP match) |
-| 🟢 Low Risk | `Jane Synthetic` | individual | DE | LOW — Standard onboarding |
-| 🔴 High Risk | `Synthetic Payments AG` | corporate | DE | HIGH — Enhanced Due Diligence (PEP match, offshore owners, structuring) |
-| 🟠 Medium Risk | `Synthetic Nordic Bank A/S` | corporate | DK | MEDIUM — Enhanced Due Diligence (PEP match) |
-| 🟢 Low Risk | `Synthetic Pacific Banking Corporation` | corporate | AU | LOW — Standard onboarding, despite adverse media and a structuring flag |
-
-Every entity is invented. These use recorded demo profiles for the parallel agents (see the status table above). All recorded scores follow the same fact-level formulas as the live agents. The tiers are unchanged by the typed-findings migration; Jane scores 3.0, Synthetic Holdings 44.0 and Cayman 76.0.
-
-### What a report shows
-
-The web UI shows a report as an analyst's case file:
-
-- **Cases** — the start page lists the demo cases with their last run and its review state in this browser, riskiest first
-- **Investigation** — each agent's progress as it runs (four in parallel, then compliance), its time and where its result came from; collapsed to one line once the report is in
-- **Case header** — risk tier, score, what set the tier (the score band or a sanctions hold), the sanctions screening status, whether enhanced due diligence is required, the recommendation (a hold as a blocking notice), the next step and the review's state
-- **Potential sanctions match** — for a hold, the listing beside the customer it may concern, where the match is confirmed, cleared or escalated
-- **Review** — a simulated review kept in this browser only and sent nowhere: the analyst decides with a reason, and a HIGH or CRITICAL decision waits for an approver's sign-off (the role is a switch in the header)
-- **Why this score** — each dimension's score times its weight, adding up to the overall score; behind each, its findings with their uncertainty, source and evidence records, or the obligations for Regulatory
-- **Explanation** — the analyst explanation, and whether a model or the template wrote it
-- **Regulations cited** — the knowledge base, source document and article behind each regulatory trigger
-- **Recommended actions** — driven by risk indicators and compliance gaps
-- **Audit trail** (collapsed) — report and task IDs, each agent's status, where its result came from and which tools fell back, the timeline, the review's steps in this browser, and the full report as JSON
-
-The JSON report also includes canonical typed `findings`, an `evidence` index and a `decision_record` with the policy version and evaluated finding IDs. Every record remains pending human review. Scores and obligations use those facts; cached agent scores cannot change them. Missing assessments retain the existing numeric defaults and are explicitly unknown. The string `key_findings` list remains available to current clients. See [the scoring record](docs/ARCHITECTURE.md#typed-findings-and-decision-record).
+Each source is one of four data-plane interfaces with a local and an Azure implementation. The
+JSON report carries the typed findings, an evidence index and a decision record with the policy
+version; see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#typed-findings-and-decision-record).
 
 ---
 
 ## Quick start
 
-Runs locally without any cloud account, on the local data plane: synthetic data, searched in memory. The six demo scenarios use their recorded profiles.
+Runs locally without any cloud account, on the local data plane: synthetic data, searched in
+memory. The six demo scenarios use their recorded profiles.
 
-Requires [uv](https://docs.astral.sh/uv/). It installs the Python version pinned in `.python-version` (3.14) and the locked dependencies.
+Requires [uv](https://docs.astral.sh/uv/). It installs the Python version pinned in
+`.python-version` (3.14) and the locked dependencies.
 
 ```bash
 git clone https://github.com/iarjunganesh/argus.git
@@ -276,12 +372,28 @@ To run on Azure instead, [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) deploys the 
 
 ---
 
+## Recognition
+
+ARGUS was selected as **1 of 3 Hack for Good winners** in the Microsoft Agents League — AI Skills
+Fest 2026. The submission material (runbooks, narration script, slides, original architecture
+spec) is preserved unchanged in [`archive/hackathon-2026/`](archive/hackathon-2026/).
+
+---
+
 ## Contributing
 
-The next work is the study above; [`HANDOFF.md`](HANDOFF.md) has the order. Issues are welcome: start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules, commands and definition of done for humans and coding agents alike, and security reports go through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
+The next work is the study above; [`HANDOFF.md`](HANDOFF.md) has the order. Issues are welcome:
+start with [`CONTRIBUTING.md`](CONTRIBUTING.md). [`AGENTS.md`](AGENTS.md) holds the full rules,
+commands and definition of done for humans and coding agents alike, and security reports go
+through [`SECURITY.md`](SECURITY.md). The most useful contributions right now:
 
-1. Accessibility review of the web UI with real assistive technology: axe finds no WCAG 2.2 AA violations, but that is not a full audit (see [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md))
-2. Translations of explanation output — the people who need plain language most often aren't reading in English
+1. **Critique of the study design.** The [protocol](docs/research/study-protocol.md) is open: a
+   flaw found before the runs is worth far more than one found after.
+2. **Accessibility review of the web UI with real assistive technology.** axe finds no WCAG 2.2
+   AA violations, but that is not a full audit (see
+   [`docs/roadmap/accessibility.md`](docs/roadmap/accessibility.md)).
+3. **Translations of explanation output.** The people who most need plain language are often not
+   reading in English.
 
 ---
 
