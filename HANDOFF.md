@@ -39,10 +39,11 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
 
 ## Current state — 25 November 2026
 
-- **Source.** `main` is at `16f124d` (#46, merged on 25 November): the session checks of 22
-  and 25 November, the protocol's model and budget, the spending stop and the open items fixed
-  on 25 November. The merged branch is deleted; this file's update is in its own docs pull
-  request (`docs/handoff-after-46`).
+- **Source.** `main` is at `9d4e535` (#47, merged on 25 November: the handoff after #46 and
+  how a local run signs in to the study model), on top of `16f124d` (#46: the session checks of
+  22 and 25 November, the protocol's model and budget, the spending stop and the open items
+  fixed on 25 November). Both merged branches are deleted; this file's update is in its own docs
+  pull request (`docs/handoff-after-47`).
 - **The week 1 baseline command (#44) and its spending stop (#46) are merged.** `python -m argus.study.baseline` runs arm A on the six demo scenarios and
   writes the protocol's run records ([`docs/research/baseline.md`](docs/research/baseline.md)).
   The analyst prompt comes from the production code, split into a prompt builder and a recorded
@@ -63,7 +64,7 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   sign off a HIGH or CRITICAL decision, all kept in the browser and labelled as a demo (B, #41,
   with a layout fix in the match panel). The public domain serves production from `16f124d`
   (#46, which changed the cold-start notice); the four review fixes came in #43. Vercel skipped
-  the builds for #44 and #45, which changed no files under `web/`.
+  the builds for #44, #45 and #47, which changed no files under `web/`.
 - **Released: `v0.1.0`, 16 November.** The tag is on `874ef46`; the
   [GitHub Release](https://github.com/iarjunganesh/argus/releases/tag/v0.1.0) carries the
   changelog notes. Zenodo archived it as 10.5281/zenodo.24292414; the concept DOI
@@ -128,12 +129,10 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
   study cases have yet to be built, and no study model calls have been made.
 - **Web UI on Node.js 26 (#39).** CI and the release workflow read `web/.nvmrc`. The
   Vercel project is set to 26.x.
-- **Checks.** CI and Attribution passed on `16f124d`. CodeQL's Python and JavaScript jobs there
-  failed while uploading their results, with no error in the log; the same analysis passed on
-  #46's last commit, and the Actions analysis uploaded. GitHub declared an incident at 15:55 UTC
-  (Actions, pull requests and Git operations degraded), three minutes after the failure, and
-  refused to rerun the run (HTTP 500 twice). The next push to `main` runs CodeQL again. Each of #31 through #46 passed all its
-  checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
+- **Checks.** CI, Attribution and CodeQL pass on `9d4e535`, and CodeQL's Python,
+  JavaScript/TypeScript and Actions analyses all uploaded with no error. On `16f124d` the Python
+  and JavaScript uploads had failed as GitHub's 25 November incident began, and GitHub refused a
+  rerun. Each of #31 through #47 passed all its checks (16 to 18 each). GitHub reports zero open Dependabot, code scanning and secret
   scanning alerts. Since 25 November the `main` ruleset requires ten checks and CodeQL results
   (Decisions, `docs/RELEASING.md`).
 
@@ -150,9 +149,6 @@ maintainer's decision. Fixes reach GitHub only with the maintainer's go-ahead, l
    required, a form starts afresh when its open steps change, and the header stays whole at
    phone widths.
 
-After this handoff's pull request merges: check that CodeQL passes on `main` again (its Python
-and JavaScript uploads failed on `16f124d`; see Checks).
-
 Waiting for the maintainer: which of the four long Markdown files to shorten, in a docs pull
 request of its own: `CHANGELOG.md` (the released `[0.1.0]` section to a summary and a link),
 this file (the session log to the last few entries; the unconfirmed schedule), the generated
@@ -165,10 +161,9 @@ The study proceeds in order:
    freeze. The frozen version must reach `main` before any study model call.
 2. Before the first model run. Done on 25 November: the deployment runs the approved version;
    the command records the sourced prices and enforces the spending stop (tests and an offline
-   run). Still open:
-   - The local `.env` does not select the study model: it leaves the provider at `none` and
-     names an older deployment on an endpoint that is no longer in use. The maintainer points it
-     at the `gpt-5.4-mini` deployment (the settings are noted in `.local/`).
+   run); the local `.env` names the `gpt-5.4-mini` deployment with the provider left at `none`
+   (it goes on the study command), and a local run signs in with Entra ID (one test call outside
+   the study; [`docs/research/baseline.md`](docs/research/baseline.md)). Still open:
    - Whether the study's charges draw on the hackathon credit, and its balance. Microsoft's
      credit documentation says Azure Sponsorship credits might cover models sold directly by
      Azure, `gpt-5.4-mini` among them, and do not cover partner models; the balance shows only
@@ -276,7 +271,18 @@ write-up.
 Newest first. Keep about ten entries; older history is in `CHANGELOG.md` and the merged pull
 requests.
 
-### 25 November 2026 (latest) — #46 merged
+### 25 November 2026 (latest) — #47 merged
+
+- GitHub reported Actions, pull requests and webhooks operational at 16:37 UTC. With the
+  maintainer's go-ahead, pushed #47's last two commits; all 17 checks on its head passed,
+  CodeQL included, and the maintainer merged it as `9d4e535` (four commits; the repository
+  allows merge commits only, so a single commit needs the branch squashed and force-pushed
+  first). On `9d4e535` CI, Attribution and CodeQL pass, with all three CodeQL analyses
+  uploaded; zero open code scanning alerts. Vercel skipped the build (no change under `web/`).
+- With the maintainer's go-ahead, deleted the merged `docs/handoff-after-46` branch (local and
+  on GitHub) and opened this file's update as its own pull request.
+
+### 25 November 2026 — #46 merged
 
 - The maintainer merged #46 (18 checks passing, SonarQube Cloud's gate passed, Codex's thread
   resolved). `main` is at `16f124d`; its CI and Attribution runs pass. CodeQL's Python and
