@@ -21,6 +21,11 @@ def commands(python: str) -> list[tuple[str, list[str]]]:
                 "before",
             ],
         ),
+        # The exact Agent Framework pin first, so that the lock upgrade resolves the new version.
+        (
+            "Move Agent Framework",
+            [python, "scripts/ci/check_versions.py", "--write-agent-framework"],
+        ),
         ("Upgrade lock", ["uv", "lock", "--upgrade"]),
         ("Raise minimums", [python, "scripts/ci/check_versions.py", "--write-minimums"]),
         ("Relock minimums", ["uv", "lock"]),
@@ -131,8 +136,9 @@ def run(root: Path, tag: str, steps: list[tuple[str, list[str]]]) -> int:
         ]
     body += [
         "",
-        "Agent Framework is pinned exactly; the orchestrator and API contract tests (Tests) run",
-        "the workflow on the refreshed version. Container base images are refreshed by tag and",
+        "Agent Framework stays pinned exactly; the refresh moves the pin to its latest release",
+        "first (Move Agent Framework), and the orchestrator and API contract tests (Tests) run",
+        "the workflow on it. Container base images are refreshed by tag and",
         "digest. The web UI's npm packages move to the newest release of their major version;",
         "a MAJOR row needs a manual update. The end-to-end tests run in this PR's CI.",
         "",
