@@ -92,11 +92,11 @@ Two prerequisites establish the study's reference data:
 2. **Typed findings: merged on 2026-11-16 (#31).** Typed facts are the only case inputs to the
    shared scoring and obligation policy. All six demo tiers are unchanged; the three older
    hand-set scores now follow the live formulas. The analyst prompt template is unchanged. The
-   protocol is drafted ([`research/study-protocol.md`](research/study-protocol.md)) but not yet
-   frozen. The [week 1 baseline command](research/baseline.md) merged on 2026-11-22 (#44)
+   protocol ([`research/study-protocol.md`](research/study-protocol.md)) was frozen on
+   2026-11-25. The [week 1 baseline command](research/baseline.md) merged on 2026-11-22 (#44)
    and produced 30 fallback outputs in an offline check. The model and the spending ceilings
-   were approved on 2026-11-22, and the command enforces the ceilings since 2026-11-25. The
-   model baseline and later arms await the protocol freeze.
+   were approved on 2026-11-22, and the command enforces the ceilings since 2026-11-25. No
+   model baseline has been captured yet.
    Design: "Shared rule and decision record" in
    [`research/study-data-design.md`](research/study-data-design.md).
 
@@ -110,8 +110,8 @@ Keep the existing ARGUS flow as the baseline. Hold the deterministic findings, s
 ### Core: the matched explanation study
 
 The procedures, case strata, arms, measures and analysis are fixed in the study protocol,
-[`research/study-protocol.md`](research/study-protocol.md) (a draft until the maintainer
-freezes it). Where it is more specific than this outline, the protocol governs.
+[`research/study-protocol.md`](research/study-protocol.md) (frozen on 2026-11-25). Where it is
+more specific than this outline, the protocol governs.
 
 1. **Baseline.** Capture today's analyst explanation for every case, with the exact prompt, model
    configuration and `explanation_source`.

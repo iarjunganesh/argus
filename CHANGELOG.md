@@ -144,6 +144,15 @@ are listed in [`archive/hackathon-2026/README.md`](archive/hackathon-2026/README
 
 ### Changed
 
+- **The study protocol is frozen.** The maintainer approved it on 25 November with a single
+  annotator (no second annotator, so agreement is not measured and the report says so) and
+  without the optional uncapped raw arm. Its status line says "frozen", section 16 records the
+  decisions, and section 2 says which ARGUS commit the held-out runs are held to. The plan, the
+  research index and the baseline guide say it is frozen. Checked: arm A's prompt (first five
+  findings, three passages cut to 100 characters, five dimension scores, 3 to 5 sentences), the
+  PEP text cut, the missing-step defaults, the 4000-token limit, the two retries and the
+  manifest fields match the code on 25 November; `check_docs.py` and markdownlint pass.
+
 - **The baseline guide says how a local run signs in to the study's model.** The study account
   accepts no keys, so the command signs in as the `az login` user, who needs the Cognitive
   Services OpenAI User role; `ARGUS_MODEL_PROVIDER` goes on the command, not in `.env`.
