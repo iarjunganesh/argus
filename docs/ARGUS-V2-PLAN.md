@@ -1,9 +1,8 @@
 # ARGUS v2: a matched explanation study
 
-Study design revised 2026-11-11; prerequisite status updated and protocol drafted 2026-11-16;
-deployment status corrected 2026-11-19. The earlier version asked only whether explanations could be
-made simpler. This version puts a controlled comparison first and keeps simplification as the
-follow-up question. The platform sections are unchanged.
+Study design revised 2026-11-11, protocol drafted 2026-11-16, deployment status corrected
+2026-11-19 and baseline status updated 2026-11-25. The controlled comparison comes first and
+simplification is the follow-up question.
 
 ## Purpose
 
@@ -74,7 +73,9 @@ Checked against the typed-findings implementation on 2026-11-15; it was merged u
 
 Still unverified:
 
-- Which services the hackathon prize's Microsoft credit covers, and its remaining balance.
+- Which Azure charges draw on the hackathon credit and how much remains. The
+  [official prize rules](https://github.com/microsoft/Agents-League-AISF-Regulations/blob/main/OFFICIAL%20RULES.md#9-prizes)
+  list US$500 in Azure credits for each Hack for Good prize package.
 - Fabric and Work IQ integration feasibility, tenant permissions, licensing, and costs.
 - No publication novelty, production readiness, or real-world compliance effectiveness is
   established by this plan.
@@ -92,7 +93,10 @@ Two prerequisites establish the study's reference data:
    shared scoring and obligation policy. All six demo tiers are unchanged; the three older
    hand-set scores now follow the live formulas. The analyst prompt template is unchanged. The
    protocol is drafted ([`research/study-protocol.md`](research/study-protocol.md)) but not yet
-   frozen; baseline capture and the experimental arms have not started.
+   frozen. The [week 1 baseline command](research/baseline.md) merged on 2026-11-22 (#44)
+   and produced 30 fallback outputs in an offline check. The model and the spending ceilings
+   were approved on 2026-11-22, and the command enforces the ceilings since 2026-11-25. The
+   model baseline and later arms await the protocol freeze.
    Design: "Shared rule and decision record" in
    [`research/study-data-design.md`](research/study-data-design.md).
 
@@ -144,17 +148,17 @@ or no budget) degrades to "not available" in the report instead of failing silen
 ### Platform stance: neutral at the boundaries, not multi-cloud
 
 ARGUS stays Azure-first. Azure is where the project's credit is, where Foundry IQ's cited
-retrieval lives, and where Fabric and Work IQ come from. It becomes provider-neutral only at
-boundaries where neutrality is almost free with current tools. At each of those boundaries,
-swapping providers means changing configuration, not rewriting code.
+retrieval lives, and where Fabric and Work IQ come from. ARGUS currently selects its model
+provider by configuration and packages the API as one container image. The table also records
+the planned tool and telemetry boundaries.
 
 | Layer | Stance | Mechanism |
 | --- | --- | --- |
-| **Models** | Neutral | Microsoft Agent Framework chat clients, created by one factory and selected with `ARGUS_MODEL_PROVIDER`. There are integrations for Azure OpenAI/Foundry and OpenAI (stable), and for Anthropic, Amazon Bedrock, Gemini, Ollama and Foundry Local (beta as of 2026-09-26). |
+| **Models** | Neutral | One OpenAI-compatible client factory selected with `ARGUS_MODEL_PROVIDER`. ARGUS supports Azure OpenAI, OpenAI, GitHub Models and a no-model fallback. |
 | **Compute** | Neutral | One container image. It runs unchanged on Azure Container Apps, other container platforms, or locally. |
-| **Tools and data sources** | Neutral | MCP. Fabric IQ, the Fabric data agent and Work IQ are reached as MCP tools (Work IQ also over A2A), not through custom integrations. |
-| **Telemetry** | Neutral | OpenTelemetry, using its GenAI conventions for model calls. |
-| **Data plane** | **Azure + local only** | A small interface for each of `Retriever`, `EntityStore`, `ReportStore` and `OCR`, each with exactly two implementations. **Azure** (Foundry IQ / AI Search, Cosmos DB, Document Intelligence) is for deployment. **Local** (keyword or local vector search, SQLite, Tesseract) is for CI, the zero-cost baseline and a future community edition. |
+| **Tools and data sources** | Neutral | MCP support for Fabric IQ, the Fabric data agent and Work IQ is planned after the first write-up. Foundry IQ is behind the existing `Retriever` interface. |
+| **Telemetry** | Neutral | OpenTelemetry with GenAI conventions for model calls is planned. |
+| **Data plane** | **Azure + local only** | A small interface for each of `Retriever`, `EntityStore`, `ReportStore` and `OCR`. **Azure** uses Foundry IQ / AI Search, Cosmos DB and Document Intelligence. **Local** uses keyword search over synthetic data, an in-memory report store and Tesseract when installed. The study runs on the local data plane. |
 
 Rules:
 

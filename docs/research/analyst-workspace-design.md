@@ -10,10 +10,10 @@ quickly (A), and a simulated review with decisions kept in the visitor's browser
 The person this is for is a KYC analyst at a retail or investment bank who works cases in ARGUS
 all day. That person needs the site to be fast, dense and calm, not decorative: the verdict and
 the next step at the top, every finding one click from its evidence, the arithmetic behind the
-score in plain view, and a clear place where a person records the decision. Today the live site
-works, but after an assessment finishes the agent diagram fills the top of the page, the verdict
-sits below it, "Why this rating" is a flat list with no link to evidence, the score's arithmetic
-is not shown, and nothing shows that a person decides.
+score in plain view, and a clear place where a person records the decision. Before #40, the
+agent diagram filled the top of the finished assessment and the verdict sat below it. "Why this
+rating" listed findings without evidence links or the score's arithmetic. #41 added a place
+to record a simulated decision.
 
 ## Goals
 
@@ -72,7 +72,8 @@ The change fails, even if it works, if it:
     `timeline`.
 - Not in a report today: how many points each finding added to its dimension, and identifiers
   (date of birth, nationality, registration number) for the listing or the customer.
-- Cold start: at zero replicas the API takes about 15 to 25 seconds to answer the first request.
+- Cold start: the first request from zero replicas took 14 to 30 seconds in the deployment
+  smoke check.
 
 ## Approaches considered
 
@@ -166,8 +167,8 @@ where the analyst resolves the match (section 8).
 ### 7. Cold start and errors
 
 If the API has not answered after three seconds, the page says that it is starting because it
-sleeps when nobody is using it, and that this takes about 20 seconds. Existing error messages
-stay.
+sleeps when nobody is using it, and that waking it can take up to a minute (it said "about 20
+seconds" until a 45-second start on 25 November 2026). Existing error messages stay.
 
 ### 8. Simulated review (option B)
 

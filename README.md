@@ -86,9 +86,10 @@
 
 <!-- Row 6 — live hosting, deployed on 18 November 2026: the web UI on Vercel and the API on Azure
      Container Apps, both running the six synthetic demo cases only. Each badge links to the running
-     service (the API's to its health check). -->
+     service (the API's to its health check, which answers {"status":"ok"}). The API scales to
+     zero when idle, so the first request waits while it wakes. -->
 [![Vercel live frontend](https://img.shields.io/badge/Vercel_live_frontend-argus.arjunganesh.dev-000000?logo=vercel&logoColor=white)](https://argus.arjunganesh.dev)
-[![Azure live API](https://img.shields.io/badge/Azure_Container_Apps_live_API-demo_cases_only-0078D4)](https://argus-api.proudbay-27e26eb7.swedencentral.azurecontainerapps.io/health)
+[![Azure live API](https://img.shields.io/badge/Azure_Container_Apps_live_API-demo_cases_only,_wakes_in_up_to_a_minute-0078D4)](https://argus-api.proudbay-27e26eb7.swedencentral.azurecontainerapps.io/health)
 
 ---
 
@@ -189,7 +190,7 @@ Working drafts behind the study are in [`docs/research/`](docs/research/README.m
 
 - [`accessibility/`](src/argus/accessibility/) has the contrast utilities. Every audited palette pair passes the WCAG AA normal-text contrast threshold. The web UI's risk badges use that palette as white-on-colour badges; its stylesheet's text colours are checked against WCAG AA in both themes, and its pages are checked with axe in the end-to-end tests. This is not a full accessibility audit.
 - [`agents/compliance/tools/explain_decision.py`](src/argus/agents/compliance/tools/explain_decision.py) has the analyst explanation (wired in) and a plain-language variant (not wired in yet).
-- [`study/baseline.py`](src/argus/study/baseline.py) writes the study's week 1 baseline from that same explanation code; see [`docs/research/baseline.md`](docs/research/baseline.md).
+- [`study/baseline.py`](src/argus/study/baseline.py) writes the study's week 1 baseline from that same explanation code, and [`study/spend.py`](src/argus/study/spend.py) stops a model run at the study's spending ceilings; see [`docs/research/baseline.md`](docs/research/baseline.md).
 
 ---
 
