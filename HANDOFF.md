@@ -281,11 +281,14 @@ requests.
   JavaScript jobs failed while uploading results, with no error logged, although the same
   analysis passed on #46's last commit. GitHub declared an incident at 15:55 UTC (Actions, pull
   requests and Git operations degraded), three minutes later; a rerun was refused with HTTP 500
-  twice, and opening this handoff's pull request failed several times during the incident. The
-  handoff pull request's merge runs CodeQL again. The merge deployed
-  production from `16f124d`, the domain points to it, and the site serves the new cold-start
-  notice. With the maintainer's go-ahead, deleted the merged `feat/study-spending-stop` branch
-  (local and on GitHub) and opened this handoff's pull request.
+  twice. The handoff pull request's merge runs CodeQL again. The merge deployed production from
+  `16f124d`, the domain points to it, and the site serves the new cold-start notice.
+- With the maintainer's go-ahead, deleted the merged `feat/study-spending-stop` branch (local
+  and on GitHub). Opening the handoff's pull request failed through both of GitHub's APIs during
+  the incident; the maintainer opened it from the web as #47, and its title and description
+  were set through the REST API. #47's first CodeQL run failed to start (`startup_failure`),
+  GitHub refuses to rerun such a run (HTTP 403), and the `main` ruleset waits for CodeQL
+  results, so the branch's next commit, pushed once Actions recovered, starts CodeQL again.
 
 ### 25 November 2026 — session check and the spending stop
 
