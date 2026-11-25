@@ -205,6 +205,8 @@ async def test_an_existing_run_is_never_overwritten(tmp_path):
 
 def test_git_details_are_read_where_git_answers(monkeypatch, tmp_path):
     assert re.fullmatch(r"[0-9a-f]{40}", baseline.git("rev-parse", "HEAD") or "")
+    # Stop Git from discovering the checkout when pytest's --basetemp is inside it.
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
     assert baseline.git("rev-parse", "HEAD", cwd=tmp_path) is None
 
     def missing(*args, **kwargs):
